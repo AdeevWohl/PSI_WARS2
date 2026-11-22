@@ -1,0 +1,440 @@
+{
+  "mapped": [
+    {
+      "id": "BU_DSH",
+      "name": "Dark Shredder",
+      "file": "01_Dark Shredder.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_JPA",
+      "name": "Jingwa Psi Avenger",
+      "file": "05_Jingwa Psi Avenger.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_LS",
+      "name": "Life Snatcher",
+      "file": "06_Life Snatcher.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_SA",
+      "name": "Shadow Assassin",
+      "file": "02_Shadow Assassin.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_TS",
+      "name": "Trangarey Scythe",
+      "file": "04_Trangarey Scythe.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_SC",
+      "name": "Siana Commander",
+      "file": "09_Siana Creature Commander Card.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_HB",
+      "name": "Hydra Bot",
+      "file": "25_Hydra Bot.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_LQ",
+      "name": "Loquidor Stalker",
+      "file": "24_Laquidor Stalker.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_TB",
+      "name": "Therabot Seeker",
+      "file": "22_Therabot.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_DC",
+      "name": "Davileam Commander",
+      "file": "28_Daviliam Robot Commander.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_BM",
+      "name": "Blade Master",
+      "file": "13_Blade Master.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_LP",
+      "name": "Lodner Predator",
+      "file": "14_Lodner Predator.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_ZM",
+      "name": "Zomber Mercenary",
+      "file": "11_Zomber Mercenary.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "EQ_CO",
+      "name": "Cyber Onslaught",
+      "file": "35_Cyber Onslaught.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "EQ_VCS",
+      "name": "Vegian Cyber Shield",
+      "file": "37_Veqian Cyber Defense.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "EQ_PB",
+      "name": "Psi Bolster",
+      "file": "33_Psionic Bolster.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "EQ_MS",
+      "name": "Mental Shield",
+      "file": "36_Mental Shield.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "EQ_PA",
+      "name": "Physical Augmentation",
+      "file": "34_Physical Augmentation.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "EQ_KA",
+      "name": "Kranthard Armour",
+      "file": "38_Kranthard Armour.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "PW_CR",
+      "name": "Creature Regenerate",
+      "file": "43_Being Regenerate.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "PW_EH",
+      "name": "Equipment Hunter",
+      "file": "39_Equipment Hunter.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "PW_EM",
+      "name": "Equipment Mechanic",
+      "file": "42_Equipment Mechanic.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "PW_HEP",
+      "name": "High-Energy Pulse",
+      "file": "46_High Energy Pulse.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "TR_GSF",
+      "name": "Grankor Stasis Field",
+      "file": "41_Grankor Statsis Field.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "CU_DS",
+      "name": "Digital Splicing",
+      "file": "31_Digital Splicing Creation Unit.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "CU_NG",
+      "name": "Neurogenesis",
+      "file": "29_Neurogenesis Creation Unit.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "CU_BA",
+      "name": "Bio-Acceleration",
+      "file": "30_Bioacceleration Creation Unit.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "CU_MA",
+      "name": "Material Animation",
+      "file": "32_Material Animation Creation Unit.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "RS_CO",
+      "name": "Creation Oracle",
+      "file": "40_Creation Oracle as Creation Unit.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_WR",
+      "name": "Warend Reaper",
+      "file": "07_Warend Reaper.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_PI",
+      "name": "Pencar Inferno",
+      "file": "21_Pencar Inferno.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_AD",
+      "name": "Acorbeac Destroyer",
+      "file": "12_Acorbeac Destroyer.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_XP",
+      "name": "Xardy Piercer",
+      "file": "26_Xardy Beast.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_GS",
+      "name": "Garilian Seer",
+      "file": "03_Garilian Seer.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_FB",
+      "name": "Fengar Berserker",
+      "file": "08_Fengar Beserker.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_TI",
+      "name": "Third I",
+      "file": "18_Third I.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_UO",
+      "name": "Urilian Overlord",
+      "file": "10_Urilian Overlord.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_BC",
+      "name": "Bellarn Cyborg",
+      "file": "15_Bellarn Cyborg.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_KC",
+      "name": "Kyler Cyborg",
+      "file": "16_Kyler Cyborg.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_JP",
+      "name": "Javarow Protector",
+      "file": "17_Javarow Protector.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_VC",
+      "name": "Veeda Commander",
+      "file": "19_Veeda Cyborg Commander.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_SS",
+      "name": "Stealth Skyfire",
+      "file": "20_Stealth Skyfire.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_NA",
+      "name": "Nomis Analyzer",
+      "file": "23_Nomis Analyzer.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "BU_TG",
+      "name": "Tricapia Guardian",
+      "file": "27_Tricapia Guardian.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "PW_RR",
+      "name": "Robo Refurb",
+      "file": "44_Robot Mechanic.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    },
+    {
+      "id": "PW_MD",
+      "name": "Mental Disrupter",
+      "file": "45_Mental Disrupter.psd",
+      "size": [
+        1576,
+        2176
+      ]
+    }
+  ],
+  "missing": [],
+  "unmapped": [
+    "Hover Transport DO NOT USE.psd",
+    "Vector Smart Object1 .psd",
+    "Vector Smart Object1.psd",
+    "Vector Smart Object11.psd"
+  ],
+  "ratioMismatch": [],
+  "ui": [
+    {
+      "asset": "logo.jpg",
+      "file": "Psi wars 3.jpg"
+    },
+    {
+      "asset": "logo-wide.jpg",
+      "file": "Psi wars.jfif"
+    },
+    {
+      "asset": "splash.jpg",
+      "file": "1ac01666c2385635e695d7216fdefa1a_original.jpg"
+    }
+  ]
+}

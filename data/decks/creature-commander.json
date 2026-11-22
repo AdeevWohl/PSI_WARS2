@@ -1,0 +1,13 @@
+{
+  "id": "creature-commander",
+  "name": "Creature Commander",
+  "starter": true,
+  "source": "Spec v2.0 §B3",
+  "battle": {
+    "BU_DSH": 3, "BU_JPA": 3, "BU_LS": 3, "BU_SA": 3, "BU_TS": 3,
+    "BU_SC": 2,
+    "EQ_PB": 3, "EQ_PA": 2, "EQ_MS": 1,
+    "PW_CR": 2, "PW_HEP": 2, "TR_GSF": 2, "PW_EH": 1
+  },
+  "resource": { "CU_NG": 8, "CU_BA": 7, "CU_MA": 3, "CU_DS": 2, "RS_CO": 3 }
+}

@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.wrangler/
+.dev.vars
+coverage/
+.DS_Store
+Thumbs.db
+# Source PSDs are ~9 GB and live outside the repo; only extracted masters are tracked.
+*.psd
+sim-results/

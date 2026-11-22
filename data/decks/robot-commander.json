@@ -1,0 +1,14 @@
+{
+  "id": "robot-commander",
+  "name": "Robot Commander",
+  "starter": true,
+  "source": "Spec v2.0 §B3",
+  "battle": {
+    "BU_HB": 3, "BU_LQ": 3, "BU_TB": 3,
+    "BU_DC": 2,
+    "BU_BM": 2, "BU_LP": 2, "BU_ZM": 2,
+    "EQ_CO": 3, "EQ_VCS": 2, "EQ_KA": 2,
+    "TR_GSF": 2, "PW_EH": 2, "PW_EM": 2
+  },
+  "resource": { "CU_DS": 7, "CU_MA": 7, "CU_NG": 3, "CU_BA": 3, "RS_CO": 3 }
+}

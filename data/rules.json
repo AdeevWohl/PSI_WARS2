@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "comment": "Tunable rule data. Dice faces per spec §A4; deck limits per §A12/A12-a; house-rule constants per build prompt §3. Engine reads everything from here.",
+  "dice": {
+    "standard": {
+      "cyber":    { "1": { "bonus": 1, "reroll": true }, "2": { "bonus": 2 }, "3": { "bonus": 3 }, "4": { "bonus": 4 }, "5": { "bonus": 1, "physicalPlus": 1 }, "6": { "bonus": 1, "obliterate": true } },
+      "psionic":  { "1": { "bonus": 1, "reroll": true }, "2": { "bonus": 2 }, "3": { "bonus": 3 }, "4": { "bonus": 4 }, "5": { "bonus": 1, "physicalPlus": 1 }, "6": { "bonus": 1, "obliterate": true } },
+      "physical": { "1": { "bonus": 1 }, "2": { "bonus": 2 }, "3": { "bonus": 2 }, "4": { "bonus": 3 }, "5": { "bonus": 4 }, "6": { "bonus": 1, "obliterate": true } }
+    },
+    "noModifier": {
+      "cyber":    { "1": { "bonus": 1 }, "2": { "bonus": 2 }, "3": { "bonus": 3 }, "4": { "bonus": 4 }, "5": { "bonus": 5 }, "6": { "bonus": 6 } },
+      "psionic":  { "1": { "bonus": 1 }, "2": { "bonus": 2 }, "3": { "bonus": 3 }, "4": { "bonus": 4 }, "5": { "bonus": 5 }, "6": { "bonus": 6 } },
+      "physical": { "1": { "bonus": 1 }, "2": { "bonus": 2 }, "3": { "bonus": 3 }, "4": { "bonus": 4 }, "5": { "bonus": 5 }, "6": { "bonus": 6 } }
+    },
+    "numericValue": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 4 }
+  },
+  "setup": {
+    "startingHandSize": 5,
+    "startingHP": { "default": 15, "presets": [10, 15, 20], "min": 10, "max": 20 },
+    "firstPlayerSkipsBattleDraw": true
+  },
+  "deckLimits": {
+    "battle": { "min": 30, "max": 40, "minBattleUnits": 12, "maxCopies": 3 },
+    "resource": { "min": 18, "max": 24, "maxCreationUnits": 20, "maxPerCUType": 8, "maxCopiesNonCU": 3 }
+  },
+  "houseRules": {
+    "MP_ATTACK_TARGETING": "perUnit",
+    "MP_BLOCKING": "attackedPlayerOnly",
+    "MP_POWER_WINDOW_ORDER": "turnOrderFromAttacker",
+    "MP_ELIMINATION": "cardsLeaveTrappedFreedDepleted",
+    "MP_OPPONENT_MEANS": "otherSideOfBattle",
+    "MP_TEAMS": "freeForAll",
+    "MP_FIRST_TURN": "onlyFirstPlayerSkipsDraw",
+    "TRAP_RESPONSES": "stackLastInFirstOut",
+    "INSTANT_SCOPE": "trapsOnly",
+    "TRAP_WINDOW_MS": 3000,
+    "FAST_WINDOWS": false,
+    "TURN_TIMER_SEC": 0,
+    "RECONNECT_GRACE_SEC": 120,
+    "ROOM_IDLE_EXPIRY_SEC": 7200
+  },
+  "instantWindows": {
+    "comment": "Points at which every player gets a priority window to play instants (Traps). Responses to a Trap on the stack are always allowed.",
+    "afterCardPlayed": true,
+    "endOfDraw": true,
+    "endOfCreation": true,
+    "afterAttackersDeclared": true,
+    "beforeCleanupEscapes": true
+  }
+}

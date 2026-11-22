@@ -1,0 +1,33 @@
+{
+  "name": "psi-wars",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Psi Wars — browser card game: rules engine, client, multiplayer servers and balance tools",
+  "type": "module",
+  "workspaces": [
+    "packages/shared",
+    "packages/engine"
+  ],
+  "scripts": {
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "assets:extract": "python tools/assets/extract_psd.py",
+    "assets:build": "node tools/assets/build.mjs",
+    "dev": "npm run dev -w @psi-wars/client",
+    "build": "npm run build -w @psi-wars/client",
+    "serve": "npm run start -w @psi-wars/server-local",
+    "sim": "tsx tools/sim/run.ts",
+    "deploy": "npm run build && npm run deploy -w @psi-wars/server"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "sharp": "^0.33.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
