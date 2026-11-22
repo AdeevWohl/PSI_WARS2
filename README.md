@@ -2,7 +2,7 @@
 
 Browser card game: a pure TypeScript rules engine, an art-driven client, AI opponents, and online play with room codes (2–4 players).
 
-> **Status: Stage 0 of 9 complete.** Data, art pipeline and toolchain are in place. The rules engine (Stage 1) comes next. The run, tunnel and deploy sections below will be filled in as those stages land.
+> **Status: Stage 1 of 9 complete.** The full rules engine runs headless with 149 tests (every §12 case, every card ability, 3–4 player rules, determinism, fuzz). The client (Stage 2) comes next. The run, tunnel and deploy sections will be filled in as those stages land.
 
 ## Requirements
 
@@ -17,6 +17,12 @@ npm install
 
 ```powershell
 npm test
+```
+
+The default fuzz run plays 200 random games. For the long run:
+
+```powershell
+$env:FUZZ_GAMES=3000; npx vitest run packages/engine/test/fuzz.test.ts -t fuzz
 ```
 
 ```powershell
@@ -39,8 +45,8 @@ python tools/assets/extract_psd.py --psd-dir "../Final Cards Single Number Full 
 
 ```
 packages/
-  engine/        pure TS rules engine (no DOM, network or timers)   — Stage 1
-  shared/        command & event schemas, protocol version           — Stage 1
+  engine/        pure TS rules engine (no DOM, network or timers)   — done
+  shared/        command & event types, protocol version             — done
   client/        Vite + TS client                                    — Stage 2+
   server/        Cloudflare Worker + Durable Object                  — Stage 5
   server-local/  Node WebSocket server, same protocol                — Stage 5
@@ -57,5 +63,9 @@ tools/
   data/          data validation tests
   sim/           AI-vs-AI batch simulator (Stage 8)
 ```
+
+## Engine in one paragraph
+
+`createGame(setup)` returns a state paused at the first prompt. `getLegalActions(state, seat)` lists everything that seat may do. `applyCommand(state, seat, command)` validates the command, returns a **new** state plus the events it caused, and never mutates its input. `viewFor(state, seat)` and `filterEvents(events, seat)` produce what one seat is allowed to see. Dice and shuffles come from a seeded RNG stored in the state, so the same seed and the same commands always give the same events.
 
 See `ART_MAPPING.md` for the art inventory and `DECISIONS.md` for judgement calls.
