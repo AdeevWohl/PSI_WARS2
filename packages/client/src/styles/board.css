@@ -72,7 +72,8 @@
 .hand.fan .hand-slot { position: absolute; bottom: 0; translate: -50% 0; transform-origin: 50% 160%; rotate: var(--rot); transform: translateY(var(--lift)); transition: left var(--dur-std) var(--ease-out-cubic), rotate var(--dur-std) var(--ease-out-cubic); }
 .hand.fan .card { --w: var(--card-w-hand); width: var(--card-w-hand); }
 .hand.fan .hand-slot:hover { z-index: 100 !important; }
-.hand.fan .card:hover { transform: translateY(-56px) scale(1.14); }
+.hand.fan .card { transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), filter 200ms, box-shadow 200ms; }
+.hand.fan .card:hover { transform: translateY(-120px) scale(1.5); box-shadow: 0 24px 50px rgba(0, 0, 0, 0.7), 0 0 26px rgba(139, 233, 255, 0.35); }
 .hand.fan .card.selected { transform: translateY(-60px) scale(1.14); }
 .hand .hand-back { --w: 30px; width: 30px; margin-left: -18px; }
 .hand .hand-back:first-child { margin-left: 0; }
@@ -219,4 +220,4 @@
 /* Keyboard focus on cards: a clear ring, and hand cards lift as on hover. */
 .card:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; z-index: 60; }
 .hand.fan .hand-slot:focus-within { z-index: 100 !important; }
-.hand.fan .card:focus-visible { transform: translateY(-56px) scale(1.14); }
+.hand.fan .card:focus-visible { transform: translateY(-120px) scale(1.5); }

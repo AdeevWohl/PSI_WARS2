@@ -229,6 +229,41 @@ export class Presenter {
     this.shake(0.7);
   }
 
+  /** A red lightning bolt smites (x, y) from above. */
+  private async bolt(x: number, y: number): Promise<void> {
+    if (this.tl.instant) return;
+    this.sfx('spell');
+    const pts: string[] = [];
+    let cx = x + (Math.random() * 160 - 80);
+    for (let i = 0; i <= 10; i++) {
+      const py = -40 + ((y + 40) * i) / 10;
+      const px = i === 10 ? x : cx + (Math.random() * 70 - 35);
+      cx = cx * 0.6 + x * 0.4;
+      pts.push(`${px.toFixed(0)},${py.toFixed(0)}`);
+    }
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('class', 'bolt');
+    svg.setAttribute('viewBox', '0 0 1920 1080');
+    for (const [w, c] of [[22, 'rgba(255,40,40,0.35)'], [9, '#ff3b3b'], [3, '#fff4f0']] as const) {
+      const pl = document.createElementNS(ns, 'polyline');
+      pl.setAttribute('points', pts.join(' '));
+      pl.setAttribute('fill', 'none');
+      pl.setAttribute('stroke', c);
+      pl.setAttribute('stroke-width', String(w));
+      pl.setAttribute('stroke-linejoin', 'bevel');
+      svg.appendChild(pl);
+    }
+    const el = this.temp(svg as unknown as HTMLElement);
+    const flash = this.temp(h('div', { class: 'screen-flash', style: { '--flash': '#ff2a2a' } as any }));
+    this.tl.done(this.tl.animate(flash, [{ opacity: 0 }, { opacity: 0.5, offset: 0.1 }, { opacity: 0 }], { duration: 500, fill: 'forwards' })).then(() => flash.remove());
+    this.shake(1.6);
+    this.env.fx.burst(x, y, { color: '#ff3b3b', count: 40, speed: 4.2, ring: true });
+    await this.tl.done(this.tl.animate(el, [{ opacity: 0 }, { opacity: 1, offset: 0.05 }, { opacity: 0.25, offset: 0.25 }, { opacity: 1, offset: 0.4 }, { opacity: 0.6, offset: 0.7 }, { opacity: 0 }], { duration: 650, fill: 'forwards' }));
+    el.remove();
+    this.temps.delete(el);
+  }
+
   private floatNumber(x: number, y: number, text: string, cls = 'dmg-num'): void {
     if (this.tl.instant) return;
     const num = this.temp(h('div', { class: cls }, text));
@@ -486,7 +521,9 @@ export class Presenter {
         const a = anchorsOf(e.seat);
         this.sfx('play');
         const mode = settings().showcase;
-        const show = !tl.instant && e.cardType !== 'Resource' && (mode === 'on' || (mode === 'opponents' && e.seat !== this.viewer));
+        // Your own targeted spells were already shown big in the staging area.
+        const stagedSpell = e.seat === this.viewer && (e.cardType === 'Power' || e.cardType === 'Trap') && !!e.target;
+        const show = !tl.instant && !stagedSpell && e.cardType !== 'Resource' && (mode === 'on' || (mode === 'opponents' && e.seat !== this.viewer));
         if (show) {
           const prev = el?.style.opacity ?? '';
           if (el) el.style.opacity = '0';
@@ -511,12 +548,8 @@ export class Presenter {
         if (this.stage && String(e.attackId) === this.stage.attackId) this.stage.damaged(e);
         if (el) {
           const r = this.centre(el);
-          const src = e.cause === 'effect' ? this.el(e.source) : null;
-          if (src && !tl.instant) {
-            const sr = this.centre(src);
-            this.env.fx.stream({ x: sr.cx, y: sr.cy }, { x: r.cx, y: r.cy }, '#ff6a5a', 18);
-            await tl.wait(260);
-          }
+          // A damage spell smites from above; sweeps just hit.
+          if (e.cause === 'effect' && !this.batch.some((x) => x.type === 'SweepDamage' && x.source === e.source)) await this.bolt(r.cx, r.cy);
           this.floatNumber(r.cx, r.cy, `−${e.amount}`);
           this.aura(el, 'danger');
           this.env.fx.burst(r.cx, r.cy, { color: '#ff4d6d', count: 12 + Number(e.amount) * 3, speed: 2.4 });
@@ -876,6 +909,10 @@ export class Presenter {
       case 'LabDamaged': {
         const seat = e.seat as Seat;
         const amount = Number(e.amount);
+        const srcCard = typeof e.source === 'string' ? v.cards[e.source] : undefined;
+        const srcDef = srcCard ? v.defs[srcCard.cardId] : undefined;
+        const hpA = this.env.board.anchors(seat);
+        if (srcDef?.cardType === 'Power' && hpA) await this.bolt(hpA.hp.cx, hpA.hp.cy);
         this.env.board.setHp(seat, Number(e.hp));
         this.sfx('labHit');
         const a = this.env.board.anchors(seat);

@@ -79,6 +79,12 @@ export class DragManager {
     const card = under.closest('.card') as HTMLElement | null;
     const uid = card?.dataset.uid;
     if (uid && spec.targets?.includes(uid)) return card;
+    if (spec.targets && spec.zone === 'board') {
+      // A spell: anywhere off the hand stages it; a Lab under the pointer is a target too.
+      const area = under.closest('.area') as HTMLElement | null;
+      if (area && spec.targets.includes(`lab:${area.dataset.seat}`) && !under.closest('.card')) return area;
+      return under.closest('.board-main') && !under.closest('.hand') ? (under.closest('.board-main') as HTMLElement) : null;
+    }
     if (spec.zone === 'battlefield') return (under.closest('.area.opp') ?? under.closest('.battlefield')) as HTMLElement | null;
     if (spec.zone === 'board') {
       const inHand = under.closest('.hand');
@@ -119,7 +125,8 @@ export class DragManager {
     this.cleanupVisuals();
     if (target) {
       proxy?.remove();
-      const uid = target.classList.contains('card') ? target.dataset.uid ?? null : null;
+      let uid = target.classList.contains('card') ? target.dataset.uid ?? null : null;
+      if (!uid && target.classList.contains('area') && st.spec.targets?.includes(`lab:${target.dataset.seat}`)) uid = `lab:${target.dataset.seat}`;
       const seat = target.classList.contains('area') && target.dataset.seat !== undefined ? Number(target.dataset.seat) : undefined;
       await this.controller.drop(st.ctx, uid, seat);
     } else if (proxy) {

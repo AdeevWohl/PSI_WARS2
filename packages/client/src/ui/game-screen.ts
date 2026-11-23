@@ -3,11 +3,12 @@ import { battleOdds, chooseCommand, seedRng, type GameView, type LegalView, type
 import { artUrl } from '../assets';
 import { Fx } from '../anim/fx';
 import { Presenter, type BatchStart } from '../anim/present';
-import { Timeline } from '../anim/timeline';
+import { EASE, Timeline } from '../anim/timeline';
+import { toStage } from '../anim/flip';
 import { rules } from '../data';
 import { Board, SEAT_COLORS, type CardCtx } from '../render/board';
 import { renderBreakdown } from '../render/breakdown';
-import { createCardEl } from '../render/card';
+import { createCardEl, updateOverlays } from '../render/card';
 import { eventLine, Namer } from '../render/log';
 import { onSettings, settings, speedFactor } from '../settings';
 import type { GameSource } from '../game/source';
@@ -135,7 +136,75 @@ export class GameScreen {
         e.preventDefault();
       }
     }, true);
+    // A staged spell can target a Lab: click anywhere on that player's area (not on a card).
+    this.el.addEventListener('click', (e) => {
+      const st = this.controller.staged();
+      const t = e.target as Element;
+      if (!st || t.closest('.card, button, .spell-stage')) return;
+      const area = t.closest('.area') as HTMLElement | null;
+      const key = area ? `lab:${area.dataset.seat}` : '';
+      if (area && st.play.targets?.includes(key)) this.controller.chooseTarget(key);
+    });
     queueMicrotask(() => this.refresh());
+  }
+
+  // ---------- spell staging (Change Request 1) ----------
+
+  private spellStage: HTMLElement | null = null;
+
+  /**
+   * A targeted Power/Trap card waits large at the right of the battlefield: hover a target to aim
+   * (red lightning), click to lock it in, then Confirm — or Cancel back to aiming / to the hand.
+   */
+  private renderSpellStage(view: GameView): void {
+    const st = this.curtainFor === null ? this.controller.staged() : null;
+    for (const p of view.players) {
+      const area = this.board.areaFor(p.seat)?.root;
+      if (!area) continue;
+      const key = `lab:${p.seat}`;
+      const isT = !!st && !!st.play.targets?.includes(key);
+      area.classList.toggle('lab-target', isT && !st!.chosen);
+      area.classList.toggle('lab-locked', !!st && st.chosen === key);
+    }
+    this.el.classList.toggle('spell-mode', !!st);
+    if (!st) {
+      const old = this.spellStage;
+      this.spellStage = null;
+      if (old) {
+        if (this.tl.instant) old.remove();
+        else this.tl.done(this.tl.animate(old, [{ opacity: 1 }, { opacity: 0, transform: 'translateY(60px) scale(0.6)' }], { duration: 200, easing: EASE.inQuad, fill: 'forwards' })).then(() => old.remove());
+      }
+      return;
+    }
+    const key = `${st.play.uid}:${st.chosen ?? ''}`;
+    if (this.spellStage?.dataset.key === key) return;
+    const wasOpen = !!this.spellStage;
+    this.spellStage?.remove();
+    const def = view.defs[st.play.cardId]!;
+    const card = createCardEl(null, def, { size: 'lg' });
+    updateOverlays(card, def);
+    card.style.setProperty('--w', '250px');
+    const tName = st.chosen ? (st.chosen.startsWith('lab:') ? `${this.nameOf(Number(st.chosen.slice(4)))}'s Lab` : view.defs[view.cards[st.chosen]!.cardId]?.name ?? 'that unit') : null;
+    const actions = st.chosen
+      ? [h('button', { class: 'btn primary', onclick: () => this.controller.confirmSpell() }, '⚡ Confirm'), h('button', { class: 'btn', onclick: () => this.controller.unchoose() }, 'Cancel')]
+      : [h('button', { class: 'btn', onclick: () => this.controller.cancel() }, 'Cancel — back to hand')];
+    const stage = h('div', { class: `spell-stage${st.chosen ? ' locked' : ''}`, dataset: { key } },
+      h('div', { class: 'ss-card' }, card),
+      h('div', { class: 'ss-name' }, def.name),
+      h('div', { class: 'ss-text' }, st.chosen ? `Target: ${tName}` : 'Hover to aim · click a target'),
+      h('div', { class: 'ss-actions' }, ...actions));
+    this.el.appendChild(stage);
+    this.spellStage = stage;
+    if (!wasOpen && !this.tl.instant) {
+      const src = this.el.querySelector(`.hand .card[data-uid="${CSS.escape(st.play.uid)}"]`);
+      const sr = src ? toStage(src.getBoundingClientRect()) : null;
+      const dr = toStage(stage.getBoundingClientRect());
+      const dx = sr ? sr.cx - dr.cx : 0;
+      const dy = sr ? sr.cy - dr.cy : 300;
+      this.tl.animate(stage, [{ transform: `translate(${dx}px, ${dy}px) scale(0.35)`, opacity: 0.4 }, { transform: 'translate(0, 0) scale(1.06)', opacity: 1, offset: 0.7 }, { transform: 'none', opacity: 1 }], { duration: 380, easing: EASE.outQuint });
+    } else if (!this.tl.instant) {
+      this.tl.animate(stage, [{ transform: 'scale(1.04)' }, { transform: 'none' }], { duration: 180, easing: EASE.outCubic });
+    }
   }
 
   /** True while a batch of events is still animating. */
@@ -309,6 +378,7 @@ export class GameScreen {
     this.controller.sync(view, curtained ? null : legal);
     this.board.render(view);
     this.decorateExtras(view);
+    this.renderSpellStage(view);
     this.renderSide(view, legal);
     this.board.root.toggleAttribute('inert', curtained);
     this.syncTimer(view, legal);

@@ -12,7 +12,7 @@ import { openModal, pickPayment, promptModal, type ModalHandle } from './modals'
 
 type Mode =
   | { k: 'none' }
-  | { k: 'target'; play: PlayOption }
+  | { k: 'target'; play: PlayOption; staged?: boolean; chosen?: string | null }
   | { k: 'moveEquip'; equip: string; to: string[] }
   | { k: 'stack'; first: string | null };
 
@@ -169,7 +169,10 @@ export class Controller {
     }
 
     if (m.k === 'target') {
-      if (m.play.targets?.includes(ctx.uid) && (ctx.zone === 'lab' || ctx.zone === 'battle')) el.classList.add('target', 'interactive');
+      if (m.play.targets?.includes(ctx.uid) && (ctx.zone === 'lab' || ctx.zone === 'battle')) {
+        el.classList.add('target', 'interactive');
+        if (m.staged) el.classList.add(m.chosen === ctx.uid ? 'zap-locked' : m.chosen ? 'zap-off' : 'zap');
+      }
       return;
     }
     if (m.k === 'moveEquip') {
@@ -238,7 +241,7 @@ export class Controller {
         return;
       }
       if (play.targets) {
-        this.mode = { k: 'target', play };
+        this.mode = { k: 'target', play, staged: this.isSpell(play), chosen: null };
         this.rerender();
         return;
       }
@@ -246,7 +249,10 @@ export class Controller {
     }
 
     if (m.k === 'target') {
-      if (m.play.targets?.includes(ctx.uid)) return this.play(m.play, ctx.uid);
+      if (m.play.targets?.includes(ctx.uid)) {
+        if (m.staged) return this.chooseTarget(ctx.uid);
+        return this.play(m.play, ctx.uid);
+      }
       return;
     }
     if (m.k === 'moveEquip') {
@@ -365,6 +371,50 @@ export class Controller {
     this.popover = null;
   }
 
+  /** Power and Trap cards with a target use the spell staging area (Confirm before casting). */
+  private isSpell(play: PlayOption): boolean {
+    const t = this.view?.defs[play.cardId]?.cardType;
+    return t === 'Power' || t === 'Trap';
+  }
+
+  /** The staged spell, for the staging area: the card, its chosen target (if locked in). */
+  staged(): { play: PlayOption; chosen: string | null } | null {
+    const m = this.mode;
+    return m.k === 'target' && m.staged ? { play: m.play, chosen: m.chosen ?? null } : null;
+  }
+
+  /** Lock in a target for the staged spell (a card uid or "lab:<seat>"). */
+  chooseTarget(t: string): void {
+    const m = this.mode;
+    if (m.k !== 'target' || !m.play.targets?.includes(t)) return;
+    if (!m.staged) return void this.play(m.play, t);
+    this.mode = { ...m, chosen: t };
+    this.rerender();
+  }
+
+  /** Back to choosing (the spell stays staged). */
+  unchoose(): void {
+    const m = this.mode;
+    if (m.k === 'target' && m.chosen) {
+      this.mode = { ...m, chosen: null };
+      this.rerender();
+    }
+  }
+
+  confirmSpell(): void {
+    const m = this.mode;
+    if (m.k === 'target' && m.staged && m.chosen) void this.play(m.play, m.chosen);
+  }
+
+  /** Dragged out of the hand: stage the spell (optionally with a target already chosen). */
+  stage(ctx: CardCtx, target: string | null): boolean {
+    const play = this.legal?.plays.find((p) => p.uid === ctx.uid);
+    if (!play || !play.targets || !this.isSpell(play)) return false;
+    this.mode = { k: 'target', play, staged: true, chosen: target && play.targets.includes(target) ? target : null };
+    this.rerender();
+    return true;
+  }
+
   cancel(): void {
     this.mode = { k: 'none' };
     this.pendingBlocker = null;
@@ -381,6 +431,7 @@ export class Controller {
     if (ctx.zone === 'hand') {
       const play = la.plays.find((p) => p.uid === ctx.uid);
       if (!play) return null;
+      if (play.targets && this.isSpell(play)) return { targets: play.targets, zone: 'board' };
       return play.targets ? { targets: play.targets } : { zone: 'board' };
     }
     if (ctx.zone === 'equip') {
@@ -410,6 +461,7 @@ export class Controller {
     if (ctx.zone === 'hand') {
       const play = la.plays.find((p) => p.uid === ctx.uid);
       if (!play) return;
+      if (play.targets && this.isSpell(play)) return void this.stage(ctx, targetUid);
       if (play.targets && (!targetUid || !play.targets.includes(targetUid))) return;
       return this.play(play, targetUid ?? undefined);
     }
@@ -490,7 +542,7 @@ export class Controller {
       for (const t of m.play.targets) {
         if (t.startsWith('lab:')) {
           const seat = Number(t.slice(4));
-          out.push({ label: `→ ${this.names(seat)}'s Lab`, color: SEAT_COLORS[seat], onClick: () => void this.play(m.play, t) });
+          out.push({ label: `→ ${this.names(seat)}'s Lab`, color: SEAT_COLORS[seat], active: m.chosen === t, onClick: () => void (m.staged ? this.chooseTarget(t) : this.play(m.play, t)) });
         } else if (v.cards[t]?.zone === 'cus') {
           const id = v.cards[t]!.cardId;
           if (seenCU.has(id)) continue;
