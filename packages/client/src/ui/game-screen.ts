@@ -1,5 +1,5 @@
 import type { Command, GameEvent, Seat } from '@psi-wars/shared';
-import { battleOdds, type GameView, type LegalView, type UnitStats } from '@psi-wars/engine';
+import { battleOdds, chooseCommand, seedRng, type GameView, type LegalView, type RngState, type UnitStats } from '@psi-wars/engine';
 import { artUrl } from '../assets';
 import { Fx } from '../anim/fx';
 import { Presenter, type BatchStart } from '../anim/present';
@@ -9,7 +9,7 @@ import { Board, SEAT_COLORS, type CardCtx } from '../render/board';
 import { renderBreakdown } from '../render/breakdown';
 import { createCardEl } from '../render/card';
 import { eventLine, Namer } from '../render/log';
-import { onSettings, settings } from '../settings';
+import { onSettings, settings, speedFactor } from '../settings';
 import type { GameSource } from '../game/source';
 import { Controller } from './controller';
 import { DragManager } from './drag';
@@ -66,6 +66,9 @@ export class GameScreen {
   private playing = false;
   private dirty = false;
   private timer: { key: string; deadline: number; id: number; els: HTMLElement[] } | null = null;
+  private aiTimer = 0;
+  private aiKey = '';
+  private aiRng: RngState = seedRng(`ai-${Math.random()}`);
 
   constructor(private source: GameSource, initialEvents: GameEvent[], private opts: GameScreenOpts) {
     this.namer = new Namer(() => this.source.view(null).defs);
@@ -121,6 +124,7 @@ export class GameScreen {
 
   destroy(): void {
     if (this.timer) clearInterval(this.timer.id);
+    clearTimeout(this.aiTimer);
     this.unsub();
     this.unsubSettings();
     this.tl.skip();
@@ -287,6 +291,32 @@ export class GameScreen {
     this.renderSide(view, legal);
     this.board.root.toggleAttribute('inert', curtained);
     this.syncTimer(view, legal);
+    this.maybeRunAi();
+  }
+
+  /**
+   * Computer seats in local games act after the animation queue settles, with a short
+   * delay (scaled by the animation speed) so a human can follow (spec C5).
+   */
+  private maybeRunAi(): void {
+    if (this.playing) return;
+    const pub = this.source.view(null);
+    const p = pub.prompt;
+    const seat = p ? this.source.seats[p.seat] : undefined;
+    if (!p || pub.result || seat?.kind !== 'ai') return;
+    const key = `${pub.commandCount}:${p.seat}:${p.kind}`;
+    if (key === this.aiKey) return;
+    this.aiKey = key;
+    clearTimeout(this.aiTimer);
+    const base = p.kind === 'priority' ? 260 : p.kind === 'main' ? 650 : 480;
+    this.aiTimer = window.setTimeout(() => {
+      const legal = this.source.legal(p.seat);
+      if (!legal || this.source.view(null).commandCount !== pub.commandCount) return;
+      const cmd = chooseCommand(seat.aiLevel ?? 'normal', this.source.view(p.seat), legal, rules, this.aiRng);
+      void this.source.send(p.seat, cmd).then((r) => {
+        if (!r.ok) console.warn('AI command rejected', r.error, cmd);
+      });
+    }, Math.round(base * speedFactor()));
   }
 
   /**

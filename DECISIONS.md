@@ -54,3 +54,12 @@ Decisions not settled by the build prompt, the Q&A or the spec. Each one is reve
 39. **Turn timer in local games** applies per decision, and expiry applies the prompt's default answer. Online, the server owns the timer (Stage 5). "Confirm before ending phase" asks only when something is still playable.
 40. **Audio.** No assets were supplied. Every hook plays a short synthesized placeholder (switchable). Real files are a data change in `AUDIO_FILES`. The music slider is wired, but there is no music yet.
 41. **Victory/defeat** zoom toward the winning Lab, with a burst and a banner; a loss also desaturates the board. The results modal follows.
+
+## Stage 4 — AI
+
+42. **One AI for every host.** `chooseCommand(level, view, legal, rules, rng)` lives in the engine package (pure, no timers), so the browser, both servers and the simulator all run the same AI. It receives the seat's filtered view and legal-action list only, so it cannot see hands or deck order.
+43. **Exact odds instead of Monte Carlo.** Battle evaluation enumerates every die outcome (`battleOdds`), memoised by strength signature. Same purpose as the spec's ~200 samples, with no sampling noise, at about 0.2 ms per decision on average.
+44. **Attacking is nearly free.** Survivors are replenished at Cleanup and depleted units can block, so Normal starts from "everyone attacks" and drops the attacker the defender punishes worst until the rest have acceptable odds. Hard searches every attack subset (up to 8 attackers) against the defender's one-to-one replies, holds Traps for the opponent's attack, and re-rolls by exact probability.
+45. **Measured strength (mirror matches, same deck both sides, 160 games each):** Normal beats Easy 65%, Hard beats Easy 71%, Hard beats Normal 54%. Dice variance caps how lopsided this game can be.
+46. **Balance finding for the team:** with the starter decks as listed in spec §B3, **Creature Commander beats Robot Commander 68% (Easy mirror) to 80–84% (Normal/Hard)**. Better play widens the gap. This is exactly what Stage 8's simulator and card editor are for.
+47. **Local AI pacing:** a computer seat acts after the animation queue settles, with a 260–650 ms delay scaled by the animation speed (zero at Instant).

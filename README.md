@@ -2,7 +2,7 @@
 
 Browser card game: a pure TypeScript rules engine, an art-driven client, AI opponents, and online play with room codes (2–4 players).
 
-> **Status: Stage 3 of 9 complete.** The rules engine (155 tests) and a playable browser client: 2-player hot-seat with the real card art, hidden-hand curtains, a full animation and effects system, drag-and-drop, and the settings screen. AI opponents (Stage 4) come next. Tunnel and deploy sections will be filled in as those stages land.
+> **Status: Stage 4 of 9 complete.** The rules engine (155 tests) and a playable browser client: 2-player hot-seat with the real card art, hidden-hand curtains, a full animation and effects system, drag-and-drop, and the settings screen. Play vs AI at Easy, Normal or Hard. Online play (Stage 5) comes next. Tunnel and deploy sections will be filled in as those stages land.
 
 ## Play it (on this computer)
 
@@ -14,7 +14,7 @@ npm install
 npm run dev
 ```
 
-Then open http://localhost:5173 and choose **Hot-seat**. `npm run build` produces a static site in `packages/client/dist`.
+Then open http://localhost:5173 and choose **Play vs AI** or **Hot-seat**. `npm run build` produces a static site in `packages/client/dist`.
 
 ## Requirements
 

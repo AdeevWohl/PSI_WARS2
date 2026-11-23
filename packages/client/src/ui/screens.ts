@@ -125,3 +125,56 @@ export function hotseatSetup(onStart: (cfg: HotseatConfig) => void, onBack: () =
     ),
   );
 }
+
+export interface VsAiConfig {
+  name: string;
+  deck: StoredDeck;
+  aiDeck: StoredDeck;
+  level: 'easy' | 'normal' | 'hard';
+  startingHP: number;
+  diceVariant: 'standard' | 'noModifier';
+}
+
+/** Play vs AI: your deck, the computer's deck and difficulty; preloads art. */
+export function vsAiSetup(onStart: (cfg: VsAiConfig) => void, onBack: () => void): HTMLElement {
+  const decks = starterDecks;
+  const cfg: VsAiConfig = { name: 'You', deck: decks[0]!, aiDeck: decks[1]!, level: 'normal', startingHP: settings().startingHP, diceVariant: settings().diceVariant };
+  const sel = (opts: [string, string][], value: string, on: (v: string) => void) =>
+    h('select', { class: 'text-input', onchange: (e: Event) => on((e.target as HTMLSelectElement).value) }, ...opts.map(([v, l]) => h('option', { value: v, selected: v === value ? true : undefined }, l)));
+  const deckOpts = decks.map((d) => [d.id, d.name] as [string, string]);
+  const progress = h('div', { class: 'progress' }, h('div', { class: 'progress-fill' }));
+  const progressLabel = h('div', { class: 'dim', style: 'font-size:13px;min-height:18px' });
+  const start = h('button', { class: 'btn primary', style: 'font-size:18px;padding:12px 34px' }, 'Start game');
+  start.addEventListener('click', async () => {
+    start.setAttribute('disabled', '');
+    const defs = currentDefs();
+    const urls = new Set<string>([artUrl('backs/battle', 'sm')!, artUrl('backs/resource', 'sm')!]);
+    for (const d of [cfg.deck, cfg.aiDeck]) for (const id of [...Object.keys(d.battle), ...Object.keys(d.resource)]) for (const sz of ['sm', 'md'] as const) { const u = artUrl(defs[id]?.art, sz); if (u) urls.add(u); }
+    await preload([...urls], (d, t) => {
+      (progress.firstChild as HTMLElement).style.transform = `scaleX(${t ? d / t : 1})`;
+      progressLabel.textContent = `Preparing card art… ${d} / ${t}`;
+    });
+    onStart(cfg);
+  });
+  return h('div', { class: 'screen setup-screen' },
+    h('div', { class: 'menu-bg' }),
+    h('div', { class: 'setup-panel panel' },
+      h('h2', { class: 'h-display' }, 'Play vs AI'),
+      h('p', { class: 'dim' }, 'The computer plays only from what its seat can see. It never looks at your hand or the deck order.'),
+      h('div', { class: 'seat-row' },
+        h('div', { class: 'seat-card panel' },
+          h('label', { class: 'field-label' }, 'Your name'),
+          h('input', { class: 'text-input', value: cfg.name, maxlength: '20', oninput: (e: Event) => (cfg.name = (e.target as HTMLInputElement).value || 'You') }),
+          h('label', { class: 'field-label' }, 'Your deck'),
+          sel(deckOpts, cfg.deck.id, (v) => (cfg.deck = decks.find((d) => d.id === v)!))),
+        h('div', { class: 'seat-card panel' },
+          h('label', { class: 'field-label' }, 'Difficulty'),
+          sel([['easy', 'Easy — learning the ropes'], ['normal', 'Normal — weighs the odds'], ['hard', 'Hard — searches attacks, holds Traps']], cfg.level, (v) => (cfg.level = v as VsAiConfig['level'])),
+          h('label', { class: 'field-label' }, 'Computer deck'),
+          sel(deckOpts, cfg.aiDeck.id, (v) => (cfg.aiDeck = decks.find((d) => d.id === v)!)))),
+      h('div', { class: 'opt-row' },
+        h('div', null, h('label', { class: 'field-label' }, 'Starting Lab HP'), sel(Array.from({ length: 11 }, (_, k) => [String(10 + k), String(10 + k)] as [string, string]), String(cfg.startingHP), (v) => (cfg.startingHP = Number(v)))),
+        h('div', null, h('label', { class: 'field-label' }, 'Dice'), sel([['standard', 'Standard dice'], ['noModifier', 'No modifier dice']], cfg.diceVariant, (v) => (cfg.diceVariant = v as VsAiConfig['diceVariant'])))),
+      progress, progressLabel,
+      h('div', { class: 'row' }, h('button', { class: 'btn', onclick: onBack }, 'Back'), start)));
+}
