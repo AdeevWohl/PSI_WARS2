@@ -4,16 +4,23 @@
  * re-validates anyway.
  */
 import type { Command, Seat } from '@psi-wars/shared';
-import type { GameView, LegalView, PlayOption } from '@psi-wars/engine';
+import { defaultCommandFor, type GameView, type LegalView, type PlayOption } from '@psi-wars/engine';
 import type { CardCtx } from '../render/board';
+import { settings } from '../settings';
 import { h, toast } from './dom';
-import { pickPayment, promptModal, type ModalHandle } from './modals';
+import { openModal, pickPayment, promptModal, type ModalHandle } from './modals';
 
 type Mode =
   | { k: 'none' }
   | { k: 'target'; play: PlayOption }
   | { k: 'moveEquip'; equip: string; to: string[] }
   | { k: 'stack'; first: string | null };
+
+/** What a card can be dragged to: specific cards, or a zone. */
+export interface DragSpec {
+  targets?: string[];
+  zone?: 'board' | 'battlefield';
+}
 
 export interface ActionButton {
   label: string;
@@ -333,6 +340,67 @@ export class Controller {
     this.rerender();
   }
 
+  // ---------- drag-and-drop (same actions as clicking) ----------
+
+  dragSpec(ctx: CardCtx): DragSpec | null {
+    const la = this.legal;
+    if (!la || ctx.owner !== la.seat || this.mode.k !== 'none') return null;
+    const k = la.prompt.kind;
+    if (ctx.zone === 'hand') {
+      const play = la.plays.find((p) => p.uid === ctx.uid);
+      if (!play) return null;
+      return play.targets ? { targets: play.targets } : { zone: 'board' };
+    }
+    if (ctx.zone === 'equip') {
+      const mv = la.moveEquipment.find((x) => x.equip === ctx.uid);
+      return mv ? { targets: mv.to } : null;
+    }
+    if (ctx.zone !== 'lab' && ctx.zone !== 'battle') return null;
+    const partners = la.stacks.filter((p) => p.a === ctx.uid || p.b === ctx.uid).map((p) => (p.a === ctx.uid ? p.b : p.a));
+    if (k === 'declareAttackers' && ctx.zone === 'lab') {
+      const eligible = la.attack!.eligible.some((e) => this.sameFighter(e, ctx.uid));
+      if (!eligible && !partners.length) return null;
+      return { targets: partners, zone: eligible ? 'battlefield' : undefined };
+    }
+    if (k === 'declareBlockers') {
+      const eligible = la.block!.blockers.some((e) => this.sameFighter(e, ctx.uid));
+      const attackers = eligible ? (this.view?.battle?.attacks ?? []).filter((a) => la.block!.attackers.includes(a.id)).flatMap((a) => a.units) : [];
+      if (!attackers.length && !partners.length) return null;
+      return { targets: [...attackers, ...partners] };
+    }
+    return null;
+  }
+
+  async drop(ctx: CardCtx, targetUid: string | null): Promise<void> {
+    const la = this.legal;
+    if (!la) return;
+    const k = la.prompt.kind;
+    if (ctx.zone === 'hand') {
+      const play = la.plays.find((p) => p.uid === ctx.uid);
+      if (!play) return;
+      if (play.targets && (!targetUid || !play.targets.includes(targetUid))) return;
+      return this.play(play, targetUid ?? undefined);
+    }
+    if (ctx.zone === 'equip' && targetUid) return this.send({ type: 'MoveEquipment', equip: ctx.uid, to: targetUid });
+    const pair = targetUid ? la.stacks.find((p) => (p.a === ctx.uid && p.b === targetUid) || (p.b === ctx.uid && p.a === targetUid)) : undefined;
+    if (pair) return this.send({ type: 'Stack', a: pair.a, b: pair.b });
+    if (k === 'declareAttackers' && !targetUid) {
+      const rep = la.attack!.eligible.find((e) => this.sameFighter(e, ctx.uid));
+      if (rep && ![...this.attackSel.keys()].some((u) => this.sameFighter(u, rep))) this.attackSel.set(rep, la.attack!.targets[0]!);
+      this.rerender();
+      return;
+    }
+    if (k === 'declareBlockers' && targetUid) {
+      const rep = la.block!.blockers.find((e) => this.sameFighter(e, ctx.uid));
+      const atk = this.view?.battle?.attacks.find((a) => a.units.includes(targetUid) && la.block!.attackers.includes(a.id));
+      if (rep && atk) {
+        for (const [a, b] of this.blockSel) if (this.sameFighter(b, rep)) this.blockSel.delete(a);
+        this.blockSel.set(atk.id, rep);
+        this.rerender();
+      }
+    }
+  }
+
   // ---------- side-panel actions ----------
 
   hint(): string {
@@ -372,7 +440,7 @@ export class Controller {
     if (m.k !== 'none') out.push({ label: 'Cancel', onClick: () => this.cancel(), key: 'Esc' });
     switch (la.prompt.kind) {
       case 'main':
-        if (m.k === 'none') out.push({ label: 'Go to Battle', primary: true, key: 'Space', onClick: () => void this.send({ type: 'AdvancePhase' }) });
+        if (m.k === 'none') out.push({ label: 'Go to Battle', primary: true, key: 'Space', onClick: () => this.confirmAdvance() });
         break;
       case 'declareAttackers': {
         if (la.stacks.length || la.unstacks.length) out.push({ label: m.k === 'stack' ? 'Done stacking' : 'Stack units', onClick: () => { this.mode = m.k === 'stack' ? { k: 'none' } : { k: 'stack', first: null }; this.rerender(); } });
@@ -393,6 +461,28 @@ export class Controller {
         if (!this.modal && this.view) out.push({ label: 'Decide…', primary: true, onClick: () => { this.modal = promptModal(this.host, this.view!, la, (c) => this.answerModal(c), this.names); } });
     }
     return out;
+  }
+
+  /** "Confirm before ending phase" setting: ask only when something is still playable. */
+  private confirmAdvance(): void {
+    const la = this.legal;
+    if (!settings().confirmEndPhase || !la || la.plays.length === 0) {
+      void this.send({ type: 'AdvancePhase' });
+      return;
+    }
+    let m: ModalHandle;
+    m = openModal(this.host, 'End the Creation phase?', `You can still play ${la.plays.length} card${la.plays.length > 1 ? 's' : ''}.`, null, [
+      { label: 'Keep playing', onClick: () => m.close() },
+      { label: 'Go to Battle', primary: true, onClick: () => { m.close(); void this.send({ type: 'AdvancePhase' }); } },
+    ], { dismissable: true });
+  }
+
+  /** Default answer for the current prompt (used by the turn timer). */
+  timeoutDefault(): Command | null {
+    const la = this.legal;
+    if (!la) return null;
+    this.reset();
+    return defaultCommandFor(la.prompt as any);
   }
 
   onKey(e: KeyboardEvent): boolean {

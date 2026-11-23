@@ -2,6 +2,7 @@
 import type { Seat } from '@psi-wars/shared';
 import { artUrl, preload } from '../assets';
 import { currentDefs, rules, starterDecks, type StoredDeck } from '../data';
+import { settings } from '../settings';
 import { h } from './dom';
 
 export function titleScreen(onContinue: () => void): HTMLElement {
@@ -66,8 +67,8 @@ export function hotseatSetup(onStart: (cfg: HotseatConfig) => void, onBack: () =
     { name: 'Player 1', deck: decks[0]! },
     { name: 'Player 2', deck: decks[1]! },
   ];
-  let hp = rules.setup.startingHP.default;
-  let dice: 'standard' | 'noModifier' = 'standard';
+  let hp = settings().startingHP ?? rules.setup.startingHP.default;
+  let dice: 'standard' | 'noModifier' = settings().diceVariant;
   const progress = h('div', { class: 'progress' }, h('div', { class: 'progress-fill' }));
   const progressLabel = h('div', { class: 'dim', style: 'font-size:13px;min-height:18px' });
 
@@ -84,8 +85,8 @@ export function hotseatSetup(onStart: (cfg: HotseatConfig) => void, onBack: () =
     ...Array.from({ length: rules.setup.startingHP.max - rules.setup.startingHP.min + 1 }, (_, k) => rules.setup.startingHP.min + k).map((v) =>
       h('option', { value: String(v), selected: v === hp ? true : undefined }, v === 10 ? '10 — short (~30 min)' : v === 15 ? '15 — default' : v === 20 ? '20 — long (45–60 min)' : String(v))));
   const diceSel = h('select', { class: 'text-input', onchange: (e: Event) => (dice = (e.target as HTMLSelectElement).value as any) },
-    h('option', { value: 'standard' }, 'Standard dice'),
-    h('option', { value: 'noModifier' }, 'No modifier dice (each die gives +1…+6)'));
+    h('option', { value: 'standard', selected: dice === 'standard' ? true : undefined }, 'Standard dice'),
+    h('option', { value: 'noModifier', selected: dice === 'noModifier' ? true : undefined }, 'No modifier dice (each die gives +1…+6)'));
 
   const start = h('button', { class: 'btn primary', style: 'font-size:18px;padding:12px 34px' }, 'Start game');
   start.addEventListener('click', async () => {

@@ -3,32 +3,39 @@ import './styles/base.css';
 import './styles/card.css';
 import './styles/board.css';
 import './styles/screens.css';
+import './styles/anim.css';
 import { artUrl, loadManifest } from './assets';
+import { unlockAudioOnGesture } from './audio';
+import { PerfMonitor } from './anim/perf';
 import { currentDefs, rules } from './data';
 import { LocalGame, randomSeed } from './game/local';
+import { applySettings, settings, updateSettings } from './settings';
 import { h } from './ui/dom';
 import { GameScreen } from './ui/game-screen';
+import { openModal } from './ui/modals';
 import { hotseatSetup, mainMenu, titleScreen, type HotseatConfig } from './ui/screens';
+import { settingsPanel } from './ui/settings-screen';
 
 const stage = document.getElementById('stage')!;
 let current: { el: HTMLElement; destroy?: () => void } | null = null;
-
-function uiScale(): number {
-  return 1;
-}
+const perf = new PerfMonitor();
 
 function fitStage(): void {
   const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
-  stage.style.transform = `translate(-50%, -50%) scale(${s * uiScale()})`;
+  stage.style.transform = `translate(-50%, -50%) scale(${s * settings().uiScale})`;
 }
 window.addEventListener('resize', fitStage);
-fitStage();
 
 function show(el: HTMLElement, destroy?: () => void): void {
   current?.destroy?.();
   current?.el.remove();
   current = { el, destroy };
   stage.prepend(el);
+}
+
+function openSettingsModal(host: HTMLElement): void {
+  let m: ReturnType<typeof openModal>;
+  m = openModal(host, 'Settings', 'Changes apply immediately.', settingsPanel(() => m.close()), [], { dismissable: true, className: 'settings-modal' });
 }
 
 function toMenu(): void {
@@ -40,9 +47,13 @@ function toMenu(): void {
       { label: 'Hot-seat', sub: 'Two players, one device, hidden-hand curtains', onClick: () => toHotseat() },
       { label: 'Deck Builder', sub: 'Build and save decks', disabledReason: 'Arrives in Stage 7' },
       { label: 'How to Play', sub: 'Rules reference and tutorial', disabledReason: 'Arrives in Stage 7' },
-      { label: 'Settings', sub: 'Animation, effects, audio, accessibility', disabledReason: 'Arrives in Stage 3' },
+      { label: 'Settings', sub: 'Animation, effects, audio, gameplay, accessibility', onClick: () => toSettings() },
     ]),
   );
+}
+
+function toSettings(): void {
+  show(h('div', { class: 'screen settings-screen' }, h('div', { class: 'menu-bg' }), h('div', { class: 'settings-page panel' }, h('h2', { class: 'h-display' }, 'Settings'), settingsPanel(() => toMenu()))));
 }
 
 function toHotseat(): void {
@@ -59,21 +70,26 @@ function startHotseat(cfg: HotseatConfig): void {
       players: cfg.seats.map((s) => ({ name: s.name, deck: s.deck })),
       startingHP: cfg.startingHP,
       diceVariant: cfg.diceVariant,
-      autoPassNoPlay: true,
+      autoPassNoPlay: settings().autoPass,
     },
   );
   const screen = new GameScreen(game, game.initialEvents(), {
     onExit: () => toMenu(),
     onRematch: () => startHotseat(cfg),
+    openSettings: (host) => openSettingsModal(host),
   });
   show(screen.el, () => {
     screen.destroy();
     game.dispose();
   });
-  (window as any).__psi = { game, screen };
+  (window as any).__psi = { game, screen, perf };
 }
 
 async function boot(): Promise<void> {
+  applySettings();
+  fitStage();
+  unlockAudioOnGesture();
+  perf.start();
   await loadManifest();
   const bg = artUrl('ui/menu-bg', '1920');
   if (bg) document.documentElement.style.setProperty('--menu-bg-url', `url("${bg}")`);
@@ -81,4 +97,5 @@ async function boot(): Promise<void> {
 }
 
 stage.appendChild(h('div', { id: 'toasts' }));
+(window as any).__psiSettings = { settings, updateSettings };
 void boot();

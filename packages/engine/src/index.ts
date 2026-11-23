@@ -18,3 +18,4 @@ export { unitStrength, fighterStrength, canHoldEquipment, isDisabled, battleUnit
 export { face, numericValue } from './dice';
 export { EFFECTS } from './effects';
 export type { PlayOption } from './plays';
+export { battleOdds, type BattleOdds, type SideStrength } from './odds';

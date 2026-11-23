@@ -6,6 +6,7 @@
 import { CU_TYPES, type CUType, type Seat } from '@psi-wars/shared';
 import type { Attack, CardDef, GameView } from '@psi-wars/engine';
 import { artUrl } from '../assets';
+import { snap, toStage, type Snap } from '../anim/flip';
 import { h } from '../ui/dom';
 import { createCardEl, setMarkers, updateOverlays } from './card';
 
@@ -57,6 +58,10 @@ export class Board {
   private cardEls = new Map<string, HTMLElement>();
   private slotEls = new Map<string, HTMLElement>();
   private view!: GameView;
+  /** Card elements removed by the last render (reused as ghosts by the animation layer). */
+  lastRemoved = new Map<string, HTMLElement>();
+  /** Displayed Lab HP held back until the damage animation plays. */
+  hpOverride = new Map<Seat, number>();
 
   constructor(private hooks: BoardHooks) {
     this.top = h('div', { class: 'opp-row' });
@@ -72,6 +77,47 @@ export class Board {
 
   areaFor(seat: Seat): Area | undefined {
     return this.areas.get(seat);
+  }
+
+  elements(): Map<string, HTMLElement> {
+    return this.cardEls;
+  }
+
+  /** Positions of every visible card (stage coordinates), for FLIP. */
+  snapshot(): Map<string, Snap & { zone?: string }> {
+    const out = new Map<string, Snap & { zone?: string }>();
+    for (const [uid, el] of this.cardEls) if (el.isConnected) out.set(uid, { ...snap(el), zone: el.dataset.zone });
+    return out;
+  }
+
+  /** Stage-space rects of an area's fixed parts: where draws come from, where discards go. */
+  anchors(seat: Seat): Record<'hand' | 'battleDeck' | 'resourceDeck' | 'discard' | 'hp' | 'cus' | 'area' | 'units', ReturnType<typeof toStage>> | null {
+    const a = this.areas.get(seat);
+    if (!a || !a.root.isConnected) return null;
+    const r = (el: Element | null | undefined) => toStage((el ?? a.root).getBoundingClientRect());
+    return {
+      hand: r(a.hand),
+      battleDeck: r(a.decks.querySelector('.pile-battle')),
+      resourceDeck: r(a.decks.querySelector('.pile-resource')),
+      discard: r(a.discard),
+      hp: r(a.hp),
+      cus: r(a.cus),
+      area: r(a.root),
+      units: r(a.units),
+    };
+  }
+
+  cuGroupEl(seat: Seat, type: CUType): HTMLElement | null {
+    return this.areas.get(seat)?.cus.querySelector(`.cu-${type}`) ?? null;
+  }
+
+  setHp(seat: Seat, hp: number): void {
+    this.hpOverride.set(seat, hp);
+    const a = this.areas.get(seat);
+    if (!a || !this.view) return;
+    a.hp.textContent = String(Math.max(hp, 0));
+    a.hpBar.style.transform = `scaleX(${Math.max(0, Math.min(1, hp / this.view.config.startingHP))})`;
+    a.hpBar.classList.toggle('low', hp <= Math.ceil(this.view.config.startingHP / 4));
   }
 
   render(view: GameView): void {
@@ -96,10 +142,12 @@ export class Board {
     for (const seat of rot) this.renderArea(this.areas.get(seat)!, seat === bottom, seen);
     this.renderBattlefield(bottom, seen);
 
+    this.lastRemoved = new Map();
     for (const [uid, el] of this.cardEls) {
       if (!seen.has(uid)) {
         el.remove();
         this.cardEls.delete(uid);
+        this.lastRemoved.set(uid, el);
       }
     }
     for (const [uid, el] of this.slotEls) {
@@ -141,10 +189,11 @@ export class Board {
     a.root.classList.toggle('active-turn', v.turn.active === a.seat);
     a.root.classList.toggle('eliminated', p.eliminated);
     a.name.textContent = p.name + (v.turn.active === a.seat ? '' : '');
-    a.hp.textContent = String(Math.max(p.labHP, 0));
+    const hp = this.hpOverride.get(a.seat) ?? p.labHP;
+    a.hp.textContent = String(Math.max(hp, 0));
     a.hp.setAttribute('aria-label', `${p.name} Lab ${p.labHP} HP`);
-    a.hpBar.style.transform = `scaleX(${Math.max(0, Math.min(1, p.labHP / v.config.startingHP))})`;
-    a.hpBar.classList.toggle('low', p.labHP <= Math.ceil(v.config.startingHP / 4));
+    a.hpBar.style.transform = `scaleX(${Math.max(0, Math.min(1, hp / v.config.startingHP))})`;
+    a.hpBar.classList.toggle('low', hp <= Math.ceil(v.config.startingHP / 4));
 
     // Decks
     a.decks.replaceChildren(
