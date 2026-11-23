@@ -4,6 +4,7 @@
  * re-validates anyway.
  */
 import type { Command, Seat } from '@psi-wars/shared';
+import { aimStyle } from '../anim/spell-fx';
 import { defaultCommandFor, type GameView, type LegalView, type PlayOption } from '@psi-wars/engine';
 import type { CardCtx } from '../render/board';
 import { settings } from '../settings';
@@ -171,7 +172,10 @@ export class Controller {
     if (m.k === 'target') {
       if (m.play.targets?.includes(ctx.uid) && (ctx.zone === 'lab' || ctx.zone === 'battle')) {
         el.classList.add('target', 'interactive');
-        if (m.staged) el.classList.add(m.chosen === ctx.uid ? 'zap-locked' : m.chosen ? 'zap-off' : 'zap');
+        if (m.staged) {
+          // Each spell aims in its own style (Overload Strike: red lightning; Grankor: frost; others: a gold mark).
+          el.classList.add(`aim-${aimStyle(m.play.cardId)}`, m.chosen === ctx.uid ? 'aim-locked' : m.chosen ? 'aim-off' : 'aim');
+        }
       }
       return;
     }

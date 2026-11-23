@@ -13,6 +13,7 @@ import { playSfx, type Sfx } from '../audio';
 import { settings } from '../settings';
 import { createCardEl, updateOverlays } from '../render/card';
 import { BattleStage } from './battle-stage';
+import { castSpell, type SpellEnv } from './spell-fx';
 import { rules } from '../data';
 import type { Board } from '../render/board';
 import { DIE_COLOR } from '../render/dice';
@@ -36,6 +37,9 @@ export interface PresentEnv {
   /** Plain-language narration for one event (null = nothing to say). */
   caption?: (ev: GameEvent) => { text: string; kind?: string } | null;
 }
+
+/** Events after which the rest of the board re-lays out (cards left or joined a row). */
+const LAYOUT = new Set(['UnitDestroyed', 'StackResolved', 'UnitTrapped', 'UnitFreed', 'UnitRevived', 'CardReturnedToHand', 'BattleEnded', 'CUDestroyed']);
 
 /** Events that get their own readable beat (a hold afterwards) and a caption. */
 const BEATS = new Set(['CardPlayed', 'AttackersDeclared', 'BlockersAssigned', 'BattleResolved', 'UnitDestroyed', 'UnitDamaged', 'LabDamaged', 'UnitTrapped', 'EscapeAttempt', 'CardsRevealed', 'CardDiscarded', 'UnitRevived', 'Obliterated', 'Disoriented', 'SweepDamage', 'StackResolving', 'EquipmentAttached', 'EquipmentMoved', 'UnitsDisabled', 'PlayerEliminated']);
@@ -90,13 +94,20 @@ export class Presenter {
     const claimed = new Set<string>();
     for (const e of events) for (const u of this.claims(e)) claimed.add(u);
 
-    // Pin claimed movers at their old place; animate everything else now.
+    // Pin claimed movers at their old place; animate everything else now (or after the
+    // layout-changing event, when the batch has one).
+    const holdLayout = events.some((e) => LAYOUT.has(e.type));
     for (const [uid, el] of now) {
       const b = start.before.get(uid);
       if (b) {
         if (claimed.has(uid)) {
           const a = flipFrom(this.tl, el, b, { paused: true, duration: DUR.travel });
           if (a) this.pins.set(uid, a);
+        } else if (holdLayout) {
+          // Other cards make room only once the event that changes the layout has played
+          // (e.g. after a destroyed unit has shattered), not at the start of the batch.
+          const a = flipFrom(this.tl, el, b, { paused: true, duration: DUR.std + 120 });
+          if (a) this.reflow.push(a);
         } else {
           flipFrom(this.tl, el, b, { duration: DUR.std + 80 });
         }
@@ -124,17 +135,47 @@ export class Presenter {
       this.narrate(ev);
       try {
         await this.step(ev);
+        if (LAYOUT.has(ev.type)) this.releaseReflow();
         if (BEATS.has(ev.type) && !this.tl.instant) await this.tl.wait(HOLD[settings().holdTime] ?? HOLD.normal);
       } catch (err) {
         console.warn('animation step failed', ev?.type, err);
       }
     }
     this.env.onEvent(events.length);
+    if (this.reflow.length && !this.tl.instant) {
+      const pending = [...this.reflow];
+      this.releaseReflow();
+      await Promise.all(pending.map((a) => this.tl.done(a)));
+    }
     this.finish();
+  }
+
+  private reflow: Animation[] = [];
+
+  /** Let the rest of the board slide into its new layout. */
+  private releaseReflow(): void {
+    for (const a of this.reflow) {
+      try {
+        a.currentTime = 0;
+        a.play();
+      } catch {
+        /* ignore */
+      }
+    }
+    this.reflow = [];
   }
 
   /** Release anything still pinned/hidden and clear overlays. */
   finish(): void {
+    for (const a of this.reflow) {
+      try {
+        a.play();
+        a.finish();
+      } catch {
+        /* ignore */
+      }
+    }
+    this.reflow = [];
     for (const a of this.pins.values()) {
       try {
         a.play();
@@ -262,6 +303,32 @@ export class Presenter {
     await this.tl.done(this.tl.animate(el, [{ opacity: 0 }, { opacity: 1, offset: 0.05 }, { opacity: 0.25, offset: 0.25 }, { opacity: 1, offset: 0.4 }, { opacity: 0.6, offset: 0.7 }, { opacity: 0 }], { duration: 650, fill: 'forwards' }));
     el.remove();
     this.temps.delete(el);
+  }
+
+  private spellEnv(): SpellEnv {
+    return {
+      tl: this.tl,
+      fx: this.env.fx,
+      view: this.view,
+      temp: (el) => this.temp(el),
+      untemp: (el) => {
+        el.remove();
+        this.temps.delete(el);
+      },
+      shake: (n) => this.shake(n),
+      at: (uid) => {
+        const el = uid ? this.el(uid) : undefined;
+        if (!el) return null;
+        const r = this.centre(el);
+        return { x: r.cx, y: r.cy, w: r.w, h: r.h };
+      },
+      area: (seat) => {
+        const a = this.env.board.anchors(seat);
+        if (!a) return null;
+        const p = (k: { cx: number; cy: number }) => ({ x: k.cx, y: k.cy });
+        return { hp: p(a.hp), discard: p(a.discard), battleDeck: p(a.battleDeck), area: p(a.area) };
+      },
+    };
   }
 
   private floatNumber(x: number, y: number, text: string, cls = 'dmg-num'): void {
@@ -550,6 +617,7 @@ export class Presenter {
           const r = this.centre(el);
           // A damage spell smites from above; sweeps just hit.
           if (e.cause === 'effect' && !this.batch.some((x) => x.type === 'SweepDamage' && x.source === e.source)) await this.bolt(r.cx, r.cy);
+          else if (e.cause === 'effect') this.env.fx.burst(r.cx, r.cy, { color: '#ffffff', count: 10, speed: 2 });
           this.floatNumber(r.cx, r.cy, `−${e.amount}`);
           this.aura(el, 'danger');
           this.env.fx.burst(r.cx, r.cy, { color: '#ff4d6d', count: 12 + Number(e.amount) * 3, speed: 2.4 });
@@ -559,7 +627,7 @@ export class Presenter {
       }
       case 'SweepDamage': {
         this.sfx('sweep');
-        if (!tl.instant) {
+        if (!tl.instant && !this.batch.some((x) => x.type === 'StackResolving' && x.uid === e.source)) {
           const flash = this.temp(h('div', { class: 'screen-flash', style: { '--flash': '#ff6a5a' } as any }));
           tl.done(tl.animate(flash, [{ opacity: 0 }, { opacity: 0.35, offset: 0.2 }, { opacity: 0 }], { duration: 600, fill: 'forwards' })).then(() => flash.remove());
           const ring = this.temp(h('div', { class: 'shockwave big', style: { left: `${(1920 - 392) / 2}px`, top: '540px', '--glow': '#ff6a5a' } as any }));
@@ -681,7 +749,11 @@ export class Presenter {
       case 'StackResolving': {
         const el = this.el(e.uid);
         this.aura(el, 'gold');
-        await tl.wait(DUR.std);
+        this.sfx('spell');
+        const r = el ? this.centre(el) : null;
+        const from = r ? { x: r.cx, y: r.cy } : { x: (1920 - 392) / 2, y: 540 };
+        if (!tl.instant) await castSpell(this.spellEnv(), String(e.cardId), Number(e.controller), from, (e.target as string | null) ?? null);
+        else await tl.wait(DUR.std);
         return;
       }
       case 'UnitTrapped': {

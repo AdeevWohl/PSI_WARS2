@@ -11,6 +11,8 @@ import { EASE, type Timeline } from './timeline';
 // Which cube face shows each side, and the cube rotation that brings it to the front.
 const FACE_OF: Record<number, string> = { 1: 'front', 6: 'back', 3: 'right', 4: 'left', 2: 'top', 5: 'bottom' };
 const SHOW: Record<number, [number, number]> = { 1: [0, 0], 6: [0, 180], 3: [0, -90], 4: [0, 90], 2: [-90, 0], 5: [90, 0] };
+/** The die rests slightly turned toward the viewer so its depth shows (the rolled face stays readable). */
+const TILT = 'rotateX(-20deg) rotateY(26deg)';
 
 export class Die3D {
   readonly el: HTMLElement;
@@ -21,6 +23,8 @@ export class Die3D {
   constructor(readonly die: Ability, side: number, readonly variant: 'standard' | 'noModifier', readonly size = 64) {
     this.side = side;
     this.cube = h('div', { class: 'cube' });
+    // A solid inner core fills the bevelled corners, so the die never looks hollow.
+    for (const f of ['front', 'back', 'right', 'left', 'top', 'bottom']) this.cube.appendChild(h('div', { class: `core3d c-${f}` }));
     for (const s of [1, 2, 3, 4, 5, 6]) {
       const f = h('div', { class: `face3d f-${FACE_OF[s]}` });
       f.appendChild(svg(dieSvg(die, s, { size, variant })));
@@ -29,13 +33,13 @@ export class Die3D {
     this.flat = h('div', { class: 'die-flat' });
     this.flat.appendChild(svg(dieSvg(die, side, { size, variant })));
     const mode = settings().dice;
-    this.el = h('div', { class: `die3d mode-${mode}`, style: { '--size': `${size}px` } as any }, mode === '3d' ? this.cube : this.flat);
+    this.el = h('div', { class: `die3d mode-${mode} d-${die}`, style: { '--size': `${size}px` } as any }, mode === '3d' ? h('div', { class: 'die-shadow' }) : null, mode === '3d' ? this.cube : this.flat);
     this.setRest(side);
   }
 
   private setRest(side: number): void {
     const [x, y] = SHOW[side]!;
-    this.cube.style.transform = `rotateX(${x}deg) rotateY(${y}deg)`;
+    this.cube.style.transform = `${TILT} rotateX(${x}deg) rotateY(${y}deg)`;
     this.flat.replaceChildren(svg(dieSvg(this.die, side, { size: this.size, variant: this.variant })));
   }
 
@@ -52,7 +56,7 @@ export class Die3D {
     const sx = 720 + Math.round(Math.random() * 2) * 90;
     const sy = 720 + Math.round(Math.random() * 2) * 90;
     tl.animate(this.el, [{ transform: 'translateY(-90px) scale(0.6)', opacity: 0 }, { transform: 'translateY(6px) scale(1.05)', opacity: 1, offset: 0.55 }, { transform: 'translateY(-10px)', offset: 0.75 }, { transform: 'translateY(0) scale(1)' }], { duration, easing: EASE.outCubic, delay, fill: 'backwards' });
-    return tl.animate(this.cube, [{ transform: `rotateX(${x + sx}deg) rotateY(${y + sy}deg)` }, { transform: `rotateX(${x - 12}deg) rotateY(${y + 14}deg)`, offset: 0.8 }, { transform: `rotateX(${x}deg) rotateY(${y}deg)` }], { duration, easing: EASE.outQuint, delay, fill: 'backwards' });
+    return tl.animate(this.cube, [{ transform: `${TILT} rotateX(${x + sx}deg) rotateY(${y + sy}deg) rotateZ(${sx / 4}deg)` }, { transform: `${TILT} rotateX(${x - 14}deg) rotateY(${y + 16}deg)`, offset: 0.8 }, { transform: `${TILT} rotateX(${x}deg) rotateY(${y}deg)` }], { duration, easing: EASE.outQuint, delay, fill: 'backwards' });
   }
 
   /** Re-roll: the die lifts and spins in place, then lands on the new side. */
