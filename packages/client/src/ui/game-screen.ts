@@ -32,6 +32,10 @@ export interface GameScreenOpts {
   aiSeed?: string;
   /** Guided-game overlay, fed the current state after every settled render. */
   tutorial?: Tutorial;
+  /** Whose perspective to draw (replays); default: the first local seat, else the public view. */
+  viewer?: Seat | null;
+  /** Replays: no Concede, no actions. */
+  readOnly?: boolean;
 }
 
 /**
@@ -79,7 +83,7 @@ export class GameScreen {
   constructor(private source: GameSource, initialEvents: GameEvent[], private opts: GameScreenOpts) {
     this.namer = new Namer(() => this.source.view(null).defs);
     const firstLocal = source.seats.find((s) => s.kind === 'local');
-    this.viewer = firstLocal?.seat ?? null;
+    this.viewer = opts.viewer !== undefined ? opts.viewer : firstLocal?.seat ?? null;
     this.board = new Board({
       decorate: (el, ctx) => this.controller.decorate(el, ctx),
       click: (ctx, ev) => {
@@ -128,6 +132,11 @@ export class GameScreen {
       }
     }, true);
     queueMicrotask(() => this.refresh());
+  }
+
+  /** True while a batch of events is still animating. */
+  get busy(): boolean {
+    return this.playing || this.queue.length > 0;
   }
 
   destroy(): void {
@@ -566,8 +575,8 @@ export class GameScreen {
     m = openModal(this.el, `${p.name}'s discard pile`, `${p.discard.length} cards (public)`, h('div', { class: 'choice-grid' }, ...(cards.length ? cards : [h('div', { class: 'faint' }, 'Empty')])), [{ label: 'Close', primary: true, onClick: () => m.close() }], { dismissable: true, className: 'discard-viewer' });
   }
 
-  private exportLog(): void {
-    const log = this.source.exportLog?.();
+  private async exportLog(): Promise<void> {
+    const log = await this.source.exportLog?.();
     if (!log) return;
     const blob = new Blob([JSON.stringify(log, null, 2)], { type: 'application/json' });
     const a = h('a', { href: URL.createObjectURL(blob), download: `psi-wars-log-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.json` });
@@ -579,10 +588,10 @@ export class GameScreen {
     let m: ReturnType<typeof openModal>;
     const actions = [
       { label: 'Rules reference', onClick: () => { m.close(); this.openRules(); } },
-      { label: 'Export game log', onClick: () => this.exportLog() },
+      { label: 'Export game log', onClick: () => void this.exportLog() },
       ...(this.opts.openSettings ? [{ label: 'Settings', onClick: () => { m.close(); this.opts.openSettings!(this.el); } }] : []),
-      { label: 'Concede', danger: true, onClick: () => { m.close(); if (this.viewer !== null) void this.source.send(this.viewer, { type: 'Concede' }); } },
-      { label: 'Quit to main menu', onClick: () => { m.close(); this.opts.onExit(); } },
+      ...(this.opts.readOnly ? [] : [{ label: 'Concede', danger: true, onClick: () => { m.close(); if (this.viewer !== null) void this.source.send(this.viewer, { type: 'Concede' }); } }]),
+      { label: this.opts.readOnly ? 'Close replay' : 'Quit to main menu', onClick: () => { m.close(); this.opts.onExit(); } },
       { label: 'Resume', primary: true, onClick: () => m.close() },
     ];
     m = openModal(this.el, 'Game menu', null, null, actions, { dismissable: true });
@@ -670,7 +679,7 @@ export class GameScreen {
     let m: ReturnType<typeof openModal>;
     const actions: { label: string; primary?: boolean; onClick: () => void }[] = [
       { label: 'View board', onClick: () => { m.close(); this.showGameOverBar(); } },
-      { label: 'Export log', onClick: () => this.exportLog() },
+      { label: 'Export log', onClick: () => void this.exportLog() },
       { label: 'Main menu', onClick: () => { m.close(); this.opts.onExit(); } },
     ];
     if (this.opts.onRematch) actions.push({ label: 'Rematch', primary: true, onClick: () => { m.close(); this.opts.onRematch!(); } });

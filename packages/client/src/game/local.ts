@@ -1,5 +1,6 @@
 import type { Command, GameEvent, Seat } from '@psi-wars/shared';
-import { applyCommand, createGame, filterEvents, getLegalView, viewFor, type GameSetup, type GameState } from '@psi-wars/engine';
+import { applyCommand, createGame, filterEvents, getLegalView, makeLog, viewFor, type GameSetup, type GameState } from '@psi-wars/engine';
+import { activeBalance } from '../balance';
 import type { GameSource, SeatInfo, Update } from './source';
 
 /**
@@ -11,6 +12,8 @@ export class LocalGame implements GameSource {
   private listeners = new Set<(u: Update) => void>();
   private commands: { seat: Seat; cmd: Command }[] = [];
   readonly allEvents: GameEvent[] = [];
+  /** The balance overlay this game was created under (for the log). */
+  private balance = activeBalance();
 
   constructor(
     readonly seats: SeatInfo[],
@@ -58,17 +61,11 @@ export class LocalGame implements GameSource {
   }
 
   exportLog() {
-    return {
-      format: 'psi-wars-log',
-      version: 1,
-      seed: this.setup.seed,
-      players: this.setup.players.map((p) => ({ name: p.name, deck: p.deck })),
-      startingHP: this.state.config.startingHP,
-      diceVariant: this.state.config.diceVariant,
-      commands: this.commands,
-      events: this.allEvents,
-      result: this.state.result,
-    };
+    return makeLog(this.setup, this.commands, this.allEvents, this.state, {
+      balance: this.balance ? { name: this.balance.name, cards: this.balance.cards } : null,
+      kinds: this.seats.map((s) => (s.kind === 'ai' ? `ai-${s.aiLevel ?? 'normal'}` : 'human')),
+      createdAt: new Date().toISOString(),
+    });
   }
 
   dispose() {

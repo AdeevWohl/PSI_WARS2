@@ -218,6 +218,10 @@ export class RemoteGame implements GameSource {
         return;
       case 'pong':
         return;
+      case 'log':
+        this.logWaiters.forEach((w) => w(m.log));
+        this.logWaiters = [];
+        return;
     }
   }
 
@@ -266,8 +270,24 @@ export class RemoteGame implements GameSource {
     return this.dl ? { ...this.dl, at: this.dl.at - this.offset } : null;
   }
 
-  exportLog() {
-    return { format: 'psi-wars-log', version: 1, room: this.code, seat: this.mySeat, note: 'Online games export the events this seat could see; the server holds the seed.', events: this.log };
+  private logWaiters: ((log: unknown) => void)[] = [];
+
+  /**
+   * Once the game is over the server sends the full replayable log (seed, commands, card data).
+   * During a game only this seat's own view of events can be exported (no hidden information).
+   */
+  exportLog(): unknown | Promise<unknown> {
+    if (!(this.v as GameView | null)?.result) {
+      return { format: 'psi-wars-log', version: 1, partial: true, room: this.code, seat: this.mySeat, note: 'Exported during an online game: only the events this seat could see. Export again after the game for the full, replayable log.', events: this.log };
+    }
+    return new Promise((resolve) => {
+      const t = setTimeout(() => resolve({ format: 'psi-wars-log', version: 1, partial: true, room: this.code, seat: this.mySeat, note: 'The server did not send the full log.', events: this.log }), 5000);
+      this.logWaiters.push((log) => {
+        clearTimeout(t);
+        resolve(log);
+      });
+      this.raw({ t: 'getLog' });
+    });
   }
 
   dispose(): void {

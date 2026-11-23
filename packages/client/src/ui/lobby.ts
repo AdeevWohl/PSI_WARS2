@@ -5,6 +5,7 @@ import { currentDefs, starterDecks, type StoredDeck } from '../data';
 import type { RemoteGame } from '../net/remote';
 import { SEAT_COLORS } from '../render/board';
 import { playableDecks } from '../decks';
+import { activeBalance } from '../balance';
 import { h, toast } from './dom';
 
 export function deckPayload(d: StoredDeck): DeckPayload {
@@ -94,6 +95,10 @@ export class LobbyScreen {
     this.status.classList.toggle('bad', s !== 'open');
   }
 
+  private balanceRow(lobby: LobbyState, host: boolean): HTMLElement {
+    return balanceRowFor(lobby, host, this.game);
+  }
+
   render(): void {
     const g = this.game;
     const lobby: LobbyState | null = g.lobby;
@@ -137,6 +142,7 @@ export class LobbyScreen {
       row('Trap response window', sel(cfg.trapWindowSec, Array.from({ length: 11 }, (_, k) => [k, `${k} s`] as [number, string]), (v) => setCfg({ trapWindowSec: Number(v) }), !host)),
       row('Fast windows', h('input', { type: 'checkbox', class: 'toggle', checked: cfg.fastWindows ? true : undefined, disabled: host ? undefined : true, onchange: (e: Event) => setCfg({ fastWindows: (e.target as HTMLInputElement).checked }) }), 'Skips players who cannot play anything — faster, but a pause then reveals that someone holds a Trap.'),
       row('Turn timer', sel(cfg.turnTimerSec, [[0, 'Off'], [30, '30 s'], [60, '60 s'], [120, '120 s']], (v) => setCfg({ turnTimerSec: Number(v) }), !host)),
+      this.balanceRow(lobby, host),
     );
 
     const mySeat = me !== null ? lobby.seats[me] : undefined;
@@ -165,6 +171,26 @@ export class LobbyScreen {
           : h('div', { class: 'dim' }, 'The host starts the game.')),
     );
   }
+}
+
+function balanceRowFor(lobby: LobbyState, host: boolean, g: RemoteGame): HTMLElement {
+  const b = lobby.balance ?? null;
+  const mine = activeBalance();
+  const details = b ? h('div', { class: 'lobby-balance-changes dim' }, ...b.changes.slice(0, 8).map((c) => h('div', null, c)), b.changes.length > 8 ? h('div', null, `…and ${b.changes.length - 8} more`) : null) : null;
+  let control: HTMLElement;
+  if (host && lobby.phase !== 'game') {
+    const opts: [string, string][] = [['std', 'Standard cards']];
+    if (mine) opts.push(['mine', `My balance: ${mine.name}`]);
+    const current = b ? (mine && b.name === mine.name ? 'mine' : 'other') : 'std';
+    if (current === 'other') opts.push(['other', `${b!.name}`]);
+    control = h('select', { class: 'text-input small', onchange: (e: Event) => {
+      const v = (e.target as HTMLSelectElement).value;
+      if (v === 'std') g.lobbyAction({ t: 'setBalance', balance: null });
+      else if (v === 'mine' && mine) g.lobbyAction({ t: 'setBalance', balance: mine });
+    } }, ...opts.map(([v, l]) => h('option', { value: v, selected: v === current ? true : undefined }, l)));
+  } else control = h('div', { class: b ? 'tag' : 'dim' }, b ? b.name : 'Standard cards');
+  const hint = b ? `${b.cards} card${b.cards === 1 ? '' : 's'} changed for everyone in this room.` : host && !mine ? 'Make a balance in the developer card editor to playtest it here.' : undefined;
+  return h('div', null, row('Card balance', control, hint), details);
 }
 
 function row(label: string, control: HTMLElement, hint?: string): HTMLElement {

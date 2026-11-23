@@ -21,3 +21,6 @@ export type { PlayOption } from './plays';
 export { battleOdds, type BattleOdds, type SideStrength } from './odds';
 export { chooseCommand, type AiLevel } from './ai';
 export { validateDeck, type DeckProblem } from './decks';
+export { BALANCE_FORMAT, PARAM_OPTIONS, LIMITS as BALANCE_LIMITS, cleanBalance, cleanCardOverlay, diffCard, describeOverlay, type BalanceFile, type CardOverlay } from './balance';
+export { LOG_FORMAT, LOG_VERSION, makeLog, checkLog, setupFromLog, Replayer, type GameLog } from './replay';
+export { runSimulation, formatReport, type SimOptions, type SimReport, type SimDeck, type CardRow } from './sim';

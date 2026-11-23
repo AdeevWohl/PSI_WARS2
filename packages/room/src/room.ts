@@ -28,6 +28,11 @@ import {
 } from '@psi-wars/shared';
 import {
   applyCommand,
+  buildDefs,
+  cleanBalance,
+  describeOverlay,
+  makeLog,
+  type BalanceFile,
   chooseCommand,
   createGame,
   defaultCommandFor,
@@ -52,6 +57,8 @@ export interface RoomHost {
 
 export interface RoomOptions {
   defs: Record<string, CardDef>;
+  /** cards.json as shipped, for validating and applying a host's balance overlay. */
+  baseCards?: { cards: CardDef[] };
   rules: RulesData;
   starterDecks: DeckPayload[];
   graceMs?: number;
@@ -102,6 +109,15 @@ export interface RoomData {
   pending: Pending | null;
   createdAt: number;
   lastActivity: number;
+  balance?: BalanceFile | null;
+  commands?: { seat: Seat; cmd: Command }[];
+  setup?: GameRecord | null;
+}
+
+/** What is needed (with the commands) to rebuild the current game exactly. */
+interface GameRecord {
+  seed: string;
+  players: { name: string; deck: DeckPayload; kind: string }[];
 }
 
 const DEFAULT_CONFIG: RoomConfig = { seats: 2, startingHP: 15, diceVariant: 'standard', trapWindowSec: 3, fastWindows: false, turnTimerSec: 0 };
@@ -121,6 +137,10 @@ export class Room {
   pending: Pending | null = null;
   createdAt: number;
   lastActivity: number;
+  balance: BalanceFile | null = null;
+  commands: { seat: Seat; cmd: Command }[] = [];
+  setup: GameRecord | null = null;
+  private defsCache: { key: BalanceFile | null; defs: Record<string, CardDef> } | null = null;
   private conns = new Map<string, Conn>();
   private graceMs: number;
   private idleMs: number;
@@ -135,6 +155,13 @@ export class Room {
     this.resizeSeats(this.config.seats);
   }
 
+  /** Card definitions in force: the shipped cards, or the host's balance overlay on top. */
+  defs(): Record<string, CardDef> {
+    if (!this.balance || !this.opts.baseCards) return this.opts.defs;
+    if (this.defsCache?.key !== this.balance) this.defsCache = { key: this.balance, defs: buildDefs(this.opts.baseCards, this.balance) };
+    return this.defsCache.defs;
+  }
+
   // ---------- persistence ----------
 
   serialize(): RoomData {
@@ -146,6 +173,7 @@ export class Room {
     return {
       v: 1, code: this.code, phase: this.phase, config: this.config, seats: this.seats, hostClientId: this.hostClientId, game,
       seq: this.seq, log: this.log.slice(-LOG_CAP), aiRng: this.aiRng, pending: this.pending, createdAt: this.createdAt, lastActivity: this.lastActivity,
+      balance: this.balance, commands: this.commands, setup: this.setup,
     };
   }
 
@@ -155,7 +183,10 @@ export class Room {
     r.config = data.config;
     r.seats = data.seats;
     r.hostClientId = data.hostClientId;
-    r.game = data.game ? ({ ...data.game, defs: opts.defs, rules: opts.rules } as GameState) : null;
+    r.balance = data.balance ?? null;
+    r.commands = data.commands ?? [];
+    r.setup = data.setup ?? null;
+    r.game = data.game ? ({ ...data.game, defs: r.defs(), rules: opts.rules } as GameState) : null;
     r.seq = data.seq;
     r.log = data.log;
     r.aiRng = data.aiRng;
@@ -222,7 +253,7 @@ export class Room {
         return this.broadcastLobby();
       case 'setDeck': {
         if (!slot || this.phase !== 'lobby') return;
-        const problems = validateDeck(this.opts.defs, this.opts.rules, msg.deck);
+        const problems = validateDeck(this.defs(), this.opts.rules, msg.deck);
         if (problems.length) return this.err(connId, 'bad_deck', problems.map((p) => p.message).join(' '));
         slot.deck = { name: String(msg.deck.name ?? 'Custom deck').slice(0, 40), battle: msg.deck.battle, resource: msg.deck.resource };
         return this.broadcastLobby();
@@ -274,6 +305,11 @@ export class Room {
       }
       case 'resync':
         return this.sendSnapshot(c);
+      case 'setBalance':
+        if (!isHost || this.phase === 'game') return this.err(connId, 'not_host', 'Only the host can choose the card balance, between games.');
+        return this.setBalance(connId, msg.balance);
+      case 'getLog':
+        return this.sendLog(c);
     }
   }
 
@@ -303,6 +339,45 @@ export class Room {
   }
 
   // ---------- lobby ----------
+
+  private setBalance(connId: string, raw: unknown): void {
+    if (raw === null) {
+      this.balance = null;
+      return this.broadcastLobby();
+    }
+    if (!this.opts.baseCards) return this.err(connId, 'no_balance', 'This server cannot apply card balance files.');
+    if (JSON.stringify(raw ?? null).length > 200_000) return this.err(connId, 'too_big', 'That balance file is too large.');
+    const { balance, errors } = cleanBalance(this.opts.baseCards, raw);
+    if (errors.length) this.err(connId, 'balance_warn', `Balance applied with ${errors.length} problem(s) ignored: ${errors.slice(0, 3).join(' ')}`);
+    this.balance = Object.keys(balance.cards).length ? balance : null;
+    this.broadcastLobby();
+  }
+
+  /** The full log only once the game is over: it reveals every hand and deck order. */
+  private sendLog(c: Conn): void {
+    if (!this.game || !this.game.result || !this.setup) return this.err(c.connId, 'no_log', 'The full game log is available once the game is over.');
+    const setup = {
+      defs: this.defs(), rules: this.opts.rules, seed: this.setup.seed,
+      players: this.setup.players.map((p) => ({ name: p.name, deck: p.deck })),
+      startingHP: this.game.config.startingHP, diceVariant: this.game.config.diceVariant, autoPassNoPlay: this.game.config.autoPassNoPlay,
+    };
+    // Re-create the event stream from the commands (the room keeps only recent events).
+    let { state, events } = createGame(setup);
+    const all = [...events];
+    for (const { seat, cmd } of this.commands) {
+      const r = applyCommand(state, seat, cmd);
+      if (!r.ok) return this.err(c.connId, 'no_log', 'The game could not be rebuilt for the log.');
+      state = r.state;
+      all.push(...r.events);
+    }
+    const log = makeLog(setup, this.commands, all, state, {
+      balance: this.balance ? { name: this.balance.name, cards: this.balance.cards } : null,
+      kinds: this.setup.players.map((p) => p.kind),
+      meta: { room: this.code },
+      createdAt: new Date(this.host.now()).toISOString(),
+    });
+    this.host.send(c.connId, { t: 'log', log });
+  }
 
   private setConfig(connId: string, patch: Partial<RoomConfig>): void {
     const cfg = { ...this.config };
@@ -334,11 +409,16 @@ export class Room {
     if (open.length) return this.err(connId, 'seats_open', 'Fill every seat (players or computer) before starting.');
     for (const s of this.seats) {
       if (!s.deck) return this.err(connId, 'no_deck', `${s.name || 'A player'} has no deck.`);
+      const problems = validateDeck(this.defs(), this.opts.rules, s.deck);
+      if (problems.length) return this.err(connId, 'bad_deck', `${s.name}'s deck is not legal under this card balance: ${problems[0]!.message}`);
     }
+    const seed = this.host.randomSeed();
+    this.setup = { seed, players: this.seats.map((s) => ({ name: s.name, deck: s.deck!, kind: s.kind === 'ai' ? `ai-${s.aiLevel ?? 'normal'}` : 'human' })) };
+    this.commands = [];
     const { state, events } = createGame({
-      defs: this.opts.defs,
+      defs: this.defs(),
       rules: this.opts.rules,
-      seed: this.host.randomSeed(),
+      seed,
       players: this.seats.map((s) => ({ name: s.name, deck: s.deck! })),
       startingHP: this.config.startingHP,
       diceVariant: this.config.diceVariant,
@@ -364,10 +444,11 @@ export class Room {
       return this.host.send(c.connId, { t: 'ack', cid, ok: false, error: r.error });
     }
     this.host.send(c.connId, { t: 'ack', cid, ok: true });
-    this.commit(r.state, r.events);
+    this.commit(r.state, r.events, slot.seat, command);
   }
 
-  private commit(state: GameState, events: GameEvent[]): void {
+  private commit(state: GameState, events: GameEvent[], seat: Seat, cmd: Command): void {
+    this.commands.push({ seat, cmd });
     this.game = state;
     this.log.push(...events);
     if (this.log.length > LOG_CAP * 2) this.log = this.log.slice(-LOG_CAP);
@@ -486,11 +567,12 @@ export class Room {
       const r = applyCommand(g, p.seat, cmd);
       if (!r.ok) {
         this.host.log('timed command rejected', { room: this.code, cmd, error: r.error });
-        const fallback = applyCommand(g, p.seat, defaultCommandFor(g.prompt));
+        const fb = defaultCommandFor(g.prompt);
+        const fallback = applyCommand(g, p.seat, fb);
         if (!fallback.ok) break;
-        this.commit(fallback.state, fallback.events);
+        this.commit(fallback.state, fallback.events, p.seat, fb);
       } else {
-        this.commit(r.state, r.events);
+        this.commit(r.state, r.events, p.seat, cmd);
       }
     }
     return 'ok';
@@ -532,7 +614,15 @@ export class Room {
       isHost: s.kind === 'human' && s.clientId === this.hostClientId,
       graceUntil: s.disconnectedAt !== null ? s.disconnectedAt + this.graceMs : undefined,
     }));
-    return { code: this.code, phase: this.phase, config: this.config, seats };
+    const base = this.opts.baseCards ? new Map(this.opts.baseCards.cards.map((c) => [c.id, c] as const)) : null;
+    const balance = this.balance
+      ? {
+          name: this.balance.name,
+          cards: Object.keys(this.balance.cards).length,
+          changes: Object.entries(this.balance.cards).slice(0, 40).map(([id, o]) => `${base?.get(id)?.name ?? id}: ${base?.get(id) ? describeOverlay(base.get(id)!, o).join(', ') : 'changed'}`),
+        }
+      : null;
+    return { code: this.code, phase: this.phase, config: this.config, seats, balance };
   }
 
   private broadcastLobby(): void {

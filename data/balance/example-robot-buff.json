@@ -1,0 +1,11 @@
+{
+  "format": "psi-wars-balance",
+  "version": 1,
+  "name": "Example: Robot buff (not official)",
+  "notes": "A sample tuning pass to show the workflow. Robot Commander loses about 73% of simulated games at Part B values, so this tries cheaper Robots and a sturdier Hydra Bot. Not a design-team decision.",
+  "cards": {
+    "BU_HB": { "stats": { "cyber": 3, "psionic": 0, "physical": 3 } },
+    "BU_DC": { "cost": { "G": 2, "B": 0, "R": 0, "P": 2, "W": 1 } },
+    "BU_LQ": { "cost": { "G": 1, "B": 0, "R": 0, "P": 1, "W": 0 } }
+  }
+}

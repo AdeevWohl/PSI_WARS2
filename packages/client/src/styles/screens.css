@@ -157,3 +157,76 @@
 .tut-step { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
 .tut-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 @media (prefers-reduced-motion: reduce) { .tut-ring { animation: none; transition: none; } }
+
+/* Main menu extras */
+.menu-balance { margin-top: 12px; padding: 8px 10px; border: 1px solid var(--gold); border-radius: 8px; background: rgba(255, 200, 87, 0.07); font-size: 13px; display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+.menu-dev-link { margin-top: 10px; background: none; border: 0; color: var(--text-faint); font-size: 12px; cursor: pointer; text-align: left; padding: 4px 0; }
+.menu-dev-link:hover, .menu-dev-link:focus-visible { color: var(--accent); }
+.dev-panel { width: 640px; }
+.dev-status { margin-top: 12px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 14px; }
+.dev-note { font-size: 13px; line-height: 1.5; }
+.dev-note code { color: var(--accent-2); }
+
+/* Card editor */
+.ce-shell { position: relative; width: 1840px; height: 1020px; padding: 18px 22px; display: flex; flex-direction: column; }
+.ce-head { display: flex; gap: 14px; align-items: center; margin-bottom: 12px; }
+.ce-head h2 { margin: 0; font-size: 26px; white-space: nowrap; }
+.ce-name { width: 300px; }
+.ce-head-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.ce-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 290px 1fr 500px; gap: 16px; }
+.ce-side, .ce-main, .ce-right { min-height: 0; overflow-y: auto; border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.ce-side { display: flex; flex-direction: column; gap: 8px; }
+.ce-filters { display: flex; flex-direction: column; gap: 6px; }
+.ce-list { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+.ce-item { text-align: left; padding: 7px 10px; border-radius: 7px; border: 1px solid transparent; background: rgba(14, 22, 38, 0.6); cursor: pointer; display: flex; flex-direction: column; color: var(--text); }
+.ce-item:hover, .ce-item:focus-visible { border-color: var(--line); }
+.ce-item.active { border-color: var(--accent); background: rgba(29, 106, 143, 0.35); }
+.ce-item.off { opacity: 0.6; }
+.ce-item-name { font-weight: 700; font-size: 14px; }
+.ce-item-sub { font-size: 12px; color: var(--text-dim); }
+.ce-dot { color: var(--gold); }
+.ce-title { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.ce-title h3 { margin: 0 0 2px; font: 700 24px var(--font-display); }
+.ce-title-actions { display: flex; gap: 8px; }
+.ce-card-state { margin: 10px 0; padding: 6px 10px; border-radius: 6px; font-size: 13px; background: #0f1828; color: var(--text-dim); }
+.ce-card-state.changed { color: var(--gold); border: 1px solid rgba(255, 200, 87, 0.4); }
+.ce-main h4, .ce-right h4 { margin: 16px 0 8px; font: 700 12px var(--font-display); letter-spacing: 0.12em; color: var(--accent); text-transform: uppercase; }
+.ce-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.ce-cell { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--text-dim); }
+.ce-cell.fixed code { color: var(--text-faint); font-size: 13px; }
+.ce-cell.cost-G span:first-child { color: #59d98c; }
+.ce-cell.cost-B span:first-child { color: #5aa8ff; }
+.ce-cell.cost-R span:first-child { color: #ff6b6b; }
+.ce-cell.cost-P span:first-child { color: #c08bff; }
+.ce-num { width: 100%; }
+.ce-num.bad { border-color: var(--danger); box-shadow: 0 0 0 1px var(--danger); }
+.ce-was { color: var(--gold); }
+.ce-checks { display: flex; gap: 12px; color: var(--text); }
+.ce-effect { padding: 10px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; }
+.ce-effect-name { font-weight: 700; margin-bottom: 8px; }
+.ce-text { width: 100%; font-size: 15px; line-height: 1.45; }
+.ce-note { font-size: 12px; margin: 6px 0; line-height: 1.45; }
+.ce-preview { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ce-preview-text { font-size: 13px; line-height: 1.45; color: var(--text-dim); margin: 0; max-width: 440px; }
+.ce-warn { color: var(--danger); font-size: 13px; margin: 4px 0; }
+.ce-summary { margin-top: 6px; }
+.ce-sum-row { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 5px 2px; color: var(--text); cursor: pointer; font-size: 13px; }
+.ce-sum-row:hover { background: rgba(79, 209, 255, 0.06); }
+.ce-sim-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ce-progress { height: 4px; border-radius: 2px; background: #0f1828; margin: 8px 0; overflow: hidden; visibility: hidden; }
+.ce-progress.on { visibility: visible; }
+.ce-progress-fill { height: 100%; background: var(--accent); transform-origin: left; transform: scaleX(0); transition: transform 0.2s linear; }
+.ce-sim-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ce-sim-table th, .ce-sim-table td { border-bottom: 1px solid var(--line); padding: 5px 6px; text-align: left; }
+.ce-sim-table th { color: var(--text-dim); font-weight: 600; }
+.ce-sim-pre { font-size: 11px; line-height: 1.35; white-space: pre; overflow-x: auto; max-height: 360px; background: #0a111d; padding: 8px; border-radius: 6px; }
+.ce-import { width: 720px; }
+
+/* Replay */
+.replay-host { position: absolute; inset: 0; }
+.replay-host > .game-screen { position: absolute; inset: 0; }
+.replay-bar { position: absolute; left: calc((1920px - 392px) / 2); bottom: 6px; transform: translateX(-50%); z-index: 42; display: flex; gap: 8px; align-items: center; padding: 8px 12px; white-space: nowrap; }
+.replay-tag { font: 800 12px var(--font-display); letter-spacing: 0.16em; color: var(--gold); }
+.replay-pos { font-variant-numeric: tabular-nums; font-size: 13px; min-width: 150px; }
+.replay-warn { color: var(--gold); font-size: 13px; }
+.lobby-balance-changes { font-size: 12px; line-height: 1.4; margin: -4px 0 8px 2px; }

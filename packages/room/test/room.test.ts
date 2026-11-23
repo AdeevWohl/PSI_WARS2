@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applyViewPatch, PROTOCOL_VERSION, type ClientMsg, type ServerMsg } from '@psi-wars/shared';
-import { chooseCommand, viewFor, seedRng, type GameView, type LegalView } from '@psi-wars/engine';
+import { checkLog, chooseCommand, Replayer, viewFor, seedRng, type GameView, type LegalView } from '@psi-wars/engine';
 import { Room, roomOptions, type RoomHost } from '../src/index';
 
 class FakeHost implements RoomHost {
@@ -310,5 +310,63 @@ describe('Room game', () => {
     const snap = JSON.stringify(a.messages().find((m) => m.t === 'snapshot')).length;
     const avg = updates.reduce((x, y) => x + y, 0) / Math.max(1, updates.length);
     expect(avg).toBeLessThan(snap / 4);
+  });
+});
+
+describe('Room balance and logs (Stage 8)', () => {
+  function playOut(env: ReturnType<typeof startTwo>) {
+    const { a, b, room, host } = env;
+    const clients = [a, b];
+    const rng = seedRng('log-ai');
+    let n = 0;
+    while (room.game && !room.game.result && n++ < 4000) {
+      for (const c of clients) c.drain();
+      const c = clients[room.game.prompt!.seat]!;
+      if (!c.legal) {
+        host.t += 10_000;
+        room.tick();
+        continue;
+      }
+      c.send({ t: 'cmd', cid: ++c.cid, command: chooseCommand('normal', c.view!, c.legal, roomOptions().rules, rng) });
+    }
+  }
+
+  it('only after the game: sends a full log that replays to the same result', () => {
+    const env = startTwo();
+    env.a.send({ t: 'getLog' });
+    expect(env.a.errors).toContain('no_log');
+    playOut(env);
+    env.a.send({ t: 'getLog' });
+    const msg = env.a.messages().filter((m) => m.t === 'log').pop() as any;
+    const { log, error } = checkLog(msg.log);
+    expect(error).toBeUndefined();
+    const rp = new Replayer(log!);
+    expect(rp.divergence).toBeNull();
+    expect(rp.length).toBe(log!.commands.length);
+    expect(rp.final.result).toEqual(env.room.game!.result);
+    expect(log!.players.map((p) => p.kind)).toEqual(['human', 'human']);
+  });
+
+  it('the host can play the room under a balance overlay; it is cleaned, shown in the lobby and survives restore', () => {
+    const { mk, room, host } = setup();
+    const a = mk(1);
+    a.hello('Ann');
+    const b = mk(2);
+    b.hello('Bo');
+    b.send({ t: 'setBalance', balance: { name: 'x', cards: { BU_HB: { stats: { cyber: 3, psionic: 0, physical: 3 } } } } });
+    expect(b.errors).toContain('not_host');
+    a.send({ t: 'setBalance', balance: { name: 'Robot test', cards: { BU_HB: { stats: { cyber: 3, psionic: 0, physical: 3 } }, BU_LQ: { name: 'Hacked' } } } });
+    expect(a.errors).toContain('balance_warn'); // the name change is refused
+    b.drain();
+    expect(b.lobby.balance.name).toBe('Robot test');
+    expect(b.lobby.balance.cards).toBe(1);
+    expect(room.defs()['BU_HB']!.stats!.physical).toBe(3);
+    expect(room.defs()['BU_LQ']!.name).toBe('Loquidor Stalker');
+    a.send({ t: 'start' });
+    expect(room.game!.defs['BU_HB']!.stats!.physical).toBe(3);
+    const restored = Room.restore(JSON.parse(JSON.stringify(room.serialize())), host, roomOptions());
+    expect(restored.game!.defs['BU_HB']!.stats!.physical).toBe(3);
+    a.send({ t: 'setBalance', balance: null });
+    expect(a.errors).toContain('not_host'); // not during a game
   });
 });

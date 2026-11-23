@@ -30,7 +30,7 @@ export interface GameSource {
   eventsFor(events: GameEvent[], viewer: Seat | null): GameEvent[];
   /** Server-enforced countdown (online games), in local clock ms. */
   deadline?(): { seat: Seat; kind: string; at: number } | null;
-  /** Full replayable log (seed + commands), for export. */
-  exportLog?(): unknown;
+  /** Full replayable log (seed + commands + card data), for export. Online: only after the game ends. */
+  exportLog?(): unknown | Promise<unknown>;
   dispose(): void;
 }

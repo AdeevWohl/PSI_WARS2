@@ -63,6 +63,8 @@ export interface LobbyState {
   phase: 'lobby' | 'game' | 'ended';
   config: RoomConfig;
   seats: LobbySeat[];
+  /** A card balance overlay the host chose for this room (null = the standard cards). */
+  balance?: { name: string; cards: number; changes: string[] } | null;
 }
 
 /** A countdown the server enforces (response window, turn timer). */
@@ -87,6 +89,10 @@ export type ClientMsg =
   | { t: 'cmd'; cid: number; command: Command }
   | { t: 'replaceWithAi'; seat: Seat; level: AiLevelName }
   | { t: 'resync' }
+  /** Host, in the lobby: play this room under a balance overlay from the card editor (null = standard). */
+  | { t: 'setBalance'; balance: unknown | null }
+  /** After the game ends: the full replayable log (seed, commands, card data). */
+  | { t: 'getLog' }
   | { t: 'ping'; at: number };
 
 // ---------- server -> client ----------
@@ -102,7 +108,8 @@ export type ServerMsg =
   | { t: 'update'; seq: number; events: GameEvent[]; patch: ViewPatch; legal: unknown | null; deadline: Deadline | null; serverTime: number }
   | { t: 'deadline'; seq: number; deadline: Deadline | null; serverTime: number }
   | { t: 'graceExpired'; seat: Seat; name: string }
-  | { t: 'pong'; at: number; serverTime: number };
+  | { t: 'pong'; at: number; serverTime: number }
+  | { t: 'log'; log: unknown };
 
 /**
  * A shallow patch of a view object: `set` replaces top-level keys; `maps` patches keyed maps

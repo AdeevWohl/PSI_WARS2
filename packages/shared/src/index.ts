@@ -4,7 +4,7 @@
  */
 
 /** Bump whenever a command, event or view shape changes incompatibly. */
-export const PROTOCOL_VERSION = 1;
+export const PROTOCOL_VERSION = 2;
 
 export type Seat = number;
 export type Ability = 'cyber' | 'psionic' | 'physical';

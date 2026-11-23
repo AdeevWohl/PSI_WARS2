@@ -7,7 +7,7 @@ import { validateDeck, type CardDef } from '@psi-wars/engine';
 import { currentDefs, rules, starterDecks } from '../data';
 import { canAdd, deckCounts, exportDeckJson, parseDeckImport, type StoredDeck } from '../deck-io';
 import { customDecks, deleteDeck, newDeckId, saveDeck } from '../decks';
-import { createCardEl } from '../render/card';
+import { createCardEl, updateOverlays } from '../render/card';
 import { h, toast } from './dom';
 import { openModal } from './modals';
 import { Preview } from './preview';
@@ -135,6 +135,7 @@ export class DeckBuilder {
       const n = list[d.id] ?? 0;
       const block = ro ? 'Starter decks are read-only — Duplicate to edit' : !d.enabled ? 'Not enabled yet (no art or still being tuned)' : canAdd(this.defs, rules, this.deck, d.id);
       const card = createCardEl(null, d, { size: 'sm' });
+      updateOverlays(card, d);
       card.style.setProperty('--w', '128px');
       card.style.width = '128px';
       const tile = h('button', {

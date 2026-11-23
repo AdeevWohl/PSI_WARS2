@@ -10,6 +10,7 @@ import type { RoomOptions } from './room';
 export function roomOptions(extra: Partial<RoomOptions> = {}): RoomOptions {
   return {
     defs: buildDefs(cardsJson as unknown as { cards: CardDef[] }),
+    baseCards: cardsJson as unknown as { cards: CardDef[] },
     rules: rulesJson as unknown as RulesData,
     starterDecks: [creature, robot].map((d) => ({ name: d.name, battle: d.battle, resource: d.resource }) as DeckPayload),
     ...extra,

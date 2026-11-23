@@ -23,6 +23,10 @@ import { settingsPanel } from './ui/settings-screen';
 import { rulesReference } from './ui/rules';
 import { Tutorial } from './ui/tutorial';
 import tutorialCfg from '@data/tutorial.json';
+import { checkLog } from '@psi-wars/engine';
+import { activeBalance, setActiveBalance } from './balance';
+import { CardEditor } from './ui/card-editor';
+import { ReplayViewer, pickLogFile } from './ui/replay';
 
 const stage = document.getElementById('stage')!;
 let current: { el: HTMLElement; destroy?: () => void } | null = null;
@@ -46,6 +50,82 @@ function openSettingsModal(host: HTMLElement): void {
   m = openModal(host, 'Settings', 'Changes apply immediately.', settingsPanel(() => m.close()), [], { dismissable: true, className: 'settings-modal' });
 }
 
+/** Developer mode (build prompt §13): the balance tools live behind Ctrl+Shift+D or ?dev, not the main menu. */
+function devMode(): boolean {
+  try {
+    return localStorage.getItem('psiwars.dev') === '1';
+  } catch {
+    return false;
+  }
+}
+function setDevMode(on: boolean): void {
+  try {
+    if (on) localStorage.setItem('psiwars.dev', '1');
+    else localStorage.removeItem('psiwars.dev');
+  } catch {
+    /* ignore */
+  }
+}
+
+const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`;
+
+function menuFooter(): (HTMLElement | null)[] {
+  const b = activeBalance();
+  return [
+    b ? h('div', { class: 'menu-balance', role: 'status' },
+      h('span', null, 'Custom card balance: ', h('b', null, b.name), ` (${plural(Object.keys(b.cards).length, 'card')} changed)`),
+      h('button', { class: 'btn small ghost', onclick: () => { setActiveBalance(null); toast('Standard cards restored.'); toMenu(); } }, 'Use standard cards')) : null,
+    devMode() ? h('button', { class: 'menu-dev-link', onclick: () => toDev() }, 'Developer tools (Ctrl+Shift+D)') : null,
+  ];
+}
+
+function toDev(): void {
+  setDevMode(true);
+  const b = activeBalance();
+  const item = (label: string, sub: string, onClick: () => void) => h('button', { class: 'menu-item', onclick: onClick }, h('span', { class: 'mi-label' }, label), h('span', { class: 'mi-sub' }, sub));
+  show(h('div', { class: 'screen dev-screen' }, h('div', { class: 'menu-bg' }),
+    h('nav', { class: 'menu-panel panel dev-panel', 'aria-label': 'Developer tools' },
+      h('div', { class: 'menu-head' }, h('div', { class: 'h-display', style: 'font-size:26px' }, 'Developer tools')),
+      item('Card editor', 'Edit costs, strengths, ability values and text; quick AI-vs-AI test', () => toEditor()),
+      item('Replay a game log', 'Open an exported log and step through it', () => pickLogFile((raw, name) => openReplay(raw, name))),
+      h('div', { class: 'dev-status' },
+        h('div', null, 'Card balance in force: ', h('b', null, b ? `${b.name} (${plural(Object.keys(b.cards).length, 'card')} changed)` : 'standard cards')),
+        b ? h('button', { class: 'btn small ghost', onclick: () => { setActiveBalance(null); toDev(); } }, 'Use standard cards') : null),
+      h('p', { class: 'dim dev-note' }, 'Batch simulation from a terminal: ', h('code', null, 'npm run sim -- --games 1000 --balance file.json'), '. Logs are exported from the in-game menu or the results screen.'),
+      h('div', { class: 'row', style: 'justify-content:space-between;margin-top:8px' },
+        h('button', { class: 'btn ghost small', onclick: () => { setDevMode(false); toMenu(); } }, 'Hide developer link'),
+        h('button', { class: 'btn', onclick: () => toMenu() }, 'Back')))));
+}
+
+function toEditor(): void {
+  const ed = new CardEditor(() => toDev());
+  show(ed.el, () => ed.destroy());
+}
+
+function openReplay(raw: unknown, name: string): void {
+  const { log, error } = checkLog(raw);
+  if (!log) return void toast(`${name}: ${error}`, 'error', 7000);
+  let viewer: ReplayViewer;
+  try {
+    viewer = new ReplayViewer(log, () => toDev());
+  } catch (e) {
+    return void toast(`Could not replay ${name}: ${(e as Error).message}`, 'error', 7000);
+  }
+  show(viewer.el, () => viewer.destroy());
+  (window as any).__psi = { replay: viewer };
+}
+
+// Dev/test hook: open a log object directly (the menu uses a file picker).
+(window as any).__psiDev = { openReplay: (raw: unknown) => openReplay(raw, 'log') };
+
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
+    if (current?.el.classList.contains('game-screen') || current?.el.classList.contains('replay-host')) return;
+    e.preventDefault();
+    toDev();
+  }
+});
+
 function toMenu(): void {
   show(
     mainMenu([
@@ -56,7 +136,7 @@ function toMenu(): void {
       { label: 'Deck Builder', sub: 'Build, save, import and export decks', onClick: () => { const db = new DeckBuilder(() => toMenu()); show(db.el); } },
       { label: 'How to Play', sub: 'Guided first game and the full rules reference', onClick: () => toHowTo() },
       { label: 'Settings', sub: 'Animation, effects, audio, gameplay, accessibility', onClick: () => toSettings() },
-    ]),
+    ], menuFooter()),
   );
 }
 
@@ -242,7 +322,9 @@ async function boot(): Promise<void> {
   await loadManifest();
   const bg = artUrl('ui/menu-bg', '1920');
   if (bg) document.documentElement.style.setProperty('--menu-bg-url', `url("${bg}")`);
-  const room = new URLSearchParams(location.search).get('room')?.toUpperCase();
+  const params = new URLSearchParams(location.search);
+  if (params.has('dev')) setDevMode(true);
+  const room = params.get('room')?.toUpperCase();
   let session: { code: string; name: string; deckId: string } | null = null;
   try {
     session = JSON.parse(sessionStorage.getItem('psiwars.session') ?? 'null');

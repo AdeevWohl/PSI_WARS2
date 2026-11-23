@@ -2,7 +2,7 @@
 
 Browser card game: a pure TypeScript rules engine, an art-driven client, AI opponents, and online play with room codes (2–4 players).
 
-> **Status: Stage 7 of 9 complete.** Rules engine, art-driven client with animation and settings, 2–4 player games with any mix of people and computer players (Easy / Normal / Hard), locally or online (host a room, share its code or invite link), a deck builder, a guided tutorial, the full searchable rules reference and a results screen. The balance tools (Stage 8) come next.
+> **Status: Stage 8 of 9 complete.** Rules engine, art-driven client with animation and settings, 2–4 player games with any mix of people and computer players (Easy / Normal / Hard), locally or online (host a room, share its code or invite link), a deck builder, a guided tutorial, the full searchable rules reference, a results screen, and the balance tools: card editor, replayable game logs and an AI-vs-AI simulator. Stage 9 (final polish and the acceptance pass) comes next.
 
 ## Requirements
 
@@ -90,6 +90,26 @@ Run the same command again to publish an update. Each room is one Durable Object
 - **Response windows.** When a Trap could be played, every player gets the same short window (3 s by default), so a pause never reveals who holds one. "Fast windows" skips players with nothing to play. It's quicker, but leaks that information.
 - **Same protocol everywhere.** Both servers (`packages/server` on Cloudflare, `packages/server-local` on Node) run the identical room code from `packages/room`. A protocol version check refuses mismatched clients with a plain message.
 
+## Balance tools
+
+Every cost, strength and ability value lives in data. Three tools let the design team tune them:
+
+**Card editor.** Press **Ctrl+Shift+D** on any menu screen, or open the game with `?dev` at the end of the address (for example http://localhost:5173/?dev), to get the developer menu. Choose **Card editor**, pick a card, and change its cost, strengths, Equipment bonus, ability values, rules text, or whether it is enabled. The card preview marks every number that differs from the printed card. **Save & apply** makes the change live for new games on this computer, and the main menu shows that a custom balance is in force. **Export** saves a balance file to share, **Import…** loads one, and **Reset card** / **Reset all** go back to `data/cards.json`. **Use printed values** copies the numbers printed on the card art. **Quick test** plays 100–1000 computer-vs-computer games in the background and compares deck win rates with the standard cards. Balance files placed in `data/balance/` appear in the editor's preset list (see [data/balance/README.md](data/balance/README.md)). To playtest a balance online, the host picks it under **Card balance** in the room lobby, and everyone in the room plays under it.
+
+**Game logs.** **Export game log** (in-game menu, or the results screen) saves the seed, every command, every event and the exact card data as JSON. In online games the full log is available once the game is over; during a game you only get the events your seat could see. **Developer menu → Replay a game log** steps through a saved game on the real board: play/pause, step (← →), jump to a turn, and watch from the public view or from any player's seat with their hand showing. The replayer re-runs the engine and warns if anything differs from the log.
+
+**Simulator.** Plays games between computer players without a screen:
+
+```powershell
+npm run sim -- --games 1000
+```
+
+```powershell
+npm run sim -- --games 1000 --balance data/balance/example-robot-buff.json
+```
+
+It reports the win rate of each deck (and per seat order), the first-player win rate, game length, how games ended, the most common first unit destroyed, and a win rate for each card (in decks that contain it, and in games where it was actually played, compared against its deck's average). Other options: `--ai easy|normal|hard`, `--players 2-4`, `--decks id-or-file,...`, `--seed`, `--hp`, `--mirrors`, `--out report.json` (or `.md`), `--help`. The same seed and data always give the same numbers, so before/after comparisons are fair.
+
 ## Tests
 
 ```powershell
@@ -136,7 +156,7 @@ packages/
   server-local/  Node WebSocket server (same protocol), for tunnels and development
 data/            cards.json, rules.json, rulings.json, decks/, balance/
 art/             masters/ (extracted) and generated/ (browser derivatives)
-tools/           assets/ (art pipeline), data/ (data tests), dev/ (AI stats), sim/ (Stage 8)
+tools/           assets/ (art pipeline), data/ (data tests), dev/ (AI stats, tutorial seed, log maker), sim/ (AI-vs-AI simulator)
 ```
 
 ## Engine in one paragraph

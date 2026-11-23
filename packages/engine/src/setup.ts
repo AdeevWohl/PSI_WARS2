@@ -28,7 +28,12 @@ export function buildDefs(cardsJson: { cards: CardDef[] }, balance?: { cards?: R
   const out: Record<string, CardDef> = {};
   for (const c of cardsJson.cards) {
     const o = balance?.cards?.[c.id];
-    out[c.id] = o ? { ...structuredClone(c), ...structuredClone(o) } as CardDef : structuredClone(c);
+    const d = o ? ({ ...structuredClone(c), ...structuredClone(o) } as CardDef) : structuredClone(c);
+    // The numbers on the card art: listed under `printed` where they differ from cards.json,
+    // otherwise the shipped values. A balance overlay never changes them, so the client can
+    // mark every changed number on the card.
+    if (o && (o.cost || o.stats) && !c.printed) d.printed = { ...(c.cost ? { cost: structuredClone(c.cost) } : {}), ...(c.stats ? { stats: structuredClone(c.stats) } : {}) };
+    out[c.id] = d;
   }
   return out;
 }

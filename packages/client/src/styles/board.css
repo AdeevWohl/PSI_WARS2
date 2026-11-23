@@ -204,3 +204,9 @@
 .btn.target-chip.active { background: color-mix(in srgb, var(--seat-color) 35%, #12203a); box-shadow: 0 0 0 1px var(--seat-color), 0 0 12px color-mix(in srgb, var(--seat-color) 40%, transparent); }
 .game-screen.dragging .area.opp { outline: 2px dashed color-mix(in srgb, var(--seat-color) 60%, transparent); outline-offset: -4px; }
 .area.opp.drop-hover { outline: 3px solid var(--seat-color) !important; }
+
+/* Spectators and replays: the bottom seat's hand is hidden — a row of backs instead of the fan. */
+.area.mine .hand:not(.fan) { display: flex; justify-content: center; align-items: flex-end; padding-bottom: 128px; pointer-events: none; }
+.area.mine .hand:not(.fan) .hand-back { --w: 70px; width: 70px; margin-left: -38px; }
+.area.mine .hand:not(.fan) .hand-back:first-child { margin-left: 0; }
+.area.mine .hand:not(.fan) .count { position: static; margin: 0 0 30px 12px; }

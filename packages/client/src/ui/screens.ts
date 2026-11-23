@@ -33,7 +33,7 @@ export interface MenuItem {
   disabledReason?: string;
 }
 
-export function mainMenu(items: MenuItem[]): HTMLElement {
+export function mainMenu(items: MenuItem[], footer: (HTMLElement | null)[] = []): HTMLElement {
   const logo = artUrl('ui/logo', 'sm');
   return h(
     'div',
@@ -46,6 +46,7 @@ export function mainMenu(items: MenuItem[]): HTMLElement {
           h('span', { class: 'mi-label' }, it.label),
           h('span', { class: 'mi-sub' }, it.disabledReason ?? it.sub)),
       ),
+      ...footer,
     ),
   );
 }

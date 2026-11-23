@@ -4,6 +4,7 @@ import rulingsJson from '@data/rulings.json';
 import creatureDeck from '@data/decks/creature-commander.json';
 import robotDeck from '@data/decks/robot-commander.json';
 import { buildDefs, type CardDef, type DeckList, type RulesData } from '@psi-wars/engine';
+import { activeBalance } from './balance';
 
 export const rules = rulesJson as unknown as RulesData;
 export const baseCards = cardsJson as unknown as { cards: CardDef[] };
@@ -25,16 +26,13 @@ export interface StoredDeck extends DeckList {
 }
 export const starterDecks: StoredDeck[] = [creatureDeck as StoredDeck, robotDeck as StoredDeck];
 
-/** Card definitions with the local balance overlay (Stage 8 card editor) applied. */
+let defsCache: { key: unknown; defs: Record<string, CardDef> } | null = null;
+
+/** Card definitions with the active balance overlay (card editor, data/balance) applied. */
 export function currentDefs(): Record<string, CardDef> {
-  let overlay: { cards?: Record<string, Partial<CardDef>> } | undefined;
-  try {
-    const raw = localStorage.getItem('psiwars.balance');
-    if (raw) overlay = JSON.parse(raw);
-  } catch {
-    overlay = undefined;
-  }
-  return buildDefs(baseCards, overlay);
+  const b = activeBalance();
+  if (defsCache?.key !== b) defsCache = { key: b, defs: buildDefs(baseCards, b ?? undefined) };
+  return defsCache.defs;
 }
 
 export function rulingsFor(def: CardDef): (Ruling & { id: string })[] {
