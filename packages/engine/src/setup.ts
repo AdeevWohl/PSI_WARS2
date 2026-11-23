@@ -49,7 +49,7 @@ export function createGame(setup: GameSetup): { state: GameState; events: GameEv
   if (n < 2 || n > 4) throw new Error('Psi Wars supports 2 to 4 players');
   const hp = setup.startingHP ?? setup.rules.setup.startingHP.default;
   const s: GameState = {
-    engineVersion: 1,
+    engineVersion: 2,
     defs: setup.defs,
     rules: setup.rules,
     config: {

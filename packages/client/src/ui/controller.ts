@@ -443,7 +443,13 @@ export class Controller {
     const la = this.legal;
     if (!la) return '';
     const m = this.mode;
-    if (m.k === 'target') return `Choose a target for ${this.view!.defs[m.play.cardId]!.name}. Esc to cancel.`;
+    if (m.k === 'target') {
+      const ts = m.play.targets ?? [];
+      const labs = ts.some((t) => t.startsWith('lab:'));
+      const cus = ts.some((t) => this.view!.cards[t]?.zone === 'cus');
+      const where = cus ? 'Pick one of your Creation Units below' : labs ? 'Click a glowing unit, or pick a Lab below' : 'Click a glowing unit';
+      return `${where} for ${this.view!.defs[m.play.cardId]!.name}. Esc to cancel.`;
+    }
     if (m.k === 'moveEquip') return 'Choose the unit to move the Equipment to.';
     if (m.k === 'stack') return m.first ? 'Choose the unit to stack with (one Cyborg + one non-Cyborg).' : 'Click a unit to stack, or a stack to split it.';
     const info = (la.prompt.info ?? {}) as any;
@@ -476,6 +482,23 @@ export class Controller {
     const m = this.mode;
     const out: ActionButton[] = [];
     if (m.k !== 'none') out.push({ label: 'Cancel', onClick: () => this.cancel(), key: 'Esc' });
+    // Targets that are not cards on the board: a player's Lab ("lab:<seat>") or one of your
+    // Creation Units (Resource Fortification). One button each (Creation Units: one per type).
+    if (m.k === 'target' && m.play.targets) {
+      const v = this.view!;
+      const seenCU = new Set<string>();
+      for (const t of m.play.targets) {
+        if (t.startsWith('lab:')) {
+          const seat = Number(t.slice(4));
+          out.push({ label: `→ ${this.names(seat)}'s Lab`, color: SEAT_COLORS[seat], onClick: () => void this.play(m.play, t) });
+        } else if (v.cards[t]?.zone === 'cus') {
+          const id = v.cards[t]!.cardId;
+          if (seenCU.has(id)) continue;
+          seenCU.add(id);
+          out.push({ label: `→ ${v.defs[id]?.name ?? 'Creation Unit'}`, onClick: () => void this.play(m.play, t) });
+        }
+      }
+    }
     switch (la.prompt.kind) {
       case 'main':
         if (m.k === 'none') out.push({ label: 'Go to Battle', primary: true, key: 'Space', onClick: () => this.confirmAdvance() });

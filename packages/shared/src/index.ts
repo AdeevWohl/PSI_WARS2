@@ -4,7 +4,7 @@
  */
 
 /** Bump whenever a command, event or view shape changes incompatibly. */
-export const PROTOCOL_VERSION = 2;
+export const PROTOCOL_VERSION = 3;
 
 export type Seat = number;
 export type Ability = 'cyber' | 'psionic' | 'physical';
@@ -15,6 +15,10 @@ export const CU_TYPES: readonly CUType[] = ['G', 'B', 'R', 'P'];
 /** Which CU types to destroy for a card's white cost. Depletion is fixed by the card's coloured cost. */
 export interface Payment {
   destroy: Partial<Record<CUType, number>>;
+  /** For each "pay one of these" choice light, the type depleted (Change Request 1, B5). */
+  choice?: CUType[];
+  /** Types depleted for the "pay any" cost (B5). */
+  any?: Partial<Record<CUType, number>>;
 }
 
 export interface AttackDeclaration {

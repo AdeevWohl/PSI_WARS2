@@ -94,7 +94,7 @@ export function eventLine(e: GameEvent, names: (s: unknown) => string, n: Namer,
     case 'Obliterated':
       return { text: `${String(e.die).toUpperCase()} OBLITERATE — ${e.by === 'both' ? 'both dice destroyed' : e.by === 'att' ? "defender's die destroyed" : "attacker's die destroyed"}.`, kind: 'big' };
     case 'Disoriented':
-      return { text: `${(e.uids as string[]).map((u) => n.name(u)).join(' + ')} ${((e.uids as string[]).length > 1) ? 'are' : 'is'} Disoriented.` };
+      return { text: `${(e.uids as string[]).map((u) => n.name(u)).join(' + ')} ${((e.uids as string[]).length > 1) ? 'are' : 'is'} Disoriented${e.auto ? ` (no ${e.ability === 'psionic' ? 'Psionic' : 'Cyber'} to fight with)` : e.ability === 'psionic' ? ' (lost the Psionic battle)' : e.ability === 'cyber' ? ' (lost the Cyber battle)' : ''}.` };
     case 'PsionicWin':
       return full ? { text: `Psionic win for the ${e.side === 'att' ? 'attacker' : 'defender'}.` } : null;
     case 'Rerolled':
@@ -130,6 +130,21 @@ export function eventLine(e: GameEvent, names: (s: unknown) => string, n: Namer,
       return { text: `${names(e.seat)} is out (${e.reason === 'labDestroyed' ? 'Lab destroyed' : e.reason === 'noBattleUnits' ? 'no Battle Units left' : String(e.reason)}).`, kind: 'big' };
     case 'GameOver':
       return { text: (e.draw ? 'The game is a draw.' : `${(e.winners as number[]).map(names).join(', ')} win${(e.winners as number[]).length === 1 && e.winners !== viewer ? 's' : ''}!`), kind: 'big' };
+    case 'UnitDamaged':
+      return { text: e.lethal ? `${n.cardName(e.cardId)} takes ${e.amount} damage — destroyed.` : `${n.cardName(e.cardId)} takes ${e.amount} damage — ${e.physicalAfter} Physical left this turn.`, kind: 'big' };
+    case 'SweepDamage':
+      return { text: `${n.name(e.source)} hits ${(e.uids as string[]).length} unit${(e.uids as string[]).length === 1 ? '' : 's'} for ${e.amount} damage.` };
+    case 'CardDiscarded':
+      return { text: `${who(e.seat)} discard${e.seat === viewer ? '' : 's'} ${n.cardName(e.cardId)}.`, kind: 'big' };
+    case 'UnitRevived': {
+      const m = e.mods as { cyber: number; psionic: number; physical: number };
+      const parts = (['physical', 'cyber', 'psionic'] as const).filter((k) => m[k]).map((k) => `${m[k] > 0 ? '+' : ''}${m[k]} ${k[0]!.toUpperCase()}${k.slice(1)}`);
+      return { text: `${who(e.seat)} brought ${n.cardName(e.cardId)} back into play (${parts.join(', ')}).`, kind: 'big' };
+    }
+    case 'ResourceFortified':
+      return { text: `${who(e.seat)} fortified a Creation Unit.` };
+    case 'CUFortified':
+      return { text: `A fortified Creation Unit was depleted instead of destroyed.` };
     case 'DeckEmpty':
       return full ? { text: `${who(e.seat)} could not draw: deck empty.` } : null;
     default:

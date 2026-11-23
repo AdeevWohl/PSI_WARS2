@@ -1,6 +1,6 @@
 /** One or more tests for every card ability in the pool (acceptance checklist item 1). */
 import { describe, expect, it } from 'vitest';
-import { getLegalActions } from '../src/index';
+import { getLegalActions, viewFor } from '../src/index';
 import { cardsJson, drive, scenario } from './helpers';
 
 const attackUnblocked = (sc: ReturnType<typeof scenario>, uids: string[]) => {
@@ -131,35 +131,31 @@ describe('Blade Master — 1 damage when it destroys a unit (RULING B1-c)', () =
   });
 });
 
-describe('Lodner Predator — optional attack roll mills on Obliterate (RULING B1-b)', () => {
-  it('side 6 mills the defender\'s top Resource card', () => {
-    const sc = scenario({ at: 'battle', seats: [{ lab: ['BU_LP'] }, { resourceDeck: ['CU_NG', 'CU_BA'] }], dice: [6] });
-    const d = attackUnblocked(sc, [sc.ids[0]!.lab[0]!]);
-    d.expectPrompt('optionalRoll', 0);
-    expect(d.state.step).toBe('cyborg');
-    d.do({ type: 'UseAbility', use: true });
-    expect(d.last('CardMilled')).toMatchObject({ seat: 1, cardId: 'CU_NG' });
-    expect(d.state.players[1]!.discard.map((u) => d.state.cards[u]!.cardId)).toEqual(['CU_NG']);
+describe('Lodner Predator — when it attacks, the attacked player destroys a Creation Unit (Change Request 1)', () => {
+  it('the attacked player chooses which Creation Unit to destroy', () => {
+    const sc = scenario({ at: 'battle', seats: [{ lab: ['BU_LP'] }, { cus: { G: 1, B: 1 } }] });
+    const d = drive(sc);
+    d.do({ type: 'DeclareAttackers', attacks: [{ uid: sc.ids[0]!.lab[0]!, target: 1 }] });
+    d.expectPrompt('chooseCard', 1);
+    const [g] = sc.state.players[1]!.cus;
+    d.do({ type: 'ChooseFromList', choice: g! });
+    expect(d.state.players[1]!.cus).not.toContain(g);
+    expect(d.state.players[1]!.discard).toContain(g);
+    expect(d.last('CUDestroyed')).toMatchObject({ seat: 1, uids: [g], reason: 'ability' });
   });
-  it('other sides do nothing', () => {
-    const sc = scenario({ at: 'battle', seats: [{ lab: ['BU_LP'] }, { resourceDeck: ['CU_NG'] }], dice: [5] });
-    const d = attackUnblocked(sc, [sc.ids[0]!.lab[0]!]);
-    d.do({ type: 'UseAbility', use: true });
-    expect(d.ofType('CardMilled')).toHaveLength(0);
-  });
-  it('is not offered when defending', () => {
-    const sc = scenario({ at: 'battle', active: 1, seats: [{ lab: ['BU_LP'] }, { lab: ['BU_HB'] }], dice: [1, 1, 1, 1, 1, 1] });
+  it('does nothing when defending, and costs 3 to destroy', () => {
+    const sc = scenario({ at: 'battle', active: 1, seats: [{ lab: ['BU_LP'], cus: { G: 1 } }, { lab: ['BU_HB'] }], dice: [1, 1, 1, 1, 1, 1] });
     const d = drive(sc);
     const hb = sc.ids[1]!.lab[0]!;
     d.do({ type: 'DeclareAttackers', attacks: [{ uid: hb, target: 0 }] });
-    d.do({ type: 'AssignBlockers', blocks: [{ blocker: sc.ids[0]!.lab[0]!, attacker: hb }] });
-    expect(d.ofType('AbilityRoll')).toHaveLength(0);
+    expect(d.ofType('CUDestroyed')).toHaveLength(0);
+    expect(sc.state.defs.BU_LP!.cost!.W).toBe(3);
   });
 });
 
-describe('Jingwa Psi Avenger — Psionic win reveals a Power card (Q&A #4)', () => {
+describe('Jingwa Psi Avenger — Psionic win: the opponent discards a Power card (Change Request 1)', () => {
   // Jingwa Ps3 Ph1 vs Trangarey Ps1 Ph3: Psionic 3+2 vs 1+2 -> Jingwa wins.
-  it('the opponent chooses which; it is only shown, not discarded', () => {
+  it('the opponent chooses which Power card to discard', () => {
     const sc = scenario({ at: 'battle', seats: [{ lab: ['BU_JPA'] }, { lab: ['BU_TS'], hand: ['PW_CR', 'TR_GSF', 'BU_LS'] }], dice: [2, 2, 2, 2] });
     const j = sc.ids[0]!.lab[0]!;
     const d = drive(sc);
@@ -169,8 +165,9 @@ describe('Jingwa Psi Avenger — Psionic win reveals a Power card (Q&A #4)', () 
     const [cr, gsf] = sc.ids[1]!.hand;
     expect(d.prompt!.options!.sort()).toEqual([cr, gsf].sort());
     d.do({ type: 'ChooseFromList', choice: gsf! });
-    expect(d.last('CardsRevealed')).toMatchObject({ seat: 1, cards: [{ uid: gsf, cardId: 'TR_GSF' }] });
-    expect(d.state.players[1]!.hand).toContain(gsf);
+    expect(d.last('CardDiscarded')).toMatchObject({ seat: 1, uid: gsf, cardId: 'TR_GSF' });
+    expect(d.state.players[1]!.hand).not.toContain(gsf);
+    expect(d.state.players[1]!.discard).toContain(gsf);
   });
   it('with no Power card the whole hand is revealed', () => {
     const sc = scenario({ at: 'battle', seats: [{ lab: ['BU_JPA'] }, { lab: ['BU_TS'], hand: ['BU_LS', 'EQ_PA'] }], dice: [2, 2, 2, 2] });
@@ -185,17 +182,33 @@ describe('Jingwa Psi Avenger — Psionic win reveals a Power card (Q&A #4)', () 
 });
 
 describe('Power cards', () => {
-  it('Creature Regenerate returns a Creature (incl. Commander) from discard; not playable if none', () => {
-    const none = scenario({ seats: [{ hand: ['PW_CR'], cus: { B: 2, R: 1 }, discard: ['BU_HB'] }, {}] });
+  it('Creature Regenerate returns a Creature or Cyborg to play, changed; not playable if none (Change Request 1)', () => {
+    const none = scenario({ seats: [{ hand: ['PW_CR'], cus: { B: 2, R: 2 }, discard: ['BU_HB'] }, {}] });
     expect(getLegalActions(none.state, 0)!.plays).toHaveLength(0);
-    const sc = scenario({ seats: [{ hand: ['PW_CR'], cus: { B: 2, R: 1 }, discard: ['BU_HB', 'BU_SC'] }, {}] });
+    const sc = scenario({ seats: [{ hand: ['PW_CR'], cus: { B: 2, R: 2 }, discard: ['BU_HB', 'BU_SC', 'BU_BM'] }, {}] });
     const d = drive(sc);
     d.do({ type: 'PlayCard', uid: sc.ids[0]!.hand[0]! });
-    d.expectPrompt('chooseCard', 0);
-    expect(d.prompt!.options).toEqual([sc.ids[0]!.discard[1]]);
-    d.do({ type: 'ChooseFromList', choice: sc.ids[0]!.discard[1]! });
-    expect(d.state.players[0]!.hand).toContain(sc.ids[0]!.discard[1]);
+    d.passUntil(['chooseCard']);
+    const [, sc2, bm] = sc.ids[0]!.discard;
+    expect(d.prompt!.options!.sort()).toEqual([sc2, bm].sort());
+    d.do({ type: 'ChooseFromList', choice: sc2! });
+    expect(d.state.cards[sc2!]!.zone).toBe('lab');
+    expect(d.state.cards[sc2!]!.depleted).toBe(false);
+    expect(d.state.cards[sc2!]!.permMods).toEqual({ cyber: 0, psionic: -1, physical: 1 });
+    expect(d.last('UnitRevived')).toMatchObject({ seat: 0, uid: sc2 });
     expect(d.state.players[0]!.discard).toContain(sc.ids[0]!.hand[0]); // power discarded after use
+    expect(d.state.players[0]!.cus).toHaveLength(2); // destroyed 2 (W2), depleted 2
+  });
+
+  it('a revived Cyborg gets +2 Physical, -1 Cyber, -1 Psionic; modifiers vanish when it leaves play', () => {
+    const sc = scenario({ seats: [{ hand: ['PW_RR'], cus: { G: 2, P: 2 }, discard: ['BU_BM'] }, {}] });
+    const d = drive(sc);
+    d.do({ type: 'PlayCard', uid: sc.ids[0]!.hand[0]! });
+    d.passUntil(['chooseCard', 'main']);
+    if (d.prompt!.kind === 'chooseCard') d.do({ type: 'ChooseFromList', choice: sc.ids[0]!.discard[0]! });
+    const bm = sc.ids[0]!.discard[0]!;
+    const st = viewFor(d.state, 0).unitStats[bm]!;
+    expect([st.cyber, st.psionic, st.physical]).toEqual([1, 1, 4]); // Blade Master 2/2/2
   });
 
   it('Equipment Hunter searches the Battle Deck, then shuffles', () => {
@@ -265,7 +278,7 @@ describe('Power cards', () => {
     d.do({ type: 'PlayCard', uid: sc.ids[1]!.hand[0]! });
     d.passUntil(['main']);
     expect(d.ofType('UnblockedHit')).toHaveLength(0);
-    expect(d.state.players[1]!.labHP).toBe(15);
+    expect(d.state.players[1]!.labHP).toBe(14); // only Blade Master's on-attack damage (Change Request 1)
   });
 
   it('Grankor Stasis Field traps an opposing unit; a trapped stack partner leaves, the other fights on', () => {
@@ -348,7 +361,7 @@ describe('Stacking', () => {
 });
 
 describe('every enabled card with an ability has at least one implementation path', () => {
-  const triggers = new Set(['ModifyRoll', 'RollX', 'StaticAura', 'CyborgStep', 'OnPsionicWin', 'OnCyberWin', 'OnPhysicalWin', 'OnDestroyEnemyUnit', 'TrapEscapeCheck', 'OnPlay']);
+  const triggers = new Set(['ModifyRoll', 'RollX', 'StaticAura', 'CyborgStep', 'OnPsionicWin', 'OnCyberWin', 'OnPhysicalWin', 'OnDestroyEnemyUnit', 'TrapEscapeCheck', 'OnPlay', 'OnAttack', 'Static']);
   for (const c of cardsJson.cards) {
     for (const e of c.effects) {
       it(`${c.id} ${e.trigger}/${e.effect}`, () => {

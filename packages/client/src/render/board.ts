@@ -221,10 +221,13 @@ export class Board {
       const uids = p.cus.filter((u) => v.defs[v.cards[u]!.cardId]?.cuType === t);
       if (uids.length === 0) continue;
       const ready = uids.filter((u) => !v.cards[u]!.depleted).length;
+      const fortified = uids.filter((u) => v.cards[u]!.equipment).length;
+      const fortText = fortified ? `, ${fortified} fortified (depleted instead of destroyed when paying)` : '';
       groups.push(
         h(
           'div',
-          { class: `cu-group cu-${t}`, title: `${CU_NAMES[t]}: ${uids.length} (${ready} ready)`, 'aria-label': `${CU_NAMES[t]} ${uids.length}, ${ready} ready` },
+          { class: `cu-group cu-${t}`, title: `${CU_NAMES[t]}: ${uids.length} (${ready} ready)${fortText}`, 'aria-label': `${CU_NAMES[t]} ${uids.length}, ${ready} ready${fortText}` },
+          fortified ? h('span', { class: 'cu-shield', 'aria-hidden': 'true' }, fortified > 1 ? `🛡${fortified}` : '🛡') : null,
           h('img', { class: 'cu-art', src: artUrl(CU_ART[t], 'sm') ?? '', alt: '' }),
           h('span', { class: 'cu-shape', 'aria-hidden': 'true' }),
           h('span', { class: 'cu-count' }, String(uids.length)),

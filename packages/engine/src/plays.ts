@@ -34,7 +34,12 @@ export function unplayableReasons(s: GameState, seat: Seat, p: Prompt): Record<s
     }
     const short = shortfall(s, seat, d.cost ?? ZERO_COST);
     if (short.length) {
-      out[uid] = 'Needs ' + short.map((x) => (x.type === 'W' ? `${x.missing} more Creation Unit${x.missing > 1 ? 's' : ''} to destroy` : `${x.missing} more ${CU_NAME[x.type]}`)).join(', ');
+      const units = (n: number) => `${n} more Creation Unit${n > 1 ? 's' : ''}`;
+      out[uid] = 'Needs ' + short.map((x) =>
+        x.type === 'W' ? `${units(x.missing)} to destroy`
+        : x.type === 'A' ? `${units(x.missing)} of any type to deplete`
+        : x.type === 'choice' ? `1 ${(x.options ?? []).map((t) => CU_NAME[t]).join(' or ')}`
+        : `${x.missing} more ${CU_NAME[x.type]}`).join(', ');
       continue;
     }
     if (d.cardType === 'Equipment') out[uid] = `No unit can hold it (needs an un-equipped ${d.equip?.allowed.join(' or ')} with ${d.equip?.ability} above 0)`;
@@ -84,6 +89,12 @@ export function playOptions(s: GameState, seat: Seat, p: Prompt): PlayOption[] {
     const d = defOf(s, uid);
     if (!types.has(d.cardType)) continue;
     if (d.cardType === 'Resource') {
+      if (d.effects.some((e) => e.effect === 'FortifyResource')) {
+        const targets = player(s, seat).cus.filter((u) => !card(s, u).equipment);
+        if (targets.length === 0) continue;
+        out.push({ uid, cardId: d.id, targets, payments: [{ destroy: {} }], suggested: { destroy: {} } });
+        continue;
+      }
       out.push({ uid, cardId: d.id, targets: null, payments: [{ destroy: {} }], suggested: { destroy: {} } });
       continue;
     }
@@ -121,6 +132,16 @@ export function performPlay(ctx: Ctx, seat: Seat, p: Prompt, cmd: Extract<Comman
   const c = card(s, cmd.uid);
   const resume: Task = p.resume;
 
+  if (d.cardType === 'Resource' && d.effects.some((e) => e.effect === 'FortifyResource')) {
+    const target = cmd.target!;
+    moveCard(ctx, cmd.uid, 'attached');
+    c.attachedTo = target;
+    card(s, target).equipment = cmd.uid;
+    emit(ctx, { type: 'CardPlayed', seat, uid: cmd.uid, cardId: d.id, cardType: d.cardType, target });
+    emit(ctx, { type: 'ResourceFortified', seat, uid: cmd.uid, cardId: d.id, cu: target });
+    push(ctx, resume);
+    return;
+  }
   if (d.cardType === 'Resource') {
     moveCard(ctx, cmd.uid, 'discard');
     emit(ctx, { type: 'CardPlayed', seat, uid: cmd.uid, cardId: d.id, cardType: d.cardType });

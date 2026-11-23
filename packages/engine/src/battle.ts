@@ -5,6 +5,7 @@ import { fighterStrength, fighterUnits, isDisabled } from './stats';
 import { card, defOf, emit, moveCard, player, turnOrderFrom } from './state';
 import { ask, push, pushSeq, register } from './tasks';
 import { checkVictory, damageLab } from './victory';
+import { damageUnit } from './damage';
 import { openWindow } from './windows';
 import { othersFrom } from './plays';
 import type { Ability, Attack, Ctx, GameState, Resolution, Seat, SideDice, Task } from './types';
@@ -90,6 +91,16 @@ register('declareAttackers', (ctx, t) => {
     b.attacks.push({ id: d.uid, seat, units, target: d.target, blockers: [], status: 'pending' });
   }
   emit(ctx, { type: 'AttackersDeclared', seat, attacks: b.attacks.map((x) => ({ id: x.id, units: x.units, target: x.target })) });
+  // Change Request 1: "When this unit attacks" abilities, in declaration order.
+  const onAttack: Task[] = [];
+  for (const atk of b.attacks) {
+    for (const u of atk.units) {
+      for (const e of defOf(s, u).effects) {
+        if (e.trigger === 'OnAttack') onAttack.push({ k: 'effect', effect: e.effect, controller: seat, source: u, params: e.params, opponent: atk.target });
+      }
+    }
+  }
+  if (onAttack.length) pushSeq(ctx, onAttack);
 });
 
 register('afterAttackers', (ctx) => {
@@ -310,6 +321,16 @@ register('fight', (ctx, t) => {
       const sd = strengths(s, atk.blockers, false);
       // A Cyber/Psionic battle happens only if both sides have >= 1 (X counts as >= 1, and is rolled by now).
       r.occurs = { cyber: sa.cyber >= 1 && sd.cyber >= 1, psionic: sa.psionic >= 1 && sd.psionic >= 1 };
+      // Zero-strength rule (B2): a side with 0 against >= 1, of a listed unit type, is instantly Disoriented.
+      const combat = s.rules.combat ?? {};
+      const zeroRule = combat.zeroStrengthDisorients ?? { psionic: ['Creature', 'Cyborg'], cyber: ['Robot', 'Cyborg'] };
+      const autoLoser: Partial<Record<'cyber' | 'psionic', 'att' | 'def'>> = {};
+      for (const ab of ['cyber', 'psionic'] as const) {
+        const types = zeroRule[ab] ?? [];
+        const isType = (units: string[]) => units.some((u) => types.includes(defOf(s, u).unitType ?? ''));
+        if (sa[ab] === 0 && sd[ab] >= 1 && isType(atk.units)) autoLoser[ab] = 'att';
+        else if (sd[ab] === 0 && sa[ab] >= 1 && isType(atk.blockers)) autoLoser[ab] = 'def';
+      }
       const roll = (ab: 'cyber' | 'psionic') => (r.occurs![ab] ? newRoll(rollSide(ctx)) : null);
       const att: SideDice = { cyber: roll('cyber'), psionic: roll('psionic'), physical: newRoll(rollSide(ctx)) };
       const def: SideDice = { cyber: roll('cyber'), psionic: roll('psionic'), physical: newRoll(rollSide(ctx)) };
@@ -324,21 +345,30 @@ register('fight', (ctx, t) => {
         const o = applyObliteration(s, ab, att[ab], def[ab]);
         if (o !== 'none') emit(ctx, { type: 'Obliterated', attackId: atk.id, die: ab, by: o });
       }
+      const psionicDisorients = combat.psionicLossDisorients ?? true;
       for (const ab of ['cyber', 'psionic'] as const) {
-        if (!r.occurs[ab]) continue;
-        const ta = sa[ab] + dieBonus(s, ab, att[ab]);
-        const td = sd[ab] + dieBonus(s, ab, def[ab]);
-        if (ta === td) continue;
-        const winner = ta > td ? 'att' : 'def';
+        let ta: number;
+        let td: number;
+        let auto = false;
+        if (autoLoser[ab]) {
+          auto = true;
+          ta = sa[ab];
+          td = sd[ab];
+        } else {
+          if (!r.occurs[ab]) continue;
+          ta = sa[ab] + dieBonus(s, ab, att[ab]);
+          td = sd[ab] + dieBonus(s, ab, def[ab]);
+          if (ta === td) continue;
+        }
+        const winner = autoLoser[ab] ? (autoLoser[ab] === 'att' ? 'def' : 'att') : ta > td ? 'att' : 'def';
+        const loser = winner === 'att' ? 'def' : 'att';
         r.winners[ab] = winner;
-        if (ab === 'cyber') {
-          const loser = winner === 'att' ? 'def' : 'att';
+        if (ab === 'psionic') emit(ctx, { type: 'PsionicWin', attackId: atk.id, side: winner, totals: { att: ta, def: td }, auto });
+        if (ab === 'cyber' || psionicDisorients || auto) {
           r.disoriented[loser] = true;
           const units = loser === 'att' ? atk.units : atk.blockers;
           for (const u of units) card(s, u).disoriented = true;
-          emit(ctx, { type: 'Disoriented', attackId: atk.id, side: loser, uids: units, totals: { att: ta, def: td } });
-        } else {
-          emit(ctx, { type: 'PsionicWin', attackId: atk.id, side: winner, totals: { att: ta, def: td } });
+          emit(ctx, { type: 'Disoriented', attackId: atk.id, side: loser, uids: units, totals: { att: ta, def: td }, ability: ab, auto });
         }
       }
       r.rerollsLeft = {
@@ -421,6 +451,38 @@ register('fight', (ctx, t) => {
       const defUnits = [...atk.blockers];
       if (r.destroyed.def) destroyFighter(ctx, defUnits, atk.id);
       if (r.destroyed.att) destroyFighter(ctx, attUnits, atk.id);
+      // B3: a Disoriented Physical winner can't destroy, but the non-Disoriented loser deals damage
+      // equal to its Physical strength (no dice). A Stack takes it on its strongest card.
+      const w = r.winners.physical;
+      if (w && (s.rules.combat?.disorientedWinnerTakesDamage ?? true) && r.disoriented[w] && !r.disoriented[w === 'att' ? 'def' : 'att']) {
+        const loserStr = w === 'att' ? sd.physical : sa.physical;
+        const winnerUnits = w === 'att' ? atk.units : atk.blockers;
+        const loserUnits = w === 'att' ? atk.blockers : atk.units;
+        const winnerStr = w === 'att' ? sa.physical : sd.physical;
+        if (loserStr > 0) {
+          if (loserStr >= winnerStr) {
+            // Enough to destroy the whole fighter.
+            emit(ctx, { type: 'UnitDamaged', uid: winnerUnits[0], cardId: card(s, winnerUnits[0]!).cardId, seat: card(s, winnerUnits[0]!).owner, amount: loserStr, physicalBefore: winnerStr, physicalAfter: 0, source: loserUnits[0] ?? null, cause: 'combat', lethal: true, attackId: atk.id });
+            destroyFighter(ctx, winnerUnits, atk.id);
+            if (w === 'att') r.destroyed.att = true;
+            else r.destroyed.def = true;
+          } else {
+            if (winnerUnits.length === 1) damageUnit(ctx, winnerUnits[0]!, loserStr, loserUnits[0] ?? null, 'combat', atk.id);
+            else {
+              // A surviving Stack spreads the reduction over its cards, strongest first.
+              let left = loserStr;
+              for (const u of [...winnerUnits].sort((a, b) => fighterStrength(s, [b], 'physical', false) - fighterStrength(s, [a], 'physical', false))) {
+                const before = fighterStrength(s, [u], 'physical', false);
+                const take = Math.min(left, before);
+                if (!take) continue;
+                card(s, u).tempMods.physical -= take;
+                left -= take;
+                emit(ctx, { type: 'UnitDamaged', uid: u, cardId: card(s, u).cardId, seat: card(s, u).owner, amount: take, physicalBefore: before, physicalAfter: fighterStrength(s, [u], 'physical', false), source: loserUnits[0] ?? null, cause: 'combat', lethal: false, attackId: atk.id });
+              }
+            }
+          }
+        }
+      }
       atk.status = 'resolved';
       push(ctx, { k: 'fightTriggers', attackId: atk.id, attUnits, defUnits, attackerSeat, defenderSeat, winners: r.winners, destroyed: r.destroyed });
       b.current = null;

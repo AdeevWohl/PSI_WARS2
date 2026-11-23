@@ -40,7 +40,8 @@ export function unitStrength(s: GameState, uid: string, ab: Ability, attacking: 
   const c = card(s, uid);
   const base = baseValue(s, uid, ab) ?? 0;
   const mods: StatMods = c.tempMods;
-  return base + equipmentBonus(s, uid, ab) + mods[ab] + (attacking ? auraBonus(s, uid, ab) : 0);
+  // Change Request 1 (B2): strengths never go below 0.
+  return Math.max(0, base + equipmentBonus(s, uid, ab) + mods[ab] + (c.permMods?.[ab] ?? 0) + (attacking ? auraBonus(s, uid, ab) : 0));
 }
 
 /** A stack's strength is the sum of its cards (§A8 Stacking). */

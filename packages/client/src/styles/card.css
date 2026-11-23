@@ -89,3 +89,10 @@
 /* Dice */
 .die { flex: none; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6)); }
 .die.obliterated { opacity: 0.55; }
+
+/* Change Request 1 cost lights */
+.light.l-choice { background: linear-gradient(135deg, var(--c1) 50%, var(--c2) 50%); }
+.light.l-A { background: #3a4558; box-shadow: inset 0 0 0 2px #e8eef8; }
+.chip.cost-chip.extra { left: 4%; white-space: nowrap; background: #1b2638; border-color: #e8eef8; font-size: 0.8em; padding: 0 4px; }
+/* Resource Fortification shield on a Creation Unit group */
+.cu-group .cu-shield { position: absolute; top: -6px; right: -6px; font-size: 14px; filter: drop-shadow(0 0 4px #ffd36a); }

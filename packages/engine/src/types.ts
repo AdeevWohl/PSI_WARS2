@@ -12,7 +12,12 @@ export interface Cost {
   B: number;
   R: number;
   P: number;
+  /** Creation Units of any (eligible) type to destroy. */
   W: number;
+  /** Creation Units of any type to deplete ("pay any"). */
+  A?: number;
+  /** "Pay one of these" lights: each entry lists the types that may be depleted for it. */
+  choice?: CUType[][];
 }
 
 export interface Stats {
@@ -69,6 +74,15 @@ export interface RulesData {
     resource: { min: number; max: number; maxCreationUnits: number; maxPerCUType: number; maxCopiesNonCU: number };
   };
   houseRules: Record<string, string | number | boolean>;
+  /** Change Request 1 combat rules (absent in old data = the new defaults). */
+  combat?: {
+    /** Losing the Psionic battle disorients, like losing the Cyber battle (B1). */
+    psionicLossDisorients?: boolean;
+    /** Unit types instantly Disoriented with 0 in the ability against an opponent with >= 1 (B2). */
+    zeroStrengthDisorients?: Partial<Record<'cyber' | 'psionic', string[]>>;
+    /** A Disoriented Physical winner takes damage from the loser instead of nothing happening (B3). */
+    disorientedWinnerTakesDamage?: boolean;
+  };
   instantWindows: Record<string, boolean | string>;
 }
 
@@ -117,6 +131,8 @@ export interface CardInstance {
   stackPartner: string | null;
   xValue: number | null;
   tempMods: StatMods;
+  /** Lasting changes while in play (e.g. a revived unit: +1 Physical, −1 Psionic). Cleared when it leaves play. */
+  permMods?: StatMods;
   disoriented: boolean;
   /** Trap card uid holding this unit. */
   trappedBy: string | null;
@@ -225,7 +241,7 @@ export interface GameResult {
 }
 
 export interface GameState {
-  engineVersion: 1;
+  engineVersion: number;
   defs: Record<string, CardDef>;
   rules: RulesData;
   config: GameConfig;

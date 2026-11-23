@@ -119,6 +119,25 @@ export function cleanCardOverlay(base: CardDef, edit: unknown, errors: string[])
           ok = false;
         }
       }
+      // Change Request 1 (B5): "pay any" count and "pay one of these" lights.
+      if (ok && c && 'A' in c) {
+        if (c.A === undefined || c.A === 0) delete (cost as Cost).A;
+        else if (isInt(c.A, 0, LIMITS.cost.max)) (cost as Cost).A = c.A as number;
+        else {
+          errors.push(`${name}: "pay any" must be a whole number from 0 to ${LIMITS.cost.max}.`);
+          ok = false;
+        }
+      }
+      if (ok && c && 'choice' in c) {
+        const ch = c.choice;
+        const types = ['G', 'B', 'R', 'P'];
+        if (ch === undefined || (Array.isArray(ch) && ch.length === 0)) delete (cost as Cost).choice;
+        else if (Array.isArray(ch) && ch.length <= 4 && ch.every((x) => Array.isArray(x) && x.length >= 2 && x.every((t) => types.includes(t as string)))) (cost as Cost).choice = (ch as string[][]).map((x) => [...new Set(x)]) as Cost['choice'];
+        else {
+          errors.push(`${name}: each "pay one of these" light needs at least two Creation Unit types (G, B, R, P).`);
+          ok = false;
+        }
+      }
       if (ok && !same(cost, base.cost)) out.cost = cost;
     }
   }

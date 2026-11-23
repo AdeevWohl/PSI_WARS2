@@ -4,6 +4,7 @@ import { isDisabled } from './stats';
 import { card, defOf, emit, isPowerLike, matchesFilter, moveCard, opponentsOf, player } from './state';
 import { ask, register } from './tasks';
 import { checkVictory, damageLab } from './victory';
+import { damageUnit } from './damage';
 import type { Ctx, GameState, Seat, Task } from './types';
 
 /**
@@ -72,6 +73,21 @@ export function trapTargets(s: GameState, seat: Seat): string[] {
   const out: string[] = [];
   for (const opp of opponentsOf(s, seat)) out.push(...player(s, opp).lab);
   return out;
+}
+
+/** Targets for "deal damage to any target": every Battle Unit in play and every live player's Lab. */
+export function damageTargets(s: GameState): string[] {
+  const out: string[] = [];
+  for (const p of s.players) {
+    if (p.eliminated) continue;
+    out.push(...p.lab, `lab:${p.seat}`);
+  }
+  return out;
+}
+
+/** A unit destroyed by damage mid-battle leaves its battle. */
+function removeIfDestroyed(ctx: Ctx, uid: string, destroyed: boolean): void {
+  if (destroyed) removeFromBattle(ctx, uid, 'destroyed');
 }
 
 export const EFFECTS: Record<string, EffectImpl> = {
@@ -230,6 +246,142 @@ export const EFFECTS: Record<string, EffectImpl> = {
         return;
       }
       ask(ctx, { seat: e.controller, kind: 'chooseCard', label: `${defOf(s, e.source).name}: you may put a card on top of your deck`, options: [...options, null], info: { source: e.source, zone: 'battleDeck', optional: true }, resume: t });
+    },
+  },
+
+  /** Change Request 1: the opponent discards a Power card of their choice (Jingwa, Nomis). */
+  DiscardPowerFromHand: {
+    run(ctx, t) {
+      const e = t as EffectTask;
+      const s = ctx.s;
+      const opp = e.opponent;
+      if (opp === undefined || player(s, opp).eliminated) return;
+      const choice = answerChoice(t);
+      const hand = player(s, opp).hand;
+      if (choice && hand.includes(choice)) {
+        moveCard(ctx, choice, 'discard');
+        emit(ctx, { type: 'CardDiscarded', seat: opp, uid: choice, cardId: card(s, choice).cardId, source: e.source, reason: 'ability' });
+        return;
+      }
+      const powers = hand.filter((u) => isPowerLike(defOf(s, u)));
+      if (powers.length === 0) {
+        // Prove it: the hand is shown, as with the old reveal ability.
+        emit(ctx, { type: 'CardsRevealed', seat: opp, cards: hand.map((u) => ({ uid: u, cardId: card(s, u).cardId })), source: e.source, wholeHand: true });
+        return;
+      }
+      if (powers.length === 1) {
+        moveCard(ctx, powers[0]!, 'discard');
+        emit(ctx, { type: 'CardDiscarded', seat: opp, uid: powers[0], cardId: card(s, powers[0]!).cardId, source: e.source, reason: 'ability' });
+        return;
+      }
+      ask(ctx, { seat: opp, kind: 'chooseCard', label: `${defOf(s, e.source).name}: choose a Power card to discard`, options: powers, info: { source: e.source, zone: 'hand', discard: true }, resume: t });
+    },
+  },
+
+  /** Change Request 1: search the Battle Deck for a matching card, reveal it, put it into hand, shuffle (optional). */
+  TutorToHand: {
+    run(ctx, t) {
+      const e = t as EffectTask;
+      const s = ctx.s;
+      const deck = player(s, e.controller).battleDeck;
+      if (t.answer !== undefined) {
+        const choice = answerChoice(t);
+        if (choice && deck.includes(choice)) {
+          moveCard(ctx, choice, 'hand');
+          emit(ctx, { type: 'CardSearched', seat: e.controller, uid: choice, cardId: card(s, choice).cardId, revealed: true, source: e.source });
+        }
+        shuffleDeck(ctx, e.controller, 'battleDeck');
+        return;
+      }
+      const options = deck.filter((u) => matchesFilter(defOf(s, u), e.params.filter));
+      if (options.length === 0) {
+        emit(ctx, { type: 'DeckSearched', seat: e.controller, found: false });
+        shuffleDeck(ctx, e.controller, 'battleDeck');
+        return;
+      }
+      ask(ctx, { seat: e.controller, kind: 'chooseCard', label: `${defOf(s, e.source).name}: you may put a card from your deck into your hand`, options: [...options, null], info: { source: e.source, zone: 'battleDeck', optional: true }, resume: t });
+    },
+  },
+
+  /** Change Request 1: return a destroyed unit to your Lab, changed (Creature Regenerate, Robo Refurb). */
+  ReviveToLab: {
+    canPlay: (s, seat, _uid, params) => player(s, seat).discard.some((u) => matchesFilter(defOf(s, u), params.filter)),
+    run(ctx, t) {
+      const e = t as EffectTask;
+      const s = ctx.s;
+      const choice = answerChoice(t);
+      if (choice && player(s, e.controller).discard.includes(choice)) {
+        moveCard(ctx, choice, 'lab');
+        const c = card(s, choice);
+        c.depleted = false;
+        c.enteredThisTurn = true;
+        const mods = (e.params.mods ?? {})[defOf(s, choice).unitType ?? ''] ?? {};
+        c.permMods = { cyber: Number(mods.cyber ?? 0), psionic: Number(mods.psionic ?? 0), physical: Number(mods.physical ?? 0) };
+        emit(ctx, { type: 'UnitRevived', seat: e.controller, uid: choice, cardId: c.cardId, mods: c.permMods, source: e.source });
+        return;
+      }
+      const options = player(s, e.controller).discard.filter((u) => matchesFilter(defOf(s, u), e.params.filter));
+      if (options.length === 0) {
+        emit(ctx, { type: 'EffectFizzled', source: e.source, reason: 'noValidCard' });
+        return;
+      }
+      ask(ctx, { seat: e.controller, kind: 'chooseCard', label: `${defOf(s, e.source).name}: choose a unit to bring back into play`, options, info: { source: e.source, zone: 'discard' }, resume: t });
+    },
+  },
+
+  /** Change Request 1: deal damage to one target — a Battle Unit in play or a Lab ("lab:<seat>"). */
+  DealDamage: {
+    targets: (s) => damageTargets(s),
+    run(ctx, t) {
+      const e = t as EffectTask;
+      const s = ctx.s;
+      const amount = Number(e.params.amount ?? 1);
+      const target = e.target ?? '';
+      if (target.startsWith('lab:')) {
+        const seat = Number(target.slice(4));
+        if (!s.players[seat] || s.players[seat]!.eliminated) return void emit(ctx, { type: 'EffectFizzled', source: e.source, reason: 'targetGone' });
+        damageLab(ctx, seat, amount, e.source);
+      } else {
+        const c = s.cards[target];
+        if (!c || c.zone !== 'lab') return void emit(ctx, { type: 'EffectFizzled', source: e.source, reason: 'targetGone' });
+        removeIfDestroyed(ctx, target, damageUnit(ctx, target, amount, e.source, 'effect'));
+      }
+      checkVictory(ctx);
+    },
+  },
+
+  /** Change Request 1: deal damage to every unit in play of the given types (Bio Pulse, Static Burst). */
+  DamageAll: {
+    canPlay: (s, _seat, _uid, params) => s.players.some((p) => p.lab.some((u) => matchesFilter(defOf(s, u), params.filter))),
+    run(ctx, t) {
+      const e = t as EffectTask;
+      const s = ctx.s;
+      const amount = Number(e.params.amount ?? 1);
+      const hit = s.players.flatMap((p) => p.lab).filter((u) => matchesFilter(defOf(s, u), e.params.filter));
+      emit(ctx, { type: 'SweepDamage', source: e.source, uids: hit, amount });
+      for (const u of hit) removeIfDestroyed(ctx, u, damageUnit(ctx, u, amount, e.source, 'effect'));
+      checkVictory(ctx);
+    },
+  },
+
+  /** Change Request 1: the opponent destroys one of their Creation Units of their choice (Lodner Predator). */
+  OpponentDestroysCU: {
+    run(ctx, t) {
+      const e = t as EffectTask;
+      const s = ctx.s;
+      const opp = e.opponent;
+      if (opp === undefined || player(s, opp).eliminated) return;
+      const cus = player(s, opp).cus;
+      const choice = answerChoice(t);
+      const destroy = (uid: string) => {
+        const cardId = card(s, uid).cardId;
+        moveCard(ctx, uid, 'discard');
+        emit(ctx, { type: 'CUDestroyed', seat: opp, uids: [uid], cardIds: [cardId], forUid: e.source, reason: 'ability' });
+      };
+      if (choice && cus.includes(choice)) return destroy(choice);
+      if (cus.length === 0) return void emit(ctx, { type: 'EffectFizzled', source: e.source, reason: 'noValidCard' });
+      if (cus.length === 1 || new Set(cus.map((u) => `${card(s, u).cardId}:${card(s, u).depleted}`)).size === 1) return destroy(cus[0]!);
+      ask(ctx, { seat: opp, kind: 'chooseCard', label: `${defOf(s, e.source).name}: choose one of your Creation Units to destroy`, options: [...cus], info: { source: e.source, zone: 'cus' }, resume: t });
     },
   },
 

@@ -70,12 +70,12 @@ describe('3–4 player house rules', () => {
     expect(d.state.players[1]!.labHP).toBe(15);
   });
 
-  it('E: Lodner Predator mills the defender it attacks', () => {
-    const sc = scenario({ at: 'battle', seats: [{ lab: ['BU_LP'] }, { resourceDeck: ['CU_NG'] }, { resourceDeck: ['CU_BA'] }], dice: [6] });
+  it('E: Lodner Predator makes the player it attacks destroy a Creation Unit', () => {
+    const sc = scenario({ at: 'battle', seats: [{ lab: ['BU_LP'] }, { cus: { G: 1 } }, { cus: { B: 1 } }] });
     const d = drive(sc);
     d.do({ type: 'DeclareAttackers', attacks: [{ uid: sc.ids[0]!.lab[0]!, target: 2 }] });
-    d.do({ type: 'UseAbility', use: true });
-    expect(d.last('CardMilled')).toMatchObject({ seat: 2, cardId: 'CU_BA' });
+    expect(d.last('CUDestroyed')).toMatchObject({ seat: 2, uids: [sc.state.players[2]!.cus[0]] });
+    expect(d.state.players[1]!.cus).toHaveLength(1);
   });
 
   it('E: High-Energy Pulse affects everyone', () => {
@@ -148,7 +148,7 @@ describe('art-only extra cards (disabled by default, data-driven)', () => {
     expect(d.last('BattleResolved').att.cyber.strength).toBe(3);
   });
 
-  it('Acorbeac Destroyer: on Psionic win may put a Cyborg from the deck on top', () => {
+  it('Acorbeac Destroyer: on Psionic win may put a Cyborg from the deck into hand (Change Request 1)', () => {
     const sc = scenario({ at: 'battle', seats: [{ lab: ['BU_AD'], battleDeck: ['BU_LS', 'BU_ZM', 'BU_TS'] }, { lab: ['BU_TS'] }], dice: [2, 2, 2, 2] });
     const ad = sc.ids[0]!.lab[0]!;
     const d = drive(sc);
@@ -158,7 +158,9 @@ describe('art-only extra cards (disabled by default, data-driven)', () => {
     const zm = sc.ids[0]!.battleDeck[1]!;
     expect(d.prompt!.options).toEqual([zm, null]);
     d.do({ type: 'ChooseFromList', choice: zm });
-    expect(d.state.players[0]!.battleDeck[0]).toBe(zm);
+    expect(d.state.players[0]!.hand).toContain(zm);
+    expect(d.state.players[0]!.battleDeck).not.toContain(zm);
+    expect(d.last('CardSearched')).toMatchObject({ uid: zm, revealed: true });
   });
 
   it('Mental Disrupter: Creatures and Cyborgs cannot attack', () => {
@@ -169,14 +171,14 @@ describe('art-only extra cards (disabled by default, data-driven)', () => {
     expect(getLegalActions(d.state, 0)!.attack!.eligible).toEqual([sc.ids[0]!.lab[2]]);
   });
 
-  it('Nomis Analyzer: with Cyber win the opponent reveals a Power card', () => {
+  it('Nomis Analyzer: with Cyber win the opponent discards a Power card (Change Request 1)', () => {
     const sc = scenario({ at: 'battle', seats: [{ lab: ['BU_NA'] }, { lab: ['BU_LQ'], hand: ['PW_EH'] }], dice: [2, 2, 2, 2] });
     const na = sc.ids[0]!.lab[0]!;
     const d = drive(sc);
     d.do({ type: 'DeclareAttackers', attacks: [{ uid: na, target: 1 }] });
     d.do({ type: 'AssignBlockers', blocks: [{ blocker: sc.ids[1]!.lab[0]!, attacker: na }] });
-    d.expectPrompt('chooseCard', 1);
-    d.do({ type: 'ChooseFromList', choice: sc.ids[1]!.hand[0]! });
-    expect(d.last('CardsRevealed').cards[0].cardId).toBe('PW_EH');
+    // Only one Power card in hand: it is discarded without asking.
+    expect(d.last('CardDiscarded')).toMatchObject({ seat: 1, cardId: 'PW_EH' });
+    expect(d.state.players[1]!.discard).toContain(sc.ids[1]!.hand[0]);
   });
 });

@@ -66,6 +66,7 @@ export function moveCard(
     if (i >= 0) fromArr.splice(i, 1);
   }
   const wasInPlay = isInPlay(c);
+  const wasCU = c.zone === 'cus';
   if (s.stack.some((x) => x.uid === uid) && zone !== 'stack') {
     s.stack = s.stack.filter((x) => x.uid !== uid);
   }
@@ -78,12 +79,23 @@ export function moveCard(
   }
 
   if (zone !== 'attached') c.attachedTo = null;
+  if (wasCU && zone !== 'cus' && c.equipment) {
+    const eq = c.equipment;
+    c.equipment = null;
+    const e = s.cards[eq];
+    if (e && e.zone === 'attached') {
+      e.attachedTo = null;
+      moveCard(ctx, eq, 'discard');
+      emit(ctx, { type: 'EquipmentDiscarded', uid: eq, cardId: e.cardId, seat: e.owner, reason: 'resourceLeftPlay' });
+    }
+  }
   const nowInPlay = isInPlay(c);
   if (wasInPlay && !nowInPlay) {
     c.depleted = false;
     c.xValue = null;
     c.disoriented = false;
     c.tempMods = { cyber: 0, psionic: 0, physical: 0 };
+    delete c.permMods;
     if (c.stackPartner) {
       const p = s.cards[c.stackPartner];
       if (p) p.stackPartner = null;

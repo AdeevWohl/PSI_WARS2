@@ -201,7 +201,11 @@ class Brain {
       const d = this.v.defs[p.cardId]!;
       let score = -Infinity;
       let target: string | null = null;
-      if (d.cardType === 'Resource') score = 50;
+      if (d.cardType === 'Resource') {
+        score = 50;
+        // Resource Fortification: protect the type we have most of (it is destroyed most often).
+        if (p.targets) target = this.bestFortifyTarget(p.targets);
+      }
       else if (d.cardType === 'BattleUnit') score = 10 + this.cardStaticValue(d) * 2 + this.costSize(d);
       else if (d.cardType === 'Equipment' && p.targets) {
         let bestT = -Infinity;
@@ -213,7 +217,11 @@ class Brain {
           }
         }
         score = 6 + this.cardStaticValue(d) * 2 + bestT * 0.3;
-      } else if (d.cardType === 'Power') score = this.powerScore(d);
+      } else if (d.cardType === 'Power') {
+        const pick = this.powerPick(d, p.targets);
+        score = pick.score;
+        target = pick.target;
+      }
       else if (d.cardType === 'Trap' && p.targets) {
         // Hard holds Traps for the opponent's attack; Normal traps a big threat now.
         const t = this.bestTrapTarget(p.targets);
@@ -230,6 +238,51 @@ class Brain {
     return best?.cmd ?? { type: 'AdvancePhase' };
   }
 
+  /** Power cards with targets choose them here; untargeted ones fall back to powerScore. */
+  private powerPick(d: CardDef, targets: string[] | null): { score: number; target: string | null } {
+    const e = d.effects.find((x) => x.trigger === 'OnPlay');
+    if (e?.effect === 'DealDamage' && targets) {
+      const amount = Number(e.params.amount ?? 1);
+      const opps = this.opponents();
+      // Lethal on a Lab wins the game.
+      for (const o of opps) if (targets.includes(`lab:${o}`) && this.v.players[o]!.labHP <= amount) return { score: 200, target: `lab:${o}` };
+      let best: { score: number; target: string | null } = { score: -Infinity, target: null };
+      for (const t of targets) {
+        if (t.startsWith('lab:')) continue;
+        const c = this.v.cards[t];
+        if (!c || c.owner === this.me) continue;
+        const phys = this.strength(t, false).physical;
+        const v = amount >= phys ? 6 + this.unitValue(t) : amount >= phys - 1 ? 1 : -Infinity;
+        if (v > best.score) best = { score: v, target: t };
+      }
+      if (best.score === -Infinity && this.level !== 'easy') {
+        const o = [...opps].sort((a, b) => this.v.players[a]!.labHP - this.v.players[b]!.labHP)[0];
+        if (o !== undefined && targets.includes(`lab:${o}`)) best = { score: 2, target: `lab:${o}` };
+      }
+      return best;
+    }
+    if (e?.effect === 'DamageAll') {
+      const amount = Number(e.params.amount ?? 1);
+      const types: string[] = e.params.filter?.unitType ?? [];
+      let net = 0;
+      for (const pl of this.v.players) {
+        for (const u of pl.lab) {
+          if (!types.includes(this.def(u).unitType ?? '')) continue;
+          const kill = amount >= this.strength(u, false).physical;
+          const v = kill ? this.unitValue(u) + 2 : 0.5;
+          net += pl.seat === this.me ? -v : v;
+        }
+      }
+      return { score: net > 3 ? net : -Infinity, target: null };
+    }
+    return { score: this.powerScore(d), target: null };
+  }
+
+  private bestFortifyTarget(targets: string[]): string {
+    const count = (t: string) => targets.filter((x) => this.v.cards[x]?.cardId === this.v.cards[t]?.cardId).length;
+    return [...targets].sort((a, b) => count(b) - count(a))[0]!;
+  }
+
   private powerScore(d: CardDef): number {
     const e = d.effects.find((x) => x.trigger === 'OnPlay');
     if (!e) return -Infinity;
@@ -241,6 +294,11 @@ class Brain {
       }
       case 'SearchDeck':
         return me.battleDeckCount > 0 ? 4 : -Infinity;
+      case 'ReviveToLab': {
+        const types: string[] = e.params.filter?.unitType ?? [];
+        const best = me.discard.map((u) => this.def(u)).filter((x) => x.cardType === 'BattleUnit' && types.includes(x.unitType ?? '')).map((x) => this.cardStaticValue(x));
+        return best.length ? 6 + Math.max(...best) : -Infinity;
+      }
       case 'DisableUnits': {
         // Only worth it in our own turn if it stops more of their blockers than our attackers.
         const affected = (uids: string[]) => uids.filter((u) => this.disableHits(e.params.filter, u)).reduce((s, u) => s + this.unitValue(u), 0);
@@ -493,6 +551,11 @@ class Brain {
           const mine = pending.flatMap((a) => (a.seat === this.me ? a.units : a.blockers));
           if (hits(theirs) - hits(mine) > 3) return this.playCmd(p.uid, null, p.suggested);
         }
+        if (e?.effect === 'DealDamage' || e?.effect === 'DamageAll') {
+          const pick = this.powerPick(d, p.targets);
+          if (pick.score >= 6) return this.playCmd(p.uid, pick.target, this.pickPayment(p.payments, p.suggested));
+        }
+        if (e?.effect === 'ReviveToLab' && this.powerScore(d) > 8) return this.playCmd(p.uid, null, p.suggested);
         if (e?.effect === 'ReturnFromDiscard' || e?.effect === 'SearchDeck') {
           if (this.powerScore(d) > 4) return this.playCmd(p.uid, null, p.suggested);
         }

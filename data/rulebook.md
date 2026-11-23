@@ -76,7 +76,11 @@ Every turn has five phases, always in this order:
 1. For each coloured light with value N, deplete N ready Creation Units of that type.
 2. For the white light W, also destroy W Creation Units (to your discard pile). They must be ready, not among those you are depleting, and of a type that appears in the card's coloured cost.
 
-**RULING A7-a:** a card with a white cost but no coloured cost (Equipment Hunter, Equipment Mechanic, Grankor Stasis Field) may destroy Creation Units of any type.
+**RULING A7-a:** a card with a white cost but no coloured cost (Equipment Hunter, Grankor Stasis Field) may destroy Creation Units of any type.
+
+**Two more kinds of cost light.** A **split light** in two colours ("pay one of these") means deplete one Creation Unit of *either* type, for example Bio-Acceleration or Material Animation; both colours count as the card's colours for the white light. A **grey ringed light** ("pay any") means deplete that many Creation Units of *any* type. Equipment Mechanic costs "pay any 1".
+
+**Resource Fortification.** A Resource card that goes to your hand when drawn. Play it free in your Creation phase onto one of your Creation Units (one per unit). When you pay a white (destroy) cost, a fortified unit is used first and is **depleted instead of destroyed**, keeping the Fortification. If the unit leaves play another way, the Fortification is discarded.
 
 **RULING A7-b:** when there is a choice of which Creation Units to destroy, you choose. The game suggests the payment that keeps your most flexible Creation Units, and you can always pick another.
 
@@ -121,9 +125,12 @@ The active player is the attacker. Steps, in order:
 - **a) X and modifiers.** Roll any X abilities (the die's numeric value; it lasts the rest of the turn) and any "may roll to modify" effects (decided before rolling). Then apply Equipment, Commander auras and Stack sums. *Which dice to roll:* a Cyber battle happens only if both sides have Cyber of at least 1; a Psionic battle only if both have Psionic of at least 1; a Physical battle always happens. (So Robots never fight Creatures psionically, and Creatures never fight Robots digitally.)
 - **Obliteration.** For each die type, if exactly one side rolled Obliterate, the other side's die of that type is destroyed: its whole result (bonus, Physical +1, re-roll icon) is removed. The Obliterate face still gives its +1. If both rolled Obliterate, both dice are destroyed and neither gets any bonus.
 - **b) Cyber battle.** Total = Cyber strength + surviving Cyber die. The lower total becomes **Disoriented**. Ties: nothing.
-- **c) Psionic battle.** The same with Psionic. The higher total is the *Psionic win*.
-- **d) Physical battle.** For each surviving re-roll icon a player *may* re-roll their Physical die once (the attacker decides first, then the defender; the new result replaces the old). Physical Obliteration is checked after all re-rolls. Total = Physical strength + surviving Physical die + 1 for each surviving Cyber/Psionic side 5. The higher total destroys the other side — unless the winner is Disoriented, in which case nothing is destroyed. A Disoriented unit still adds its full Physical total and can be destroyed. Ties, or both sides Disoriented: nothing is destroyed. Destroyed units go to their owner's discard pile with their Equipment and stack partners. Then "on win" and "on destroy" abilities resolve.
+- **c) Psionic battle.** The same with Psionic: the lower total is also **Disoriented**, and the higher total is the *Psionic win* (its abilities trigger).
+- **No strength to fight with.** A Creature or Cyborg (or a Stack with one) with **Psionic 0** against an opponent with Psionic 1 or more is instantly Disoriented, and the opponent wins the Psionic battle; no Psionic dice are rolled. The same for a Robot or Cyborg with **Cyber 0** against Cyber 1 or more. (Robot vs Creature battles are unaffected.) Strengths never go below 0.
+- **d) Physical battle.** For each surviving re-roll icon a player *may* re-roll their Physical die once (the attacker decides first, then the defender; the new result replaces the old). Physical Obliteration is checked after all re-rolls. Total = Physical strength + surviving Physical die + 1 for each surviving Cyber/Psionic side 5. The higher total destroys the other side — unless the winner is Disoriented. Then the winner destroys nothing, but the non-Disoriented side deals **damage equal to its Physical strength** (no dice) to the winner; see Damage below. A Disoriented unit still adds its full Physical total and can be destroyed. Ties, or both sides Disoriented: nothing is destroyed. Destroyed units go to their owner's discard pile with their Equipment and stack partners. Then "on win" and "on destroy" abilities resolve.
 - **e) Unblocked attackers.** Each deals damage to the attacked player's Lab equal to its current Physical strength (base + Equipment + Stack + Commander + modifiers). No dice are rolled.
+
+**Damage.** A Battle Unit dealt damage is destroyed if the damage is at least its current Physical strength. Otherwise its Physical strength drops by that much until the end of the turn. A Disoriented unit deals no battle damage. When a surviving Stack takes battle damage, the reduction is spread over its cards, strongest first; a card destroyed by an ability's damage breaks its Stack and the other card stays. Damage to a Lab lowers its HP.
 
 **RULING A8-c:** Disoriented lasts until the end of the current Battle phase and only matters in the battle where it happened.
 

@@ -46,6 +46,9 @@ export function proceduralFace(def: CardDef): HTMLElement {
         'div',
         { class: 'proc-cost' },
         [...CU_TYPES, 'W' as const].map((t) => h('span', { class: `light l-${t}${cost[t] ? '' : ' off'}` }, String(cost[t] ?? 0))),
+        // Change Request 1 costs: "pay one of these" (split light) and "pay any" (ringed light).
+        (cost.choice ?? []).map((opts) => h('span', { class: 'light l-choice', style: { '--c1': `var(--cu-${opts[0]})`, '--c2': `var(--cu-${opts[1] ?? opts[0]})` } as any, title: `Deplete one: ${opts.join(' or ')}` }, '1')),
+        cost.A ? h('span', { class: 'light l-A', title: `Deplete any ${cost.A}` }, String(cost.A)) : null,
       ),
     def.cuType && h('div', { class: `proc-cu l-${def.cuType}` }),
     def.stats &&
@@ -118,6 +121,11 @@ export function updateOverlays(el: HTMLElement, def: CardDef, opts: CardRenderOp
         ),
       );
     }
+  }
+  // Costs the printed art can't show: "pay any" and "pay one of these" (Change Request 1).
+  if (def.cost && artShown && (def.cost.A || def.cost.choice?.length)) {
+    const parts = [...(def.cost.choice ?? []).map((o) => o.join('/')), ...(def.cost.A ? [`ANY ${def.cost.A}`] : [])];
+    chips.push(h('span', { class: 'chip cost-chip extra', style: { top: `${COST_Y[COST_Y.length - 1]! * 100 + 8}%` }, title: `Also pay: ${parts.join(', ')}` }, parts.join(' + ')));
   }
   const printedCost: Cost | undefined = def.printed?.cost;
   if (def.cost && printedCost && artShown) {
