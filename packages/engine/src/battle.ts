@@ -338,8 +338,8 @@ register('fight', (ctx, t) => {
       r.def = def;
       emit(ctx, {
         type: 'DiceRolled', attackId: atk.id,
-        att: { seat: attackerSeat, cyber: att.cyber?.side ?? null, psionic: att.psionic?.side ?? null, physical: att.physical.side },
-        def: { seat: defenderSeat, cyber: def.cyber?.side ?? null, psionic: def.psionic?.side ?? null, physical: def.physical.side },
+        att: { seat: attackerSeat, cyber: att.cyber?.side ?? null, psionic: att.psionic?.side ?? null, physical: att.physical.side, str: sa },
+        def: { seat: defenderSeat, cyber: def.cyber?.side ?? null, psionic: def.psionic?.side ?? null, physical: def.physical.side, str: sd },
       });
       for (const ab of ['cyber', 'psionic'] as const) {
         const o = applyObliteration(s, ab, att[ab], def[ab]);

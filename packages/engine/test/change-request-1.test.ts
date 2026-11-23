@@ -80,13 +80,13 @@ describe('B4: damage effects', () => {
     expect(viewFor(d.state, 0).unitStats[dc]!.physical).toBe(1);
   });
 
-  it('Bio Pulse hits every Creature and Cyborg, on both sides; Robots are untouched', () => {
+  it('Bio Pulse hits every enemy Creature and Cyborg; your own units and Robots are untouched', () => {
     const sc = scenario({ seats: [{ hand: ['PW_BP'], cus: { R: 2 }, lab: ['BU_PH'] }, { lab: ['BU_TS', 'BU_HB', 'BU_BM'] }] });
     const d = drive(sc);
     d.do({ type: 'PlayCard', uid: sc.ids[0]!.hand[0]! });
     d.passUntil(['main']);
     const [ts, hb, bm] = sc.ids[1]!.lab;
-    expect(d.state.cards[sc.ids[0]!.lab[0]!]!.zone).toBe('discard'); // Psi Hatchling, Physical 1
+    expect(d.state.cards[sc.ids[0]!.lab[0]!]!.zone).toBe('lab'); // your own Psi Hatchling is safe
     expect(viewFor(d.state, 0).unitStats[ts!]!.physical).toBe(2);
     expect(viewFor(d.state, 0).unitStats[bm!]!.physical).toBe(1);
     expect(viewFor(d.state, 0).unitStats[hb!]!.physical).toBe(2); // Robot: untouched
@@ -137,5 +137,21 @@ describe('A5: X strengths show their waiting bonus', () => {
     const st = viewFor(sc.state, 0).unitStats[sc.ids[0]!.lab[0]!]!;
     expect(st.psionic).toBe('X');
     expect(st.xBonus).toEqual({ psionic: 1 });
+  });
+});
+
+describe("Creation Units ready only at the start of their owner's turn", () => {
+  it("a Creation Unit spent in your turn stays spent through the opponent's turn", () => {
+    const sc = scenario({ seats: [{ hand: ['PW_EH'], cus: { G: 2 }, battleDeck: ['EQ_PB', 'BU_LS', 'BU_TS'], lab: ['BU_PH'] }, { lab: ['BU_HB'], battleDeck: ['BU_LQ', 'BU_LQ'] }] });
+    const d = drive(sc);
+    d.do({ type: 'PlayCard', uid: sc.ids[0]!.hand[0]! }); // Equipment Hunter: destroy 1 Creation Unit
+    d.passUntil(['chooseCard', 'main']);
+    if (d.prompt!.kind === 'chooseCard') d.do({ type: 'ChooseFromList', choice: d.prompt!.options![0]! });
+    const cus = () => d.state.players[0]!.cus.map((u) => d.state.cards[u]!.depleted);
+    d.state.cards[d.state.players[0]!.cus[0]!]!.depleted = true; // spent this turn
+    d.do({ type: 'AdvancePhase' });
+    d.passUntil(['main']); // into the opponent's turn
+    expect(d.state.turn.active).toBe(1);
+    expect(cus()).toContain(true);
   });
 });

@@ -13,6 +13,7 @@ import { playSfx, type Sfx } from '../audio';
 import { settings } from '../settings';
 import { createCardEl, updateOverlays } from '../render/card';
 import { BattleStage } from './battle-stage';
+import { rules } from '../data';
 import type { Board } from '../render/board';
 import { DIE_COLOR } from '../render/dice';
 import { h } from '../ui/dom';
@@ -59,6 +60,8 @@ export class Presenter {
   private view!: GameView;
   private viewer: Seat | null = null;
   private stage: BattleStage | null = null;
+  private batch: GameEvent[] = [];
+  private idx = 0;
   private fighters = new Map<string, { att: string[]; def: string[]; attSeat: Seat; defSeat: Seat }>();
 
   constructor(private env: PresentEnv) {}
@@ -115,6 +118,8 @@ export class Presenter {
 
     for (let i = 0; i < events.length; i++) {
       const ev = events[i]!;
+      this.batch = events;
+      this.idx = i;
       this.env.onEvent(i);
       this.narrate(ev);
       try {
@@ -698,7 +703,31 @@ export class Presenter {
       }
       case 'DiceRolled': {
         const stage = this.openStage(String(e.attackId));
-        if (stage && !tl.instant) await tl.wait(DUR.travel);
+        if (stage && !tl.instant) {
+          await tl.wait(DUR.travel);
+          // This battle's later events in this batch (up to its result), for step-by-step play.
+          const ahead: GameEvent[] = [];
+          for (let k = this.idx + 1; k < this.batch.length; k++) {
+            const x = this.batch[k]!;
+            if (x.attackId !== undefined && String(x.attackId) !== stage.attackId) break;
+            ahead.push(x);
+            if (x.type === 'BattleResolved') break;
+          }
+          await stage.playDice(e, ahead, rules.dice[v.config.diceVariant] as any, (ab, face, who) => {
+            const die = new Die3D(ab, face, v.config.diceVariant, 84);
+            this.dice.set(`${who}:${ab}`, die);
+            return {
+              el: die.el,
+              roll: (delay, duration) => die.roll(tl, face, delay, duration),
+              shatter: () => {
+                const r = this.centre(die.el);
+                this.env.fx.shards({ x: r.x, y: r.y, w: r.w, h: r.h }, DIE_COLOR[ab]);
+                void die.shatter(tl);
+              },
+            };
+          }, (n) => this.sfx(n));
+          return;
+        }
         const box = stage ? null : this.ensureDiceBox(String(e.attackId));
         const att = e.att as Record<string, any>;
         const def = e.def as Record<string, any>;
@@ -722,6 +751,7 @@ export class Presenter {
         return;
       }
       case 'Obliterated': {
+        if (this.stage?.presented) return;
         this.sfx('obliterate');
         const ab = e.die as Ability;
         const victims = e.by === 'both' ? ['att', 'def'] : e.by === 'att' ? ['def'] : ['att'];
@@ -744,6 +774,7 @@ export class Presenter {
         return;
       }
       case 'Disoriented': {
+        if (this.stage?.presented) return;
         this.sfx('disorient');
         if (this.stage) {
           await this.stage.disoriented(e);

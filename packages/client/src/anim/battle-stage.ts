@@ -12,6 +12,7 @@ import { SEAT_COLORS } from '../render/board';
 import { h } from '../ui/dom';
 import { DUR, EASE, type Timeline } from './timeline';
 
+
 const LABEL: Record<Ability, string> = { cyber: 'CYBER BATTLE', psionic: 'PSIONIC BATTLE', physical: 'PHYSICAL BATTLE' };
 const NAME: Record<Ability, string> = { cyber: 'Cyber', psionic: 'Psionic', physical: 'Physical' };
 
@@ -23,7 +24,7 @@ interface SideInfo {
 export class BattleStage {
   readonly el: HTMLElement;
   readonly attackId: string;
-  private rows = {} as Record<Ability, { row: HTMLElement; att: HTMLElement; def: HTMLElement; attDie: HTMLElement; defDie: HTMLElement; note: HTMLElement }>;
+  private rows = {} as Record<Ability, { row: HTMLElement; att: HTMLElement; def: HTMLElement; attDie: HTMLElement; defDie: HTMLElement; note: HTMLElement; line: () => HTMLElement }>;
   private cols: Record<'att' | 'def', { col: HTMLElement; tag: HTMLElement }>;
   private result = h('div', { class: 'bs-result' });
   private closed = false;
@@ -48,6 +49,7 @@ export class BattleStage {
         def: h('div', { class: 'bs-eq' }),
         note: h('div', { class: 'bs-note' }),
         row: h('div', { class: `bs-row r-${ab} pending`, style: { '--ab': DIE_COLOR[ab] } as any }),
+        line: () => r.row.querySelector('.bs-line') as HTMLElement,
       };
       r.row.append(h('div', { class: 'bs-label' }, LABEL[ab]), h('div', { class: 'bs-line' }, r.attDie, r.att, h('span', { class: 'bs-vs' }, 'vs'), r.def, r.defDie), r.note);
       this.rows[ab] = r;
@@ -101,6 +103,123 @@ export class BattleStage {
     if (!this.tl.instant) await this.tl.done(this.tl.animate(tag, [{ transform: 'scale(1.6)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: DUR.std, easing: EASE.outBack }));
   }
 
+  /** True once the dice have been played step by step (later dice events then add nothing). */
+  presented = false;
+  private physicalShown = false;
+
+  /**
+   * Play the battles one at a time: Cyber, then Psionic, then Physical. Each row rolls its two
+   * dice slowly, shows "strength + die = total", and says who won before the next row starts.
+   * `ahead` = this battle's events that follow the dice in the same batch.
+   */
+  async playDice(dice: GameEvent, ahead: GameEvent[], diceTable: Record<Ability, Record<string, { bonus: number }>>, makeDie: (ab: Ability, side: number, who: 'att' | 'def') => { el: HTMLElement; roll: (delay: number, duration: number) => Animation | null; shatter: () => void }, sfx: (n: 'dice' | 'obliterate' | 'disorient') => void): Promise<void> {
+    this.presented = true;
+    const att = dice.att as Record<string, any>;
+    const def = dice.def as Record<string, any>;
+    const resolved = ahead.find((x) => x.type === 'BattleResolved') as Record<string, any> | undefined;
+    for (const ab of ['cyber', 'psionic', 'physical'] as const) {
+      const r = this.rows[ab];
+      for (const k of ['cyber', 'psionic', 'physical'] as const) this.rows[k].row.classList.toggle('active', k === ab);
+      r.row.classList.remove('pending');
+      const auto = ahead.find((x) => x.type === 'Disoriented' && x.auto && x.ability === ab);
+      if (auto) {
+        const loser = auto.side as 'att' | 'def';
+        r.note.textContent = `${loser === 'att' ? 'Attacker' : 'Defender'} has no ${NAME[ab]} to fight with — automatically Disoriented`;
+        r.note.classList.add('show');
+        r.row.classList.add(`won-${loser === 'att' ? 'def' : 'att'}`);
+        await this.disoriented(auto);
+        sfx('disorient');
+        await this.tl.wait(1100);
+        continue;
+      }
+      if (att[ab] === null || att[ab] === undefined) {
+        r.note.textContent = `No ${NAME[ab]} battle (both need ${NAME[ab]} 1 or more)`;
+        r.note.classList.add('show');
+        r.row.classList.add('skipped');
+        await this.tl.wait(650);
+        continue;
+      }
+      // Roll this battle's two dice, slowly.
+      const dA = makeDie(ab, att[ab], 'att');
+      const dD = makeDie(ab, def[ab], 'def');
+      r.attDie.replaceChildren(dA.el);
+      r.defDie.replaceChildren(dD.el);
+      sfx('dice');
+      const a1 = dA.roll(0, 1700);
+      const a2 = dD.roll(140, 1700);
+      await this.tl.done(a2 ?? a1);
+      // Obliteration
+      const obl = ahead.find((x) => x.type === 'Obliterated' && x.die === ab);
+      if (obl) {
+        sfx('obliterate');
+        if (obl.by === 'both' || obl.by === 'att') dD.shatter();
+        if (obl.by === 'both' || obl.by === 'def') dA.shatter();
+        r.note.textContent = obl.by === 'both' ? 'Both rolled Obliterate — both dice destroyed' : `${obl.by === 'att' ? 'Attacker' : 'Defender'} rolled Obliterate — the other die is destroyed`;
+        r.note.classList.add('show');
+        await this.tl.wait(700);
+      }
+      // Totals (exact from the result when it is in this batch; otherwise from the dice table).
+      let ta: number | null;
+      let td: number | null;
+      let eqA: string;
+      let eqD: string;
+      const killed = (side: 'att' | 'def') => !!obl && (obl.by === 'both' || obl.by === (side === 'att' ? 'def' : 'att'));
+      const strA = Number(att.str?.[ab] ?? 0);
+      const strD = Number(def.str?.[ab] ?? 0);
+      if (resolved?.att?.[ab] && resolved?.def?.[ab]) {
+        ta = resolved.att[ab].total;
+        td = resolved.def[ab].total;
+        eqA = this.eq(resolved.att[ab]);
+        eqD = this.eq(resolved.def[ab]);
+      } else if (ab !== 'physical') {
+        const bonus = (side: 'att' | 'def', face: number) => (killed(side) ? 0 : diceTable[ab][String(face)]?.bonus ?? 0);
+        ta = strA + bonus('att', att[ab]);
+        td = strD + bonus('def', def[ab]);
+        eqA = `${strA} + ${ta - strA} = `;
+        eqD = `${strD} + ${td - strD} = `;
+      } else {
+        ta = td = null;
+        eqA = `${strA} + ? = `;
+        eqD = `${strD} + ? = `;
+      }
+      r.att.replaceChildren(h('span', { class: 'bs-sum' }, eqA), h('b', null, ta === null ? '?' : String(ta)));
+      r.def.replaceChildren(h('span', { class: 'bs-sum' }, eqD), h('b', null, td === null ? '?' : String(td)));
+      if (!this.tl.instant) await this.tl.done(this.tl.animate(r.line(), [{ transform: 'scale(1.06)', filter: 'brightness(1.6)' }, { transform: 'none', filter: 'none' }], { duration: 420, easing: EASE.outCubic }));
+      if (ta === null || td === null) continue; // Physical waits for re-roll decisions
+      if (ab === 'physical') this.physicalShown = true;
+      const w = ta > td ? 'att' : td > ta ? 'def' : null;
+      if (w) {
+        r.row.classList.add(`won-${w}`);
+        this.flashWinner(ab, w);
+        if (ab !== 'physical') {
+          const dis = ahead.find((x) => x.type === 'Disoriented' && x.ability === ab && !x.auto);
+          if (dis) {
+            await this.tl.wait(350);
+            await this.disoriented(dis);
+            sfx('disorient');
+          }
+        }
+      } else {
+        r.note.textContent = ab === 'physical' ? 'Tie on Physical — nothing is destroyed' : 'Tie — nobody is Disoriented';
+        r.note.classList.add('show');
+      }
+      await this.tl.wait(1100);
+    }
+    for (const k of ['cyber', 'psionic', 'physical'] as const) this.rows[k].row.classList.remove('active');
+  }
+
+  private eq(p: { strength: number; total: number; side5?: number }): string {
+    const bonus = p.total - p.strength - (p.side5 ?? 0);
+    return `${p.strength} ${bonus >= 0 ? '+' : '−'} ${Math.abs(bonus)}${p.side5 ? ` + ${p.side5}` : ''} = `;
+  }
+
+  private flashWinner(ab: Ability, w: 'att' | 'def'): void {
+    const r = this.rows[ab];
+    const tag = h('div', { class: 'bs-win', style: { '--ab': DIE_COLOR[ab] } as any }, `${w === 'att' ? 'ATTACKER' : 'DEFENDER'} WINS ${NAME[ab].toUpperCase()}`);
+    r.row.appendChild(tag);
+    if (!this.tl.instant) this.tl.animate(tag, [{ transform: 'translate(-50%, -50%) scale(1.8)', opacity: 0 }, { transform: 'translate(-50%, -50%) scale(1)', opacity: 1, offset: 0.3 }, { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 }], { duration: 600, easing: EASE.outBack, fill: 'forwards' });
+  }
+
   /** Reveal each battle's maths in turn, then say what happened. */
   async resolved(e: GameEvent): Promise<void> {
     type Part = { strength: number; die: number; total: number; side5?: number } | null;
@@ -108,6 +227,7 @@ export class BattleStage {
     const def = e.def as Record<string, any>;
     const winners = e.winners as Record<Ability, 'att' | 'def' | null>;
     for (const ab of ['cyber', 'psionic', 'physical'] as const) {
+      if (this.presented && (ab !== 'physical' || this.physicalShown)) continue;
       const r = this.rows[ab];
       const a: Part = att[ab];
       const d: Part = def[ab];

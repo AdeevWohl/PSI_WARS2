@@ -106,3 +106,4 @@
 .proc-name { color: color-mix(in srgb, var(--tint) 70%, #fff); text-shadow: 0 0 8px color-mix(in srgb, var(--tint) 60%, transparent); }
 .proc-type { color: color-mix(in srgb, var(--tint) 60%, #fff); }
 .proc-stats .box { box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6); }
+.cu-group.fortified { box-shadow: 0 0 0 2px #ffd36a, 0 0 14px rgba(255, 211, 106, 0.55); border-radius: 10px; }

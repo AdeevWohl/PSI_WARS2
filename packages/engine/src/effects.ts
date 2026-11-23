@@ -352,12 +352,13 @@ export const EFFECTS: Record<string, EffectImpl> = {
 
   /** Change Request 1: deal damage to every unit in play of the given types (Bio Pulse, Static Burst). */
   DamageAll: {
-    canPlay: (s, _seat, _uid, params) => s.players.some((p) => p.lab.some((u) => matchesFilter(defOf(s, u), params.filter))),
+    canPlay: (s, seat, _uid, params) => s.players.some((p) => (!params.enemiesOnly || p.seat !== seat) && p.lab.some((u) => matchesFilter(defOf(s, u), params.filter))),
     run(ctx, t) {
       const e = t as EffectTask;
       const s = ctx.s;
       const amount = Number(e.params.amount ?? 1);
-      const hit = s.players.flatMap((p) => p.lab).filter((u) => matchesFilter(defOf(s, u), e.params.filter));
+      // enemiesOnly: only opponents' units are hit (Bio Pulse, Static Burst).
+      const hit = s.players.filter((p) => !e.params.enemiesOnly || p.seat !== e.controller).flatMap((p) => p.lab).filter((u) => matchesFilter(defOf(s, u), e.params.filter));
       emit(ctx, { type: 'SweepDamage', source: e.source, uids: hit, amount });
       for (const u of hit) removeIfDestroyed(ctx, u, damageUnit(ctx, u, amount, e.source, 'effect'));
       checkVictory(ctx);

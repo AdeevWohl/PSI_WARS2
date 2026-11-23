@@ -146,3 +146,8 @@
 .wait-pill { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 12; padding: 5px 14px; border-radius: 999px; background: rgba(6, 10, 20, 0.9); border: 2px solid var(--seat-color, var(--accent)); color: #fff; font: 700 calc(14px * var(--font-scale)) var(--font-ui); white-space: nowrap; animation: wait-pulse 1.6s ease-in-out infinite; pointer-events: none; }
 @keyframes wait-pulse { 50% { box-shadow: 0 0 18px var(--seat-color, var(--accent)); } }
 @media (prefers-reduced-motion: reduce) { .wait-pill, .bs-col.disoriented .bs-cards { animation: none; } }
+.bs-row { position: relative; transition: opacity 0.3s, transform 0.3s, box-shadow 0.3s; }
+.bs-row.active { opacity: 1; transform: scale(1.04); box-shadow: 0 0 0 2px var(--ab), 0 0 34px color-mix(in srgb, var(--ab) 55%, transparent); }
+.bs-mid:has(.bs-row.active) .bs-row:not(.active):not(.won-att):not(.won-def) { opacity: 0.35; }
+.bs-win { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 6px 18px; border-radius: 10px; background: rgba(4, 8, 16, 0.92); border: 2px solid var(--ab); color: #fff; font: 900 calc(24px * var(--font-scale)) var(--font-display); letter-spacing: 0.08em; text-shadow: 0 0 14px var(--ab); white-space: nowrap; pointer-events: none; animation: bs-win-out 0.5s ease 1.05s forwards; }
+@keyframes bs-win-out { to { opacity: 0; transform: translate(-50%, -50%) scale(0.85); } }

@@ -266,6 +266,7 @@ class Brain {
       const types: string[] = e.params.filter?.unitType ?? [];
       let net = 0;
       for (const pl of this.v.players) {
+        if (e.params.enemiesOnly && pl.seat === this.me) continue;
         for (const u of pl.lab) {
           if (!types.includes(this.def(u).unitType ?? '')) continue;
           const kill = amount >= this.strength(u, false).physical;

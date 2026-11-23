@@ -217,23 +217,25 @@ export class Board {
 
     // Creation Units grouped by type with ready / depleted split
     const groups: Node[] = [];
+    // Fortified Creation Units form their own pile per type (Resource Fortification).
     for (const t of CU_TYPES) {
-      const uids = p.cus.filter((u) => v.defs[v.cards[u]!.cardId]?.cuType === t);
-      if (uids.length === 0) continue;
-      const ready = uids.filter((u) => !v.cards[u]!.depleted).length;
-      const fortified = uids.filter((u) => v.cards[u]!.equipment).length;
-      const fortText = fortified ? `, ${fortified} fortified (depleted instead of destroyed when paying)` : '';
-      groups.push(
-        h(
-          'div',
-          { class: `cu-group cu-${t}`, title: `${CU_NAMES[t]}: ${uids.length} (${ready} ready)${fortText}`, 'aria-label': `${CU_NAMES[t]} ${uids.length}, ${ready} ready${fortText}` },
-          fortified ? h('span', { class: 'cu-shield', 'aria-hidden': 'true' }, fortified > 1 ? `🛡${fortified}` : '🛡') : null,
-          h('img', { class: 'cu-art', src: artUrl(CU_ART[t], 'sm') ?? '', alt: '' }),
-          h('span', { class: 'cu-shape', 'aria-hidden': 'true' }),
-          h('span', { class: 'cu-count' }, String(uids.length)),
-          h('span', { class: 'cu-ready' }, `${ready} ready`),
-        ),
-      );
+      for (const fort of [false, true]) {
+        const uids = p.cus.filter((u) => v.defs[v.cards[u]!.cardId]?.cuType === t && !!v.cards[u]!.equipment === fort);
+        if (uids.length === 0) continue;
+        const ready = uids.filter((u) => !v.cards[u]!.depleted).length;
+        const label = `${fort ? 'Fortified ' : ''}${CU_NAMES[t]}: ${uids.length} (${ready} ready)${fort ? ' — depleted instead of destroyed when paying' : ''}`;
+        groups.push(
+          h(
+            'div',
+            { class: `cu-group cu-${t}${fort ? ' fortified' : ''}`, title: label, 'aria-label': label },
+            fort ? h('span', { class: 'cu-shield', 'aria-hidden': 'true' }, '🛡') : null,
+            h('img', { class: 'cu-art', src: artUrl(CU_ART[t], 'sm') ?? '', alt: '' }),
+            h('span', { class: 'cu-shape', 'aria-hidden': 'true' }),
+            h('span', { class: 'cu-count' }, String(uids.length)),
+            h('span', { class: 'cu-ready' }, `${ready} ready`),
+          ),
+        );
+      }
     }
     if (groups.length === 0) groups.push(h('div', { class: 'faint cu-empty' }, 'No Creation Units yet'));
     a.cus.replaceChildren(...groups);

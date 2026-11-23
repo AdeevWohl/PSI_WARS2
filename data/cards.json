@@ -2284,11 +2284,12 @@
                 "Creature",
                 "Cyborg"
               ]
-            }
+            },
+            "enemiesOnly": true
           }
         }
       ],
-      "text": "Deal 1 damage to every Creature and Cyborg in play.",
+      "text": "Deal 1 damage to every enemy Creature and Cyborg in play.",
       "enabled": true,
       "origin": "Change Request 1 (new card; no art yet - the client draws a generated face)"
     },
@@ -2316,11 +2317,12 @@
                 "Robot",
                 "Cyborg"
               ]
-            }
+            },
+            "enemiesOnly": true
           }
         }
       ],
-      "text": "Deal 1 damage to every Robot and Cyborg in play.",
+      "text": "Deal 1 damage to every enemy Robot and Cyborg in play.",
       "enabled": true,
       "origin": "Change Request 1 (new card; no art yet - the client draws a generated face)"
     }
