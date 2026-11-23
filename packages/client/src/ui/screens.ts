@@ -49,99 +49,68 @@ export function mainMenu(items: MenuItem[]): HTMLElement {
   );
 }
 
-export interface SeatSetup {
+export type SeatKindChoice = 'human' | 'easy' | 'normal' | 'hard';
+
+export interface LocalSeat {
+  kind: SeatKindChoice;
   name: string;
   deck: StoredDeck;
 }
 
-export interface HotseatConfig {
-  seats: SeatSetup[];
+export interface LocalConfig {
+  seats: LocalSeat[];
   startingHP: number;
   diceVariant: 'standard' | 'noModifier';
 }
 
-/** Hot-seat: names, decks, starting HP; preloads this match's art with a progress bar. */
-export function hotseatSetup(onStart: (cfg: HotseatConfig) => void, onBack: () => void): HTMLElement {
-  const decks = starterDecks;
-  const seats: SeatSetup[] = [
-    { name: 'Player 1', deck: decks[0]! },
-    { name: 'Player 2', deck: decks[1]! },
-  ];
-  let hp = settings().startingHP ?? rules.setup.startingHP.default;
-  let dice: 'standard' | 'noModifier' = settings().diceVariant;
-  const progress = h('div', { class: 'progress' }, h('div', { class: 'progress-fill' }));
-  const progressLabel = h('div', { class: 'dim', style: 'font-size:13px;min-height:18px' });
+const KIND_LABEL: Record<SeatKindChoice, string> = { human: 'Human', easy: 'Computer — Easy', normal: 'Computer — Normal', hard: 'Computer — Hard' };
+const SEAT_COLORS = ['#4fd1ff', '#ff8a4c', '#c77dff', '#5ee6a8'];
 
-  const seatCard = (s: SeatSetup, i: Seat) =>
-    h('div', { class: 'seat-card panel' },
-      h('label', { class: 'field-label' }, `Player ${i + 1} name`),
-      h('input', { class: 'text-input', value: s.name, maxlength: '20', oninput: (e: Event) => (s.name = (e.target as HTMLInputElement).value || `Player ${i + 1}`) }),
-      h('label', { class: 'field-label' }, 'Deck'),
-      h('select', { class: 'text-input', onchange: (e: Event) => (s.deck = decks.find((d) => d.id === (e.target as HTMLSelectElement).value)!) },
-        ...decks.map((d) => h('option', { value: d.id, selected: d.id === s.deck.id ? true : undefined }, d.name))),
+/**
+ * One setup screen for every local game: 2–4 seats, each a human at this device or a
+ * computer player, in any mix (§4.1 "any mix of humans and AI"). Two presets:
+ * "vsai" starts as you vs one computer; "hotseat" as two humans sharing the device.
+ */
+export function localSetup(preset: 'vsai' | 'hotseat', onStart: (cfg: LocalConfig) => void, onBack: () => void): HTMLElement {
+  const decks = starterDecks;
+  const seats: LocalSeat[] =
+    preset === 'vsai'
+      ? [{ kind: 'human', name: 'You', deck: decks[0]! }, { kind: 'normal', name: 'Computer', deck: decks[1]! }]
+      : [{ kind: 'human', name: 'Player 1', deck: decks[0]! }, { kind: 'human', name: 'Player 2', deck: decks[1]! }];
+  const cfg: LocalConfig = { seats, startingHP: settings().startingHP ?? rules.setup.startingHP.default, diceVariant: settings().diceVariant };
+  const list = h('div', { class: 'local-seats' });
+  const note = h('p', { class: 'dim', style: 'font-size:14px;min-height:20px' });
+  const sel = (opts: [string, string][], value: string, on: (v: string) => void, label: string) =>
+    h('select', { class: 'text-input', 'aria-label': label, onchange: (e: Event) => on((e.target as HTMLSelectElement).value) }, ...opts.map(([v, l]) => h('option', { value: v, selected: v === value ? true : undefined }, l)));
+
+  const renderSeats = () => {
+    list.replaceChildren(
+      ...seats.map((s, i) =>
+        h('div', { class: 'local-seat panel', style: { '--seat-color': SEAT_COLORS[i] } as any },
+          h('span', { class: 'seat-dot' }),
+          h('div', { class: 'local-seat-fields' },
+            h('input', { class: 'text-input', value: s.name, maxlength: '20', 'aria-label': `Seat ${i + 1} name`, oninput: (e: Event) => (s.name = (e.target as HTMLInputElement).value) }),
+            sel((Object.keys(KIND_LABEL) as SeatKindChoice[]).map((k) => [k, KIND_LABEL[k]]), s.kind, (v) => {
+              const was = s.kind;
+              s.kind = v as SeatKindChoice;
+              if ((was === 'human') !== (s.kind === 'human')) s.name = s.kind === 'human' ? `Player ${i + 1}` : 'Computer';
+              renderSeats();
+            }, `Seat ${i + 1} player type`),
+            sel(decks.map((d) => [d.id, d.name]), s.deck.id, (v) => (s.deck = decks.find((d) => d.id === v)!), `Seat ${i + 1} deck`)),
+          seats.length > 2 ? h('button', { class: 'btn small ghost', 'aria-label': `Remove seat ${i + 1}`, onclick: () => { seats.splice(i, 1); renderSeats(); } }, '✕') : null)),
+      ...(seats.length < 4
+        ? [h('button', { class: 'btn ghost add-seat', onclick: () => { seats.push({ kind: 'normal', name: 'Computer', deck: decks[seats.length % decks.length]! }); renderSeats(); } }, '+ Add a seat (up to 4)')]
+        : []),
     );
+    const humans = seats.filter((s) => s.kind === 'human').length;
+    note.textContent =
+      humans === 0 ? 'All seats are computers: you will watch them play.'
+      : humans > 1 ? `${humans} people share this device. A curtain hides the screen whenever play passes between them.`
+      : seats.length > 2 ? 'Free-for-all: each of your attackers picks which opponent it attacks. Last player standing wins.'
+      : '';
+  };
+  renderSeats();
 
-  const hpSel = h('select', { class: 'text-input', onchange: (e: Event) => (hp = Number((e.target as HTMLSelectElement).value)) },
-    ...Array.from({ length: rules.setup.startingHP.max - rules.setup.startingHP.min + 1 }, (_, k) => rules.setup.startingHP.min + k).map((v) =>
-      h('option', { value: String(v), selected: v === hp ? true : undefined }, v === 10 ? '10 — short (~30 min)' : v === 15 ? '15 — default' : v === 20 ? '20 — long (45–60 min)' : String(v))));
-  const diceSel = h('select', { class: 'text-input', onchange: (e: Event) => (dice = (e.target as HTMLSelectElement).value as any) },
-    h('option', { value: 'standard', selected: dice === 'standard' ? true : undefined }, 'Standard dice'),
-    h('option', { value: 'noModifier', selected: dice === 'noModifier' ? true : undefined }, 'No modifier dice (each die gives +1…+6)'));
-
-  const start = h('button', { class: 'btn primary', style: 'font-size:18px;padding:12px 34px' }, 'Start game');
-  start.addEventListener('click', async () => {
-    start.setAttribute('disabled', '');
-    const defs = currentDefs();
-    const ids = new Set<string>();
-    for (const s of seats) for (const id of [...Object.keys(s.deck.battle), ...Object.keys(s.deck.resource)]) ids.add(id);
-    const urls: string[] = ['backs/battle', 'backs/resource'].flatMap((k) => [artUrl(k, 'sm')!]);
-    for (const id of ids) {
-      const a = defs[id]?.art;
-      for (const sz of ['sm', 'md'] as const) {
-        const u = artUrl(a, sz);
-        if (u) urls.push(u);
-      }
-    }
-    await preload(urls, (d, t) => {
-      (progress.firstChild as HTMLElement).style.transform = `scaleX(${t ? d / t : 1})`;
-      progressLabel.textContent = `Preparing card art… ${d} / ${t}`;
-    });
-    onStart({ seats, startingHP: hp, diceVariant: dice });
-  });
-
-  return h(
-    'div',
-    { class: 'screen setup-screen' },
-    h('div', { class: 'menu-bg' }),
-    h('div', { class: 'setup-panel panel' },
-      h('h2', { class: 'h-display' }, 'Hot-seat game'),
-      h('p', { class: 'dim' }, 'Two players share this device. A curtain hides the screen whenever the turn passes, so each player only sees their own hand.'),
-      h('div', { class: 'seat-row' }, ...seats.map((s, i) => seatCard(s, i))),
-      h('div', { class: 'opt-row' },
-        h('div', null, h('label', { class: 'field-label' }, 'Starting Lab HP'), hpSel),
-        h('div', null, h('label', { class: 'field-label' }, 'Dice'), diceSel)),
-      progress, progressLabel,
-      h('div', { class: 'row' }, h('button', { class: 'btn', onclick: onBack }, 'Back'), start),
-    ),
-  );
-}
-
-export interface VsAiConfig {
-  name: string;
-  deck: StoredDeck;
-  aiDeck: StoredDeck;
-  level: 'easy' | 'normal' | 'hard';
-  startingHP: number;
-  diceVariant: 'standard' | 'noModifier';
-}
-
-/** Play vs AI: your deck, the computer's deck and difficulty; preloads art. */
-export function vsAiSetup(onStart: (cfg: VsAiConfig) => void, onBack: () => void): HTMLElement {
-  const decks = starterDecks;
-  const cfg: VsAiConfig = { name: 'You', deck: decks[0]!, aiDeck: decks[1]!, level: 'normal', startingHP: settings().startingHP, diceVariant: settings().diceVariant };
-  const sel = (opts: [string, string][], value: string, on: (v: string) => void) =>
-    h('select', { class: 'text-input', onchange: (e: Event) => on((e.target as HTMLSelectElement).value) }, ...opts.map(([v, l]) => h('option', { value: v, selected: v === value ? true : undefined }, l)));
-  const deckOpts = decks.map((d) => [d.id, d.name] as [string, string]);
   const progress = h('div', { class: 'progress' }, h('div', { class: 'progress-fill' }));
   const progressLabel = h('div', { class: 'dim', style: 'font-size:13px;min-height:18px' });
   const start = h('button', { class: 'btn primary', style: 'font-size:18px;padding:12px 34px' }, 'Start game');
@@ -149,32 +118,27 @@ export function vsAiSetup(onStart: (cfg: VsAiConfig) => void, onBack: () => void
     start.setAttribute('disabled', '');
     const defs = currentDefs();
     const urls = new Set<string>([artUrl('backs/battle', 'sm')!, artUrl('backs/resource', 'sm')!]);
-    for (const d of [cfg.deck, cfg.aiDeck]) for (const id of [...Object.keys(d.battle), ...Object.keys(d.resource)]) for (const sz of ['sm', 'md'] as const) { const u = artUrl(defs[id]?.art, sz); if (u) urls.add(u); }
+    for (const s of seats) for (const id of [...Object.keys(s.deck.battle), ...Object.keys(s.deck.resource)]) for (const sz of ['sm', 'md'] as const) { const u = artUrl(defs[id]?.art, sz); if (u) urls.add(u); }
     await preload([...urls], (d, t) => {
       (progress.firstChild as HTMLElement).style.transform = `scaleX(${t ? d / t : 1})`;
       progressLabel.textContent = `Preparing card art… ${d} / ${t}`;
     });
-    onStart(cfg);
+    seats.forEach((s, i) => (s.name = s.name.trim() || (s.kind === 'human' ? `Player ${i + 1}` : 'Computer')));
+    onStart({ ...cfg, seats: seats.map((s) => ({ ...s })) });
   });
+
   return h('div', { class: 'screen setup-screen' },
     h('div', { class: 'menu-bg' }),
     h('div', { class: 'setup-panel panel' },
-      h('h2', { class: 'h-display' }, 'Play vs AI'),
-      h('p', { class: 'dim' }, 'The computer plays only from what its seat can see. It never looks at your hand or the deck order.'),
-      h('div', { class: 'seat-row' },
-        h('div', { class: 'seat-card panel' },
-          h('label', { class: 'field-label' }, 'Your name'),
-          h('input', { class: 'text-input', value: cfg.name, maxlength: '20', oninput: (e: Event) => (cfg.name = (e.target as HTMLInputElement).value || 'You') }),
-          h('label', { class: 'field-label' }, 'Your deck'),
-          sel(deckOpts, cfg.deck.id, (v) => (cfg.deck = decks.find((d) => d.id === v)!))),
-        h('div', { class: 'seat-card panel' },
-          h('label', { class: 'field-label' }, 'Difficulty'),
-          sel([['easy', 'Easy — learning the ropes'], ['normal', 'Normal — weighs the odds'], ['hard', 'Hard — searches attacks, holds Traps']], cfg.level, (v) => (cfg.level = v as VsAiConfig['level'])),
-          h('label', { class: 'field-label' }, 'Computer deck'),
-          sel(deckOpts, cfg.aiDeck.id, (v) => (cfg.aiDeck = decks.find((d) => d.id === v)!)))),
+      h('h2', { class: 'h-display' }, preset === 'vsai' ? 'Play vs AI' : 'Hot-seat game'),
+      h('p', { class: 'dim' }, 'Two to four seats, each a person at this device or a computer player. Computers only see what their own seat can see.'),
+      list,
+      note,
       h('div', { class: 'opt-row' },
-        h('div', null, h('label', { class: 'field-label' }, 'Starting Lab HP'), sel(Array.from({ length: 11 }, (_, k) => [String(10 + k), String(10 + k)] as [string, string]), String(cfg.startingHP), (v) => (cfg.startingHP = Number(v)))),
-        h('div', null, h('label', { class: 'field-label' }, 'Dice'), sel([['standard', 'Standard dice'], ['noModifier', 'No modifier dice']], cfg.diceVariant, (v) => (cfg.diceVariant = v as VsAiConfig['diceVariant'])))),
+        h('div', null, h('label', { class: 'field-label' }, 'Starting Lab HP'), sel(Array.from({ length: 11 }, (_, k) => [String(10 + k), 10 + k === 15 ? '15 — default' : String(10 + k)] as [string, string]), String(cfg.startingHP), (v) => (cfg.startingHP = Number(v)), 'Starting Lab HP')),
+        h('div', null, h('label', { class: 'field-label' }, 'Dice'), sel([['standard', 'Standard dice'], ['noModifier', 'No modifier dice (each die gives +1…+6)']], cfg.diceVariant, (v) => (cfg.diceVariant = v as LocalConfig['diceVariant']), 'Dice'))),
       progress, progressLabel,
       h('div', { class: 'row' }, h('button', { class: 'btn', onclick: onBack }, 'Back'), start)));
 }
+
+export type { Seat };

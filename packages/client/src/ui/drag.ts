@@ -79,7 +79,7 @@ export class DragManager {
     const card = under.closest('.card') as HTMLElement | null;
     const uid = card?.dataset.uid;
     if (uid && spec.targets?.includes(uid)) return card;
-    if (spec.zone === 'battlefield') return under.closest('.battlefield') as HTMLElement | null;
+    if (spec.zone === 'battlefield') return (under.closest('.area.opp') ?? under.closest('.battlefield')) as HTMLElement | null;
     if (spec.zone === 'board') {
       const inHand = under.closest('.hand');
       const onBoard = under.closest('.board-main');
@@ -120,7 +120,8 @@ export class DragManager {
     if (target) {
       proxy?.remove();
       const uid = target.classList.contains('card') ? target.dataset.uid ?? null : null;
-      await this.controller.drop(st.ctx, uid);
+      const seat = target.classList.contains('area') && target.dataset.seat !== undefined ? Number(target.dataset.seat) : undefined;
+      await this.controller.drop(st.ctx, uid, seat);
     } else if (proxy) {
       // Fly back to where it came from.
       const from = snap(proxy);

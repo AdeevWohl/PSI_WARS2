@@ -76,3 +76,12 @@ Decisions not settled by the build prompt, the Q&A or the spec. Each one is reve
 55. **Storage.** The persisted room drops card definitions and rules (re-injected on restore) to stay small (<200 KB). Rooms survive Durable Object eviction and hibernation; a test restores a serialised room mid-game and continues identically.
 56. **Wrangler 4** (v3 reported itself out of date). `run_worker_first` routes `/api` and `/ws` to the Worker, and everything else to Workers Assets on the same origin.
 57. **Not verified here:** a real deployment (needs your Cloudflare account) and a Quick Tunnel (needs `cloudflared`, not installed on this machine). Both are documented step by step in the README. Everything else was exercised: both servers locally, two browser tabs through the Cloudflare runtime (host, join by invite link, full game, mid-game reload back into the seat, rematch).
+
+## Stage 6 — 3–4 players
+
+58. **One local setup for every mix.** "Play vs AI" and "Hot-seat" are two presets of the same screen: 2–4 seats, each a person at this device or a computer (Easy/Normal/Hard). Curtains appear whenever play passes between two people at the device, and computer seats act on their own.
+59. **Opponents share the top row** in compact areas sized by count (card width 104 / 90 / 74 px for 1 / 2 / 3 opponents). Their units overlap like a fan and open up when the area is hovered or focused (keyboard-focusable). Creation Units collapse to small chips.
+60. **Per-attacker targeting (house rule A).** In the declare step the prompt shows one chip per opponent in that player's colour. Picked attackers go at the selected opponent, carry a "→ name" tag and an outline in the target's colour, and clicking one again re-targets or un-picks it. Dragging a unit onto an opponent's area targets that opponent. Battlefield columns are tinted and labelled "attacker → defender".
+61. **Turn order is always visible** in the side panel: every seat in play order with HP, the active player marked, eliminated players struck through, offline players flagged.
+62. **Seat names are unique** (local and online) — e.g. "Computer (Normal) 1" and "2" — so the board, turn order and log are never ambiguous.
+63. **Online computer pacing is configurable** (`aiDelayScale`; 1 = paced for humans, 0 for tests). A 4-seat online game (two people, two computers) completes end to end.

@@ -447,6 +447,25 @@ export class GameScreen {
     }
   }
 
+  /** Turn order, always visible: every seat in play order, the active one marked, HP shown. */
+  private turnOrder(view: GameView): HTMLElement {
+    const n = view.players.length;
+    const kids: Node[] = [];
+    for (let i = 0; i < n; i++) {
+      const seat = (view.turn.firstPlayer + i) % n;
+      const p = view.players[seat]!;
+      const name = this.nameOf(seat);
+      if (i) kids.push(h('span', { class: 'to-arrow', 'aria-hidden': 'true' }, '›'));
+      kids.push(h('div', {
+        class: `to-chip${seat === view.turn.active ? ' active' : ''}${p.eliminated ? ' out' : ''}${name.endsWith('(offline)') ? ' offline' : ''}`,
+        style: { '--seat-color': SEAT_COLORS[seat] } as any,
+        title: `${name}${seat === view.turn.active ? ' — taking their turn' : ''}${p.eliminated ? ' — out' : ''}`,
+        role: 'listitem',
+      }, h('span', { class: 'to-name' }, name.replace(' (offline)', '')), h('span', { class: 'to-hp' }, p.eliminated ? 'out' : `${Math.max(0, p.labHP)} HP`)));
+    }
+    return h('div', { class: 'turn-order', role: 'list', 'aria-label': 'Turn order' }, ...kids);
+  }
+
   private renderSide(view: GameView, legal: LegalView | null): void {
     const act = view.turn.active;
     const pi = PHASES.indexOf(view.phase as any);
@@ -456,6 +475,7 @@ export class GameScreen {
       h('div', { class: 'phases', role: 'list', 'aria-label': 'Phases' }, ...PHASES.map((ph, i) => h('div', { class: `phase${i === pi ? ' now' : i < pi ? ' done' : ''}`, role: 'listitem', 'aria-current': i === pi ? 'step' : undefined }, PHASE_LABEL[ph]))),
       h('div', { class: 'steps', 'aria-hidden': 'true', style: { visibility: view.phase === 'battle' ? 'visible' : 'hidden' } }, ...STEPS.map((_, i) => h('span', { class: i === si ? 'now' : i < si ? 'done' : '' }))),
       h('div', { class: 'step-name' }, view.phase === 'battle' && view.step ? STEP_LABEL[view.step] : ''),
+      this.turnOrder(view),
     );
 
     const kids: Node[] = [];
@@ -463,7 +483,12 @@ export class GameScreen {
       kids.push(h('div', { class: 'prompt-label' }, legal.prompt.label));
       kids.push(h('div', { class: 'prompt-hint' }, this.controller.hint()));
       const btns = this.controller.buttons().map((b) =>
-        h('button', { class: `btn${b.primary ? ' primary' : ''}${b.danger ? ' danger' : ''}`, disabled: b.disabled, onclick: b.onClick }, b.label, b.key ? h('kbd', null, b.key) : null),
+        h('button', {
+          class: `btn${b.primary ? ' primary' : ''}${b.danger ? ' danger' : ''}${b.color ? ' target-chip small' : ''}${b.active ? ' active' : ''}`,
+          style: b.color ? ({ '--seat-color': b.color } as any) : undefined,
+          'aria-pressed': b.color ? String(!!b.active) : undefined,
+          disabled: b.disabled, onclick: b.onClick,
+        }, b.label, b.key ? h('kbd', null, b.key) : null),
       );
       kids.push(h('div', { class: 'prompt-actions' }, ...btns));
     } else if (view.prompt) {

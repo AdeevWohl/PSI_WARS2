@@ -135,6 +135,9 @@ export class Board {
       const parent = seat === bottom ? this.bottomHost : this.top;
       a.root.classList.toggle('mine', seat === bottom);
       a.root.classList.toggle('opp', seat !== bottom);
+      if (seat !== bottom) a.root.tabIndex = 0;
+      else a.root.removeAttribute('tabindex');
+      a.root.setAttribute('aria-label', `${view.players[seat]!.name}'s area`);
       if (a.root.parentElement !== parent) parent.appendChild(a.root);
     }
     for (const seat of opponents) this.top.appendChild(this.areas.get(seat)!.root); // keep turn order
@@ -406,10 +409,12 @@ export class Board {
       }
       const topEl = attackerIsBottom ? defEl : attEl;
       const botEl = attackerIsBottom ? attEl : defEl;
+      const multi = v.players.filter((p) => !p.eliminated).length > 2 || v.players.length > 2;
       cols.push(
         h(
           'div',
           { class: `bf-col${atk.status === 'resolved' ? ' resolved' : ''}`, dataset: { attack: atk.id }, style: { '--seat-color': SEAT_COLORS[defenderSeat] } as any },
+          multi ? h('div', { class: 'bf-label' }, `${v.players[atk.seat]!.name} → ${v.players[defenderSeat]!.name}`) : null,
           h('div', { class: 'bf-cell top' }, topEl),
           h('div', { class: 'bf-tether', 'aria-hidden': 'true' }),
           h('div', { class: 'bf-cell bottom' }, botEl),

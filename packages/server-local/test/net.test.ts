@@ -20,7 +20,7 @@ beforeAll(async () => {
     base = external;
     return;
   }
-  srv = await startServer({ port: 0, staticDir: null, quiet: true });
+  srv = await startServer({ port: 0, staticDir: null, quiet: true, aiDelayScale: 0 });
   base = `http://localhost:${srv.port}`;
 });
 afterAll(async () => {
@@ -142,6 +142,45 @@ describe(`online play over WebSockets (${external ? 'external server ' + externa
     expect(a.gaps).toBe(0);
     for (const c of clients) c.ws.close();
   }, 120_000);
+
+  it('a 4-seat room — two people and two computer players — completes a game', async () => {
+    const { code } = (await (await fetch(`${base}/api/rooms`, { method: 'POST' })).json()) as { code: string };
+    const a = new NetClient(code, 'p-ann', 'Ann');
+    const b = new NetClient(code, 'p-ben', 'Ben');
+    await a.connect();
+    await until(() => a.seat === 0);
+    a.send({ t: 'config', config: { seats: 4, trapWindowSec: 0 } });
+    await until(() => a.lobby?.seats?.length === 4);
+    await b.connect();
+    await until(() => b.seat === 1);
+    a.send({ t: 'seatAi', seat: 2, level: 'normal' });
+    a.send({ t: 'seatAi', seat: 3, level: 'hard' });
+    await until(() => a.lobby?.seats?.every((s: any) => s.kind !== 'open'));
+    a.send({ t: 'start' });
+    await until(() => !!a.view && !!b.view);
+    expect(a.view!.players).toHaveLength(4);
+    const rng = seedRng('net4');
+    let steps = 0;
+    while (!a.view!.result && steps++ < 6000) {
+      const actor = [a, b].find((c) => c.legal && c.view && c.view.prompt?.seat === c.seat);
+      if (!actor) {
+        await Promise.race([a.next(), b.next()]);
+        continue;
+      }
+      const cmd = chooseCommand('normal', actor.view!, actor.legal!, rules, rng);
+      actor.legal = null;
+      actor.send({ t: 'cmd', cid: ++actor.cid, command: cmd });
+      await actor.next();
+      await new Promise((r) => setTimeout(r, 20));
+    }
+    expect(a.view!.result).not.toBeNull();
+    await until(() => !!b.view?.result);
+    expect(b.view!.result).toEqual(a.view!.result);
+    // Hands of other seats never reached either client.
+    expect(a.view!.players.filter((p) => p.seat !== 0).every((p) => p.hand === null)).toBe(true);
+    a.ws.close();
+    b.ws.close();
+  }, 240_000);
 
   it('rejects unknown rooms and mismatched protocol versions', async () => {
     const bad = new WebSocket(`${base.replace('http', 'ws')}/ws/ZZZZZZ`);

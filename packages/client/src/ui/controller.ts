@@ -29,7 +29,12 @@ export interface ActionButton {
   danger?: boolean;
   key?: string;
   disabled?: boolean;
+  /** Seat colour for opponent-target chips. */
+  color?: string;
+  active?: boolean;
 }
+
+const SEAT_COLORS = ['#4fd1ff', '#ff8a4c', '#c77dff', '#5ee6a8'];
 
 export class Controller {
   view: GameView | null = null;
@@ -38,6 +43,8 @@ export class Controller {
   private attackSel = new Map<string, Seat>();
   private blockSel = new Map<string, string>();
   private pendingBlocker: string | null = null;
+  /** 3–4 players: the opponent newly picked attackers go after (house rule A). */
+  private attackTarget: Seat | null = null;
   private promptKey = '';
   private modal: ModalHandle | null = null;
   private popover: HTMLElement | null = null;
@@ -73,6 +80,7 @@ export class Controller {
     this.attackSel.clear();
     this.blockSel.clear();
     this.pendingBlocker = null;
+    this.attackTarget = null;
     this.modal?.close();
     this.modal = null;
     this.closePopover();
@@ -80,6 +88,19 @@ export class Controller {
 
   dispose(): void {
     this.reset();
+  }
+
+  /** Current target for new attackers: the chosen one, else the next opponent in turn order. */
+  private currentTarget(): Seat {
+    const la = this.legal!;
+    const targets = la.attack?.targets ?? [];
+    if (this.attackTarget !== null && targets.includes(this.attackTarget)) return this.attackTarget;
+    const n = this.view?.players.length ?? 2;
+    for (let i = 1; i <= n; i++) {
+      const s = (la.seat + i) % n;
+      if (targets.includes(s)) return s;
+    }
+    return targets[0]!;
   }
 
   tentativeBlocks(): Map<string, string> {
@@ -175,7 +196,15 @@ export class Controller {
       const rep = la.attack!.eligible.find((e) => this.sameFighter(e, ctx.uid));
       if (rep) {
         el.classList.add('interactive', 'selectable');
-        if ([...this.attackSel.keys()].some((u) => this.sameFighter(u, ctx.uid))) el.classList.add('selected', 'attacking-pick');
+        const picked = [...this.attackSel.entries()].find(([u]) => this.sameFighter(u, ctx.uid));
+        if (picked) {
+          el.classList.add('selected', 'attacking-pick');
+          el.style.setProperty('--target-color', SEAT_COLORS[picked[1]] ?? '#ff4a4a');
+          if (la.attack!.targets.length > 1) {
+            const tag = h('span', { class: 'target-tag' }, `→ ${this.names(picked[1])}`);
+            el.querySelector('.overlays')?.appendChild(tag);
+          }
+        } else el.style.removeProperty('--target-color');
       }
       return;
     }
@@ -262,8 +291,11 @@ export class Controller {
       const rep = la.attack!.eligible.find((e) => this.sameFighter(e, ctx.uid));
       if (!rep) return;
       const existing = [...this.attackSel.keys()].find((u) => this.sameFighter(u, rep));
-      if (existing) this.attackSel.delete(existing);
-      else this.attackSel.set(rep, la.attack!.targets[0]!);
+      const target = this.currentTarget();
+      // Clicking a picked attacker sends it at the currently chosen opponent; clicking again un-picks it.
+      if (existing && this.attackSel.get(existing) !== target) this.attackSel.set(existing, target);
+      else if (existing) this.attackSel.delete(existing);
+      else this.attackSel.set(rep, target);
       this.rerender();
       return;
     }
@@ -371,7 +403,7 @@ export class Controller {
     return null;
   }
 
-  async drop(ctx: CardCtx, targetUid: string | null): Promise<void> {
+  async drop(ctx: CardCtx, targetUid: string | null, targetSeat?: Seat): Promise<void> {
     const la = this.legal;
     if (!la) return;
     const k = la.prompt.kind;
@@ -386,7 +418,11 @@ export class Controller {
     if (pair) return this.send({ type: 'Stack', a: pair.a, b: pair.b });
     if (k === 'declareAttackers' && !targetUid) {
       const rep = la.attack!.eligible.find((e) => this.sameFighter(e, ctx.uid));
-      if (rep && ![...this.attackSel.keys()].some((u) => this.sameFighter(u, rep))) this.attackSel.set(rep, la.attack!.targets[0]!);
+      const target = targetSeat !== undefined && la.attack!.targets.includes(targetSeat) ? targetSeat : this.currentTarget();
+      if (rep) {
+        const existing = [...this.attackSel.keys()].find((u) => this.sameFighter(u, rep));
+        this.attackSel.set(existing ?? rep, target);
+      }
       this.rerender();
       return;
     }
@@ -415,7 +451,9 @@ export class Controller {
       case 'main':
         return la.plays.length ? 'Play cards from your hand, manage Equipment, then go to Battle.' : 'Nothing affordable to play. Go to Battle when ready.';
       case 'declareAttackers':
-        return 'Click ready units to attack. A stack attacks as one.';
+        return la.attack!.targets.length > 1
+          ? 'Pick an opponent, then click units to send them at that opponent (or drag a unit onto an opponent). Click a picked unit again to re-target or un-pick it.'
+          : 'Click ready units to attack. A stack attacks as one.';
       case 'declareBlockers':
         return la.block!.attackers.length > 1 ? 'Click one of your units, then the attacker it blocks. One defender per attacker.' : 'Click a unit to block the attacker, or confirm no blocks.';
       case 'priority': {
@@ -443,6 +481,10 @@ export class Controller {
         if (m.k === 'none') out.push({ label: 'Go to Battle', primary: true, key: 'Space', onClick: () => this.confirmAdvance() });
         break;
       case 'declareAttackers': {
+        if (la.attack!.targets.length > 1 && m.k === 'none') {
+          const cur = this.currentTarget();
+          for (const t of la.attack!.targets) out.push({ label: `→ ${this.names(t)}`, color: SEAT_COLORS[t], active: t === cur, onClick: () => { this.attackTarget = t; this.rerender(); } });
+        }
         if (la.stacks.length || la.unstacks.length) out.push({ label: m.k === 'stack' ? 'Done stacking' : 'Stack units', onClick: () => { this.mode = m.k === 'stack' ? { k: 'none' } : { k: 'stack', first: null }; this.rerender(); } });
         const n = this.attackSel.size;
         if (m.k === 'none') out.push({ label: n ? `Attack with ${n}` : 'No attack', primary: true, key: 'Space', onClick: () => void this.send({ type: 'DeclareAttackers', attacks: [...this.attackSel].map(([uid, target]) => ({ uid, target })) }) });

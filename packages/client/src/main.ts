@@ -16,7 +16,7 @@ import { LobbyScreen, deckPayload, onlineEntry } from './ui/lobby';
 import type { StoredDeck } from './data';
 import { GameScreen } from './ui/game-screen';
 import { openModal } from './ui/modals';
-import { hotseatSetup, mainMenu, titleScreen, vsAiSetup, type HotseatConfig, type VsAiConfig } from './ui/screens';
+import { localSetup, mainMenu, titleScreen, type LocalConfig } from './ui/screens';
 import { settingsPanel } from './ui/settings-screen';
 
 const stage = document.getElementById('stage')!;
@@ -44,10 +44,10 @@ function openSettingsModal(host: HTMLElement): void {
 function toMenu(): void {
   show(
     mainMenu([
-      { label: 'Play vs AI', sub: 'You against the computer: Easy, Normal or Hard', onClick: () => show(vsAiSetup((cfg) => startVsAi(cfg), () => toMenu())) },
+      { label: 'Play vs AI', sub: 'You against 1–3 computer players: Easy, Normal or Hard', onClick: () => toLocal('vsai') },
       { label: 'Host Game', sub: 'Create an online room and share its code', onClick: () => toOnline('host') },
       { label: 'Join Game', sub: 'Enter a room code from a friend', onClick: () => toOnline('join') },
-      { label: 'Hot-seat', sub: 'Two players, one device, hidden-hand curtains', onClick: () => toHotseat() },
+      { label: 'Hot-seat', sub: '2–4 players on one device, hidden-hand curtains; mix in computers', onClick: () => toLocal('hotseat') },
       { label: 'Deck Builder', sub: 'Build and save decks', disabledReason: 'Arrives in Stage 7' },
       { label: 'How to Play', sub: 'Rules reference and tutorial', disabledReason: 'Arrives in Stage 7' },
       { label: 'Settings', sub: 'Animation, effects, audio, gameplay, accessibility', onClick: () => toSettings() },
@@ -59,18 +59,22 @@ function toSettings(): void {
   show(h('div', { class: 'screen settings-screen' }, h('div', { class: 'menu-bg' }), h('div', { class: 'settings-page panel' }, h('h2', { class: 'h-display' }, 'Settings'), settingsPanel(() => toMenu()))));
 }
 
-function toHotseat(): void {
-  show(hotseatSetup((cfg) => startHotseat(cfg), () => toMenu()));
+function toLocal(preset: 'vsai' | 'hotseat'): void {
+  show(localSetup(preset, (cfg) => startLocal(cfg), () => toMenu()));
 }
 
-function startHotseat(cfg: HotseatConfig): void {
+/** Any local mix of 2–4 seats: humans at this device and computer players. */
+function startLocal(cfg: LocalConfig): void {
+  // One unique display name per seat, used by the board, turn order and log alike.
+  const raw = cfg.seats.map((s) => (s.kind === 'human' ? s.name : `${s.name} (${s.kind[0]!.toUpperCase()}${s.kind.slice(1)})`));
+  const names = raw.map((n, i) => (raw.filter((x) => x === n).length > 1 ? `${n} ${raw.slice(0, i + 1).filter((x) => x === n).length}` : n));
   const game = new LocalGame(
-    cfg.seats.map((s, seat) => ({ seat, name: s.name, kind: 'local' as const })),
+    cfg.seats.map((s, seat) => (s.kind === 'human' ? { seat, name: names[seat]!, kind: 'local' as const } : { seat, name: names[seat]!, kind: 'ai' as const, aiLevel: s.kind })),
     {
       defs: currentDefs(),
       rules,
       seed: randomSeed(),
-      players: cfg.seats.map((s) => ({ name: s.name, deck: s.deck })),
+      players: cfg.seats.map((s, i) => ({ name: names[i]!, deck: s.deck })),
       startingHP: cfg.startingHP,
       diceVariant: cfg.diceVariant,
       autoPassNoPlay: settings().autoPass,
@@ -78,36 +82,7 @@ function startHotseat(cfg: HotseatConfig): void {
   );
   const screen = new GameScreen(game, game.initialEvents(), {
     onExit: () => toMenu(),
-    onRematch: () => startHotseat(cfg),
-    openSettings: (host) => openSettingsModal(host),
-  });
-  show(screen.el, () => {
-    screen.destroy();
-    game.dispose();
-  });
-  (window as any).__psi = { game, screen, perf };
-}
-
-function startVsAi(cfg: VsAiConfig): void {
-  const level = cfg.level[0]!.toUpperCase() + cfg.level.slice(1);
-  const game = new LocalGame(
-    [
-      { seat: 0, name: cfg.name, kind: 'local' },
-      { seat: 1, name: `Computer (${level})`, kind: 'ai', aiLevel: cfg.level },
-    ],
-    {
-      defs: currentDefs(),
-      rules,
-      seed: randomSeed(),
-      players: [{ name: cfg.name, deck: cfg.deck }, { name: `Computer (${level})`, deck: cfg.aiDeck }],
-      startingHP: cfg.startingHP,
-      diceVariant: cfg.diceVariant,
-      autoPassNoPlay: settings().autoPass,
-    },
-  );
-  const screen = new GameScreen(game, game.initialEvents(), {
-    onExit: () => toMenu(),
-    onRematch: () => startVsAi(cfg),
+    onRematch: () => startLocal(cfg),
     openSettings: (host) => openSettingsModal(host),
   });
   show(screen.el, () => {

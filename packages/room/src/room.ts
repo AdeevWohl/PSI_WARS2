@@ -56,6 +56,8 @@ export interface RoomOptions {
   starterDecks: DeckPayload[];
   graceMs?: number;
   idleMs?: number;
+  /** Multiplier for computer players' thinking pauses (1 = paced for humans, 0 = instant; tests). */
+  aiDelayScale?: number;
 }
 
 interface SeatSlot {
@@ -216,7 +218,7 @@ export class Room {
     const isHost = c.clientId === this.hostClientId;
     switch (msg.t) {
       case 'setName':
-        if (slot) slot.name = cleanName(msg.name, slot.seat);
+        if (slot) slot.name = this.uniqueName(cleanName(msg.name, slot.seat), slot.seat);
         return this.broadcastLobby();
       case 'setDeck': {
         if (!slot || this.phase !== 'lobby') return;
@@ -243,7 +245,7 @@ export class Room {
         if (!isHost || this.phase !== 'lobby') return this.err(connId, 'not_host', 'Only the host can add computer players.');
         const s = this.seats[msg.seat];
         if (!s || s.kind === 'human') return;
-        if (msg.level) Object.assign(s, { kind: 'ai', aiLevel: msg.level, name: `Computer (${cap(msg.level)})`, deck: this.opts.starterDecks[s.seat % this.opts.starterDecks.length]!, ready: true });
+        if (msg.level) Object.assign(s, { kind: 'ai', aiLevel: msg.level, name: this.uniqueName(`Computer (${cap(msg.level)})`, s.seat), deck: this.opts.starterDecks[s.seat % this.opts.starterDecks.length]!, ready: true });
         else Object.assign(s, emptySlot(s.seat));
         return this.broadcastLobby();
       }
@@ -290,7 +292,7 @@ export class Room {
       const want = msg.seat !== undefined ? this.seats[msg.seat] : undefined;
       const open = want?.kind === 'open' ? want : this.seats.find((s) => s.kind === 'open');
       if (open) {
-        Object.assign(open, { kind: 'human', clientId, name: cleanName(msg.name, open.seat), deck: this.opts.starterDecks[open.seat % this.opts.starterDecks.length]!, ready: false, disconnectedAt: null, graceNotified: false });
+        Object.assign(open, { kind: 'human', clientId, name: this.uniqueName(cleanName(msg.name, open.seat), open.seat), deck: this.opts.starterDecks[open.seat % this.opts.starterDecks.length]!, ready: false, disconnectedAt: null, graceNotified: false });
         slot = open;
       }
     }
@@ -424,7 +426,7 @@ export class Room {
       const key = `${g.commandCount}:${p.seat}:${p.kind}`;
       const now = this.host.now();
       if (slot.kind === 'ai') {
-        const delay = p.kind === 'priority' ? 350 : p.kind === 'main' ? 900 : 650;
+        const delay = (p.kind === 'priority' ? 350 : p.kind === 'main' ? 900 : 650) * (this.opts.aiDelayScale ?? 1);
         this.pending = { key, seat: p.seat, kind: 'ai', at: now + delay };
       } else if (p.kind === 'priority') {
         // House rule M: every player gets the same short window, so a pause reveals nothing.
@@ -500,6 +502,13 @@ export class Room {
     const next = this.seats.find((s) => s.kind === 'human' && s.clientId && s.disconnectedAt === null && [...this.conns.values()].some((c) => c.clientId === s.clientId));
     this.hostClientId = next?.clientId ?? null;
     if (next) for (const c of this.conns.values()) if (c.clientId === next.clientId) this.host.send(c.connId, { t: 'welcome', protocol: PROTOCOL_VERSION, code: this.code, clientId: next.clientId!, seat: next.seat, isHost: true, serverTime: this.host.now() });
+  }
+
+  /** Seat names must be distinct so the board, turn order and log are unambiguous. */
+  private uniqueName(name: string, seat: Seat): string {
+    const taken = new Set(this.seats.filter((s) => s.seat !== seat && s.kind !== 'open').map((s) => s.name));
+    if (!taken.has(name)) return name;
+    for (let n = 2; ; n++) if (!taken.has(`${name} ${n}`)) return `${name} ${n}`;
   }
 
   private isConnected(clientId: string | null): boolean {

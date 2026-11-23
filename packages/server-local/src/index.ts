@@ -25,6 +25,7 @@ export interface ServerOptions {
   staticDir?: string | null;
   graceMs?: number;
   quiet?: boolean;
+  aiDelayScale?: number;
 }
 
 interface RoomEntry {
@@ -35,7 +36,7 @@ interface RoomEntry {
 
 export function startServer(opts: ServerOptions) {
   const rooms = new Map<string, RoomEntry>();
-  const opt = roomOptions({ graceMs: opts.graceMs });
+  const opt = roomOptions({ graceMs: opts.graceMs, aiDelayScale: opts.aiDelayScale });
   const log = (m: string, d?: unknown) => {
     if (!opts.quiet) console.log(`[psi-wars] ${m}`, d ? JSON.stringify(d) : '');
   };

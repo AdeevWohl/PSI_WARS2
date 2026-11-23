@@ -154,3 +154,53 @@
 .curtain p { color: var(--text-dim); font-size: 18px; margin: 0 0 28px; }
 @keyframes curtain-in { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 .discard-viewer .choice-grid .card { --w: 120px; width: 120px; }
+
+/* 3–4 players: opponents share the top row in compact areas that expand on hover/focus */
+.board-main[data-opponents='2'] .opp-row, .board-main[data-opponents='3'] .opp-row { gap: 10px; }
+.board-main[data-opponents='2'] .area.opp, .board-main[data-opponents='3'] .area.opp {
+  flex: 1 1 0; min-width: 0; grid-template-rows: 44px 30px 1fr; grid-template-areas: 'strip' 'cus' 'field';
+  border-color: color-mix(in srgb, var(--seat-color) 30%, transparent); transition: flex-grow var(--dur-std) var(--ease-out-cubic), border-color var(--dur-std);
+}
+.board-main[data-opponents='2'] .area.opp { --card-w-opp: 90px; }
+.board-main[data-opponents='3'] .area.opp { --card-w-opp: 74px; }
+.board-main[data-opponents='2'] .area.opp:is(:hover, :focus-within), .board-main[data-opponents='3'] .area.opp:is(:hover, :focus-within) { flex-grow: 1.7; border-color: var(--seat-color); z-index: 3; }
+.board-main[data-opponents='2'] .area.opp .cu-row, .board-main[data-opponents='3'] .area.opp .cu-row { position: static; flex-direction: row; justify-content: flex-start; padding-left: 12px; gap: 6px; }
+.board-main[data-opponents='2'] .area.opp .cu-group, .board-main[data-opponents='3'] .area.opp .cu-group { height: 24px; padding: 0 8px 0 2px; gap: 4px; }
+.board-main[data-opponents='2'] .area.opp .cu-art, .board-main[data-opponents='3'] .area.opp .cu-art { width: 20px; height: 20px; }
+.board-main[data-opponents='2'] .area.opp .cu-ready, .board-main[data-opponents='3'] .area.opp .cu-ready { display: none; }
+.board-main[data-opponents='2'] .area.opp .p-id, .board-main[data-opponents='3'] .area.opp .p-id { min-width: 0; gap: 8px; }
+.board-main[data-opponents='2'] .area.opp .p-strip, .board-main[data-opponents='3'] .area.opp .p-strip { gap: 10px; padding: 4px 10px; }
+.board-main[data-opponents='3'] .area.opp .hp-bar { width: 64px; }
+.board-main[data-opponents='2'] .area.opp .hp-bar { width: 96px; }
+.board-main[data-opponents='3'] .area.opp .p-name { font-size: 15px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+.board-main[data-opponents='3'] .area.opp .p-hp { font-size: 22px; min-width: 30px; }
+.board-main[data-opponents='3'] .area.opp .decks, .board-main[data-opponents='3'] .area.opp .discard-pile { transform: scale(0.8); }
+.board-main[data-opponents='2'] .area.opp .hand, .board-main[data-opponents='3'] .area.opp .hand { top: 4px; right: 8px; height: 36px; }
+.board-main[data-opponents='3'] .area.opp .hand .hand-back { --w: 22px; width: 22px; margin-left: -16px; }
+/* Many units in a narrow area overlap like a fanned row, and open up when the area expands. */
+.board-main[data-opponents='3'] .area.opp .units-row { gap: 4px; }
+.board-main[data-opponents='3'] .area.opp:not(:hover):not(:focus-within) .units-row > * + * { margin-left: calc(var(--card-w-opp) * -0.38); }
+.board-main[data-opponents='2'] .area.opp:not(:hover):not(:focus-within) .units-row > * + * { margin-left: calc(var(--card-w-opp) * -0.2); }
+.board-main[data-opponents='2'] .area.opp .field, .board-main[data-opponents='3'] .area.opp .field { gap: 10px; overflow: hidden; }
+
+.bf-label { grid-row: 1; position: absolute; transform: translateY(-120%); font: 700 11px var(--font-display); letter-spacing: 0.06em; color: var(--seat-color); white-space: nowrap; }
+.bf-col { position: relative; }
+
+/* Turn order, always visible */
+.turn-order { display: flex; gap: 4px; margin-top: 10px; }
+.to-chip { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; padding: 5px 4px; border-radius: 6px; border: 1px solid var(--line); background: #0f1828; font-size: 12px; position: relative; }
+.to-chip .to-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--seat-color); font-weight: 700; }
+.to-chip .to-hp { font: 700 13px var(--font-display); }
+.to-chip.active { border-color: var(--seat-color); box-shadow: 0 0 10px color-mix(in srgb, var(--seat-color) 40%, transparent); }
+.to-chip.active::after { content: '▼'; position: absolute; top: -12px; font-size: 10px; color: var(--seat-color); }
+.to-chip.out { opacity: 0.4; text-decoration: line-through; }
+.to-chip.offline .to-name::after { content: ' ⚠'; color: var(--gold); }
+.to-arrow { align-self: center; color: var(--text-faint); font-size: 10px; }
+
+/* Attack targeting (3–4 players) */
+.card.attacking-pick .overlays { box-shadow: inset 0 0 0 3px var(--target-color, var(--physical)), 0 0 18px 4px color-mix(in srgb, var(--target-color, var(--physical)) 55%, transparent); }
+.target-tag { position: absolute; left: 50%; bottom: -10px; transform: translateX(-50%); padding: 1px 6px; border-radius: 8px; font: 700 10px var(--font-display); background: var(--target-color); color: #071018; white-space: nowrap; z-index: 6; }
+.btn.target-chip { border-color: var(--seat-color); }
+.btn.target-chip.active { background: color-mix(in srgb, var(--seat-color) 35%, #12203a); box-shadow: 0 0 0 1px var(--seat-color), 0 0 12px color-mix(in srgb, var(--seat-color) 40%, transparent); }
+.game-screen.dragging .area.opp { outline: 2px dashed color-mix(in srgb, var(--seat-color) 60%, transparent); outline-offset: -4px; }
+.area.opp.drop-hover { outline: 3px solid var(--seat-color) !important; }

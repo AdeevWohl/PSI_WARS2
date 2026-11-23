@@ -64,3 +64,7 @@
 .conn-status.bad { color: var(--danger); }
 .code-input { font: 800 34px var(--font-display); letter-spacing: 0.3em; text-transform: uppercase; text-align: center; }
 .net-badge { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); z-index: 850; padding: 6px 14px; border-radius: 16px; background: var(--panel-solid); border: 1px solid var(--danger); color: var(--danger); font-size: 14px; }
+.local-seats { display: flex; flex-direction: column; gap: 10px; margin: 18px 0 8px; }
+.local-seat { display: flex; align-items: center; gap: 14px; padding: 10px 14px; }
+.local-seat-fields { flex: 1; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.add-seat { align-self: flex-start; }
