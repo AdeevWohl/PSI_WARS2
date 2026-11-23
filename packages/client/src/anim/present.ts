@@ -292,7 +292,7 @@ export class Presenter {
 
   private ghost(el: HTMLElement, b: Snap): HTMLElement {
     el.style.opacity = '';
-    el.classList.add('ghost');
+    el.classList.add('anim-ghost');
     const w = b.w;
     Object.assign(el.style, { position: 'absolute', left: `${b.cx - w / 2}px`, top: `${b.cy - w / 0.7243 / 2}px`, width: `${w}px`, transform: b.transform || 'none' });
     el.style.setProperty('--w', `${w}px`);

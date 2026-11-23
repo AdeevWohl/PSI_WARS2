@@ -7,7 +7,8 @@
 @keyframes tether-flow { to { stroke-dashoffset: -28; } }
 :root[data-glow='off'] .tether-layer { display: none; }
 
-.ghost { pointer-events: none; z-index: 2; }
+/* Animation stand-ins for cards that left the board ("anim-ghost", not to be confused with .btn.ghost buttons). */
+.anim-ghost { pointer-events: none; z-index: 2; }
 .card .sheen { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 5; background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.65) 48%, rgba(180, 230, 255, 0.4) 52%, transparent 70%); mix-blend-mode: screen; }
 
 /* Banner sweep for turns / phases */
