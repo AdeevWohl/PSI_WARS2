@@ -16,6 +16,15 @@ First time only:
 npm install
 ```
 
+## The easy way: double-click
+
+In the `Psi Wars` folder (one level above `psi-wars`) there are two files:
+
+- **Start Psi Wars.bat** — double-click to play on this computer (vs AI or hot-seat). It builds the game, starts it and opens your browser.
+- **Start Psi Wars Online.bat** — double-click to play with friends anywhere. It does the same, then opens a free Cloudflare link, copies it to your clipboard and shows it in big letters. Send that link to your friends.
+
+A black window stays open while you play; closing it stops the game. The first run takes a minute longer (it installs what it needs). If Windows shows "Windows protected your PC", click **More info → Run anyway** (the file only runs this game's own launcher script, `psi-wars/tools/launch/start.ps1`).
+
 ## Play on this computer (vs AI or hot-seat)
 
 ```powershell
