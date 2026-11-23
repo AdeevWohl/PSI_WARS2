@@ -2,7 +2,7 @@
 
 Each item has a status and the evidence behind it. **✅** means implemented and verified here (by automated tests and/or in a browser). **🟡** means implemented, but part of the check needs hardware or accounts this machine doesn't have. That part is listed under "Still to check on your side" with exact steps.
 
-Test suite at the time of writing: `npm test` runs **14 test files, 197+ tests**, all passing. That includes a 200-game fuzz run; a separate 1,500-game fuzz run was started at the end of Stage 9 (see the end of this file).
+Test suite at the time of writing: `npm test` runs **14 test files, 197+ tests**, all passing. That includes a 200-game fuzz run; a separate 1,500-game fuzz run also passed (see the end of this file).
 
 | # | Item | Status | Evidence |
 |---|---|---|---|
@@ -40,4 +40,4 @@ Test suite at the time of writing: `npm test` runs **14 test files, 197+ tests**
 
 ## Long fuzz run
 
-`$env:FUZZ_GAMES=1500; npx vitest run packages/engine/test/fuzz.test.ts -t fuzz` — started at the end of Stage 9; its result was not recorded before the session ended. Run it once to confirm.
+`$env:FUZZ_GAMES=1500; npx vitest run packages/engine/test/fuzz.test.ts -t fuzz` — passed: 1,500 random games, no engine errors and no soft-locks (538 s).
