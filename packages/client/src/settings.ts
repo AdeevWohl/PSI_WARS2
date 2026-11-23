@@ -23,6 +23,10 @@ export interface Settings {
   uiScale: number;
   colorblind: boolean;
   autoReduce: boolean;
+  /** Change Request 1, Part D: readability. */
+  showcase: 'on' | 'opponents' | 'off';
+  spotlight: boolean;
+  holdTime: 'short' | 'normal' | 'long';
   // Audio
   volMaster: number;
   volMusic: number;
@@ -62,6 +66,9 @@ export const DEFAULTS: Settings = {
   uiScale: 1,
   colorblind: false,
   autoReduce: true,
+  showcase: 'on',
+  spotlight: true,
+  holdTime: 'normal',
   volMaster: 0.8,
   volMusic: 0.5,
   volSfx: 0.8,

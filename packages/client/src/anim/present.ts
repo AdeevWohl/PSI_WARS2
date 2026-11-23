@@ -11,14 +11,15 @@ import type { Ability, CUType, GameEvent, Seat } from '@psi-wars/shared';
 import type { GameView } from '@psi-wars/engine';
 import { playSfx, type Sfx } from '../audio';
 import { settings } from '../settings';
-import { createCardEl } from '../render/card';
+import { createCardEl, updateOverlays } from '../render/card';
+import { BattleStage } from './battle-stage';
 import type { Board } from '../render/board';
 import { DIE_COLOR } from '../render/dice';
 import { h } from '../ui/dom';
 import { Die3D } from './dice3d';
 import { flipFace, flipFrom, snap, toStage, type Snap } from './flip';
 import type { Fx } from './fx';
-import { DUR, EASE, type Timeline } from './timeline';
+import { DUR, EASE, HOLD, type Timeline } from './timeline';
 
 type Anchors = NonNullable<ReturnType<Board['anchors']>>;
 
@@ -31,7 +32,12 @@ export interface PresentEnv {
   names: (seat: unknown) => string;
   onEvent: (index: number) => void;
   onBattle: (ev: GameEvent) => void;
+  /** Plain-language narration for one event (null = nothing to say). */
+  caption?: (ev: GameEvent) => { text: string; kind?: string } | null;
 }
+
+/** Events that get their own readable beat (a hold afterwards) and a caption. */
+const BEATS = new Set(['CardPlayed', 'AttackersDeclared', 'BlockersAssigned', 'BattleResolved', 'UnitDestroyed', 'UnitDamaged', 'LabDamaged', 'UnitTrapped', 'EscapeAttempt', 'CardsRevealed', 'CardDiscarded', 'UnitRevived', 'Obliterated', 'Disoriented', 'SweepDamage', 'StackResolving', 'EquipmentAttached', 'EquipmentMoved', 'UnitsDisabled', 'PlayerEliminated']);
 
 export interface BatchStart {
   before: Map<string, Snap & { zone?: string }>;
@@ -52,6 +58,8 @@ export class Presenter {
   private start!: BatchStart;
   private view!: GameView;
   private viewer: Seat | null = null;
+  private stage: BattleStage | null = null;
+  private fighters = new Map<string, { att: string[]; def: string[]; attSeat: Seat; defSeat: Seat }>();
 
   constructor(private env: PresentEnv) {}
 
@@ -67,6 +75,14 @@ export class Presenter {
     const now = board.elements();
     const removed = board.lastRemoved;
 
+    // Who fights in each battle of this batch (for the spotlight).
+    for (const e of events) {
+      if (e.type === 'BattleResolved') {
+        const a = e.att as { units: string[]; seat: Seat };
+        const d = e.def as { units: string[]; seat: Seat };
+        this.fighters.set(String(e.attackId), { att: a.units, def: d.units, attSeat: a.seat, defSeat: d.seat });
+      }
+    }
     // Which cards each event moves ("claims")
     const claimed = new Set<string>();
     for (const e of events) for (const u of this.claims(e)) claimed.add(u);
@@ -98,11 +114,14 @@ export class Presenter {
     }
 
     for (let i = 0; i < events.length; i++) {
+      const ev = events[i]!;
       this.env.onEvent(i);
+      this.narrate(ev);
       try {
-        await this.step(events[i]!);
+        await this.step(ev);
+        if (BEATS.has(ev.type) && !this.tl.instant) await this.tl.wait(HOLD[settings().holdTime] ?? HOLD.normal);
       } catch (err) {
-        console.warn('animation step failed', events[i]?.type, err);
+        console.warn('animation step failed', ev?.type, err);
       }
     }
     this.env.onEvent(events.length);
@@ -130,7 +149,110 @@ export class Presenter {
     this.diceBox = null;
     this.dice.clear();
     this.env.board.hpOverride.clear();
+    // Keep the spotlight only while its battle is waiting on a decision (e.g. a re-roll).
+    if (this.stage && (this.tl.instant || this.view?.battle?.current?.attackId !== this.stage.attackId)) {
+      this.stage.dispose();
+      this.stage = null;
+    }
+    this.fighters.clear();
   }
+
+  // ---------- spotlight / showcase ----------
+
+  private openStage(attackId: string): BattleStage | null {
+    if (this.stage?.attackId === attackId) return this.stage;
+    if (!settings().spotlight || this.tl.instant) return null;
+    let f = this.fighters.get(attackId);
+    if (!f) {
+      const atk = this.view.battle?.attacks.find((a) => a.id === attackId);
+      if (atk) f = { att: atk.units, def: atk.blockers, attSeat: atk.seat, defSeat: atk.target };
+    }
+    if (!f || !f.att.length || !f.def.length) return null;
+    const host = this.env.layer.parentElement ?? this.env.layer;
+    this.stage = new BattleStage(host, this.tl, this.view, attackId, { units: f.att, seat: f.attSeat }, { units: f.def, seat: f.defSeat }, this.env.names);
+    this.stage.setUnits(f.att, f.def);
+    return this.stage;
+  }
+
+  /** A played card is shown large in the middle first, then flies to where it goes. */
+  private async showcase(cardId: string, from: { cx: number; cy: number } | null, fromOpponent: boolean, target: HTMLElement | undefined): Promise<void> {
+    const def = this.view.defs[cardId];
+    if (!def) return;
+    const W = 280;
+    const cx = (1920 - 392) / 2;
+    const cy = 470;
+    const card = createCardEl(null, def, { size: 'lg' });
+    updateOverlays(card, def);
+    card.style.setProperty('--w', `${W}px`);
+    const color = def.cardType === 'BattleUnit' ? (def.unitType === 'Robot' ? '#4fd1ff' : def.unitType === 'Creature' ? '#ff8a4c' : '#c77dff') : def.cardType === 'Equipment' ? '#b867ff' : '#ffc857';
+    const wrap = this.temp(h('div', { class: 'showcase', style: { left: `${cx}px`, top: `${cy}px`, '--glow': color } as any }, card, h('div', { class: 'showcase-name' }, def.name)));
+    this.sfx('showcase');
+    const sx = from ? from.cx - cx : 0;
+    const sy = from ? from.cy - cy : 320;
+    await this.tl.done(this.tl.animate(wrap, [
+      { transform: `translate(-50%, -50%) translate(${sx}px, ${sy}px) scale(0.3)${fromOpponent ? ' rotateY(90deg)' : ''}`, opacity: 0.5 },
+      { transform: 'translate(-50%, -50%) scale(1.06)', opacity: 1, offset: 0.75 },
+      { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
+    ], { duration: DUR.travel, easing: EASE.outQuint, fill: 'forwards' }));
+    await this.tl.wait(650);
+    if (target && target.isConnected) {
+      const r = this.centre(target);
+      const k = Math.max(0.2, r.w / W);
+      await this.tl.done(this.tl.animate(wrap, [
+        { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
+        { transform: `translate(-50%, -50%) translate(${r.cx - cx}px, ${r.cy - cy}px) scale(${k})`, opacity: 1, offset: 0.85 },
+        { transform: `translate(-50%, -50%) translate(${r.cx - cx}px, ${r.cy - cy}px) scale(${k})`, opacity: 0 },
+      ], { duration: DUR.travel - 120, easing: EASE.inOutQuart, fill: 'forwards' }));
+    } else {
+      await this.tl.done(this.tl.animate(wrap, [{ opacity: 1 }, { opacity: 0, transform: 'translate(-50%, -50%) scale(0.8)' }], { duration: DUR.std, fill: 'forwards' }));
+    }
+    wrap.remove();
+    this.temps.delete(wrap);
+  }
+
+  /** The landing: a slam, a shockwave across the board and a small shake. */
+  private async slam(el: HTMLElement, color: string): Promise<void> {
+    if (this.tl.instant) return;
+    const base = getComputedStyle(el).transform;
+    const bt = base === 'none' ? '' : base;
+    this.sfx('slam');
+    await this.tl.done(this.tl.animate(el, [{ transform: `${bt} translateY(-34px) scale(1.22)`, filter: 'brightness(1.9)' }, { transform: `${bt}`, filter: 'none' }], { duration: 230, easing: EASE.inQuad }));
+    const r = this.centre(el);
+    const ring = this.temp(h('div', { class: 'shockwave', style: { left: `${r.cx}px`, top: `${r.cy}px`, '--glow': color } as any }));
+    this.tl.done(this.tl.animate(ring, [{ transform: 'translate(-50%, -50%) scale(0.2)', opacity: 0.9 }, { transform: 'translate(-50%, -50%) scale(4.5)', opacity: 0 }], { duration: 700, easing: EASE.outCubic, fill: 'forwards' })).then(() => ring.remove());
+    this.env.fx.burst(r.cx, r.y + r.h * 0.92, { count: 26, color, speed: 3.4, ring: true });
+    this.shake(0.7);
+  }
+
+  private floatNumber(x: number, y: number, text: string, cls = 'dmg-num'): void {
+    if (this.tl.instant) return;
+    const num = this.temp(h('div', { class: cls }, text));
+    Object.assign(num.style, { left: `${x}px`, top: `${y}px` });
+    this.tl.done(this.tl.animate(num, [{ transform: 'translate(-50%, -50%) scale(0.4)', opacity: 0 }, { transform: 'translate(-50%, -80%) scale(1.4)', opacity: 1, offset: 0.2 }, { transform: 'translate(-50%, -220%) scale(1)', opacity: 0 }], { duration: 1200, easing: EASE.outQuint, fill: 'forwards' })).then(() => num.remove());
+  }
+
+  // ---------- narration ----------
+
+  private captionEl: HTMLElement | null = null;
+
+  /** The caption strip at the top of the battlefield says what is happening, in words. */
+  private narrate(e: GameEvent): void {
+    const line = this.env.caption?.(e);
+    if (!line) return;
+    if (!this.captionEl || !this.captionEl.isConnected) {
+      this.captionEl = h('div', { class: 'caption-strip', role: 'status', 'aria-live': 'polite' });
+      this.env.layer.parentElement?.appendChild(this.captionEl);
+    }
+    const el = this.captionEl;
+    el.textContent = line.text;
+    el.classList.toggle('big', line.kind === 'big');
+    el.classList.add('show');
+    if (!this.tl.instant) this.tl.animate(el, [{ opacity: 0.2, transform: 'translate(-50%, -6px)' }, { opacity: 1, transform: 'translate(-50%, 0)' }], { duration: DUR.micro, easing: EASE.outCubic });
+    clearTimeout(this.captionTimer);
+    this.captionTimer = window.setTimeout(() => el.classList.remove('show'), 4000);
+  }
+
+  private captionTimer = 0;
 
   // ---------- helpers ----------
 
@@ -155,6 +277,8 @@ export class Presenter {
       case 'Stacked':
       case 'Unstacked':
         return (e.uids as string[]) ?? [];
+      case 'UnitRevived':
+        return [String(e.uid)];
       case 'AttackersDeclared':
         return ((e.attacks as { units: string[] }[]) ?? []).flatMap((a) => a.units);
       case 'BlockersAssigned':
@@ -276,6 +400,14 @@ export class Presenter {
   private async step(e: GameEvent): Promise<void> {
     const tl = this.tl;
     const v = this.view;
+    if (this.stage) {
+      const same = e.attackId === undefined || String(e.attackId) === this.stage.attackId;
+      const battleBeat = ['XRolled', 'RollModified', 'AbilityRoll', 'DiceRolled', 'Obliterated', 'Disoriented', 'PsionicWin', 'Rerolled', 'BattleResolved', 'UnitDamaged'].includes(e.type);
+      if (!battleBeat || !same) {
+        await this.stage.close(e.type === 'UnitDestroyed' ? 500 : 900);
+        this.stage = null;
+      }
+    }
     const anchorsOf = (seat: unknown): Anchors | undefined => (typeof seat === 'number' ? this.start.anchors.get(seat) ?? this.env.board.anchors(seat) ?? undefined : undefined);
     switch (e.type) {
       case 'TurnStarted': {
@@ -283,7 +415,7 @@ export class Presenter {
         this.sfx('phase');
         const area = this.env.board.areaFor(seat)?.root;
         if (area && !tl.instant) tl.animate(area, [{ boxShadow: '0 0 0 0 transparent' }, { boxShadow: '0 0 60px 6px color-mix(in srgb, var(--seat-color) 35%, transparent)' }, { boxShadow: '0 0 0 0 transparent' }], { duration: 900 });
-        await this.banner(`${this.env.names(seat)}`, `Turn ${e.turn}`, 'var(--seat-color, #4fd1ff)');
+        await this.banner(seat === this.viewer ? 'YOUR TURN' : `${this.env.names(seat).toUpperCase()}'S TURN`, `Turn ${e.turn}`, 'var(--seat-color, #4fd1ff)');
         return;
       }
       case 'PhaseChanged': {
@@ -348,12 +480,84 @@ export class Presenter {
         const el = this.el(uid);
         const a = anchorsOf(e.seat);
         this.sfx('play');
-        const anim = this.release(uid, a ? { cx: a.hand.cx, cy: a.hand.cy, w: 80 } : undefined, { flipFace: e.seat !== this.viewer, land: true, duration: DUR.travel + 80 });
+        const mode = settings().showcase;
+        const show = !tl.instant && e.cardType !== 'Resource' && (mode === 'on' || (mode === 'opponents' && e.seat !== this.viewer));
+        if (show) {
+          const prev = el?.style.opacity ?? '';
+          if (el) el.style.opacity = '0';
+          await this.showcase(String(e.cardId), a ? { cx: a.hand.cx, cy: a.hand.cy } : null, e.seat !== this.viewer, el);
+          if (el) el.style.opacity = prev === '0' ? '' : prev;
+        }
+        const anim = this.release(uid, a ? { cx: a.hand.cx, cy: a.hand.cy, w: 80 } : undefined, { flipFace: !show && e.seat !== this.viewer, land: !show, duration: show ? 1 : DUR.travel + 80 });
         await tl.done(anim);
         if (el && e.cardType !== 'Resource') {
-          const r = this.centre(el);
-          this.env.fx.burst(r.cx, r.y + r.h * 0.9, { count: 16, color: e.cardType === 'Equipment' ? '#b867ff' : '#8be9ff', speed: 2.6, ring: true });
+          const color = e.cardType === 'Equipment' ? '#b867ff' : e.cardType === 'BattleUnit' ? '#8be9ff' : '#ffc857';
+          if (show && e.cardType === 'BattleUnit') await this.slam(el, color);
+          else {
+            const r = this.centre(el);
+            this.env.fx.burst(r.cx, r.y + r.h * 0.9, { count: 16, color, speed: 2.6, ring: true });
+          }
         }
+        return;
+      }
+      case 'UnitDamaged': {
+        const el = this.el(e.uid);
+        this.sfx('damage');
+        if (this.stage && String(e.attackId) === this.stage.attackId) this.stage.damaged(e);
+        if (el) {
+          const r = this.centre(el);
+          const src = e.cause === 'effect' ? this.el(e.source) : null;
+          if (src && !tl.instant) {
+            const sr = this.centre(src);
+            this.env.fx.stream({ x: sr.cx, y: sr.cy }, { x: r.cx, y: r.cy }, '#ff6a5a', 18);
+            await tl.wait(260);
+          }
+          this.floatNumber(r.cx, r.cy, `−${e.amount}`);
+          this.aura(el, 'danger');
+          this.env.fx.burst(r.cx, r.cy, { color: '#ff4d6d', count: 12 + Number(e.amount) * 3, speed: 2.4 });
+          this.shake(0.3 + Number(e.amount) * 0.15);
+        }
+        return;
+      }
+      case 'SweepDamage': {
+        this.sfx('sweep');
+        if (!tl.instant) {
+          const flash = this.temp(h('div', { class: 'screen-flash', style: { '--flash': '#ff6a5a' } as any }));
+          tl.done(tl.animate(flash, [{ opacity: 0 }, { opacity: 0.35, offset: 0.2 }, { opacity: 0 }], { duration: 600, fill: 'forwards' })).then(() => flash.remove());
+          const ring = this.temp(h('div', { class: 'shockwave big', style: { left: `${(1920 - 392) / 2}px`, top: '540px', '--glow': '#ff6a5a' } as any }));
+          await tl.done(tl.animate(ring, [{ transform: 'translate(-50%, -50%) scale(0.1)', opacity: 1 }, { transform: 'translate(-50%, -50%) scale(9)', opacity: 0 }], { duration: 900, easing: EASE.outCubic, fill: 'forwards' }));
+          ring.remove();
+        }
+        return;
+      }
+      case 'UnitRevived': {
+        const uid = String(e.uid);
+        const a = anchorsOf(e.seat);
+        this.sfx('revive');
+        const anim = this.release(uid, a ? { cx: a.discard.cx, cy: a.discard.cy, w: 70 } : undefined, { land: true, duration: DUR.travel + 120 });
+        await tl.done(anim);
+        const el = this.el(uid);
+        if (el) {
+          const r = this.centre(el);
+          this.env.fx.burst(r.cx, r.cy, { color: '#ffc857', count: 30, speed: 2.8, ring: true });
+          this.aura(el, 'gold');
+        }
+        return;
+      }
+      case 'CardDiscarded': {
+        const a = anchorsOf(e.seat);
+        if (a) await this.flyTemp(String(e.cardId), 'battle', { cx: a.hand.cx, cy: a.hand.cy, w: 110 }, { cx: a.discard.cx, cy: a.discard.cy }, true);
+        return;
+      }
+      case 'ResourceFortified':
+      case 'CUFortified': {
+        const a = anchorsOf(e.seat);
+        this.sfx('shield');
+        if (a && !tl.instant) {
+          this.env.fx.burst(a.cus.cx, a.cus.cy, { color: '#ffd36a', count: 18, speed: 2, ring: true });
+          this.floatNumber(a.cus.cx, a.cus.cy - 20, '🛡', 'shield-num');
+        }
+        await tl.wait(DUR.std);
         return;
       }
       case 'EquipmentAttached':
@@ -493,11 +697,14 @@ export class Presenter {
         return;
       }
       case 'DiceRolled': {
-        const box = this.ensureDiceBox(String(e.attackId));
+        const stage = this.openStage(String(e.attackId));
+        if (stage && !tl.instant) await tl.wait(DUR.travel);
+        const box = stage ? null : this.ensureDiceBox(String(e.attackId));
         const att = e.att as Record<string, any>;
         const def = e.def as Record<string, any>;
         const viewerIsAtt = att.seat === this.viewer;
-        const rows = { att: box.querySelector(viewerIsAtt ? '.dice-row.bottom' : '.dice-row.top')!, def: box.querySelector(viewerIsAtt ? '.dice-row.top' : '.dice-row.bottom')! };
+        const fallback = box ? { att: box.querySelector(viewerIsAtt ? '.dice-row.bottom' : '.dice-row.top')!, def: box.querySelector(viewerIsAtt ? '.dice-row.top' : '.dice-row.bottom')! } : null;
+        const rows = fallback;
         this.sfx('dice');
         let last: Animation | null = null;
         let i = 0;
@@ -505,10 +712,10 @@ export class Presenter {
           const d = side === 'att' ? att : def;
           for (const ab of ['cyber', 'psionic', 'physical'] as const) {
             if (d[ab] === null || d[ab] === undefined) continue;
-            const die = new Die3D(ab, d[ab], v.config.diceVariant, 58);
+            const die = new Die3D(ab, d[ab], v.config.diceVariant, stage ? 76 : 58);
             this.dice.set(`${side}:${ab}`, die);
-            rows[side].appendChild(die.el);
-            last = die.roll(tl, d[ab], i++ * 60) ?? last;
+            (stage?.dieSlot(side, ab) ?? rows?.[side])?.appendChild(die.el);
+            last = die.roll(tl, d[ab], i++ * 90) ?? last;
           }
         }
         await tl.done(last);
@@ -538,6 +745,10 @@ export class Presenter {
       }
       case 'Disoriented': {
         this.sfx('disorient');
+        if (this.stage) {
+          await this.stage.disoriented(e);
+          return;
+        }
         for (const u of (e.uids as string[]) ?? []) {
           const el = this.el(u);
           if (!el) continue;
@@ -560,6 +771,15 @@ export class Presenter {
       }
       case 'BattleResolved': {
         this.env.onBattle(e);
+        const stage = this.openStage(String(e.attackId));
+        if (stage) {
+          await stage.resolved(e);
+          await tl.wait(500);
+          this.diceBox?.remove();
+          this.diceBox = null;
+          this.dice.clear();
+          return;
+        }
         const winners = e.winners as Record<string, 'att' | 'def' | null>;
         const att = e.att as { units: string[] };
         const def = e.def as { units: string[] };

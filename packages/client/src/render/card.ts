@@ -33,13 +33,16 @@ function img(key: string, size: ArtSize, alt: string): HTMLImageElement {
   return el;
 }
 
+const EMBLEM: Record<string, string> = { Creature: '✦', Robot: '⚙', Cyborg: '⬢', Equipment: '⛨', Power: '⚡', Trap: '⌖', Resource: '◈', CreationUnit: '◉' };
+
 /** Readable card face built from data, for cards whose art has not arrived (§5.3 fallback). */
 export function proceduralFace(def: CardDef): HTMLElement {
   const typeLine = def.cardType === 'BattleUnit' ? `${def.unitType ?? ''}${def.isCommander ? ' Commander' : ''}` : def.cardType === 'CreationUnit' ? 'Creation Unit' : def.cardType;
   const cost = def.cost;
   return h(
     'div',
-    { class: `proc-face proc-${def.cardType}` },
+    { class: `proc-face proc-${def.cardType}${def.unitType ? ` proc-u-${def.unitType}` : ''}` },
+    h('div', { class: 'proc-art' }, h('div', { class: 'proc-emblem' }, EMBLEM[def.unitType ?? def.cardType] ?? '◆')),
     h('div', { class: 'proc-name' }, def.name),
     cost &&
       h(

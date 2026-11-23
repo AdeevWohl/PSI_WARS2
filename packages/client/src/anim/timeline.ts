@@ -19,7 +19,11 @@ export const EASE = {
 } as const;
 
 /** Base durations (ms) before the speed multiplier. */
-export const DUR = { micro: 120, std: 240, travel: 380, drama: 700, flip: 420 } as const;
+// Change Request 1, Part D: slower at Normal so each action can be followed (Fast ~ the old Normal).
+export const DUR = { micro: 150, std: 320, travel: 540, drama: 950, flip: 560 } as const;
+
+/** Readable pause after each important beat, by the Hold time setting (before the speed multiplier). */
+export const HOLD = { short: 220, normal: 480, long: 900 } as const;
 
 export class Timeline {
   private running = new Set<Animation>();

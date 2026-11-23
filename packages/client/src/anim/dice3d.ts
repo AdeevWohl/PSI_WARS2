@@ -51,8 +51,8 @@ export class Die3D {
     const [x, y] = SHOW[side]!;
     const sx = 720 + Math.round(Math.random() * 2) * 90;
     const sy = 720 + Math.round(Math.random() * 2) * 90;
-    tl.animate(this.el, [{ transform: 'translateY(-90px) scale(0.6)', opacity: 0 }, { transform: 'translateY(6px) scale(1.05)', opacity: 1, offset: 0.55 }, { transform: 'translateY(-10px)', offset: 0.75 }, { transform: 'translateY(0) scale(1)' }], { duration: 760, easing: EASE.outCubic, delay, fill: 'backwards' });
-    return tl.animate(this.cube, [{ transform: `rotateX(${x + sx}deg) rotateY(${y + sy}deg)` }, { transform: `rotateX(${x - 12}deg) rotateY(${y + 14}deg)`, offset: 0.8 }, { transform: `rotateX(${x}deg) rotateY(${y}deg)` }], { duration: 760, easing: EASE.outQuint, delay, fill: 'backwards' });
+    tl.animate(this.el, [{ transform: 'translateY(-90px) scale(0.6)', opacity: 0 }, { transform: 'translateY(6px) scale(1.05)', opacity: 1, offset: 0.55 }, { transform: 'translateY(-10px)', offset: 0.75 }, { transform: 'translateY(0) scale(1)' }], { duration: 1150, easing: EASE.outCubic, delay, fill: 'backwards' });
+    return tl.animate(this.cube, [{ transform: `rotateX(${x + sx}deg) rotateY(${y + sy}deg)` }, { transform: `rotateX(${x - 12}deg) rotateY(${y + 14}deg)`, offset: 0.8 }, { transform: `rotateX(${x}deg) rotateY(${y}deg)` }], { duration: 1150, easing: EASE.outQuint, delay, fill: 'backwards' });
   }
 
   /** Re-roll: the die lifts and spins in place, then lands on the new side. */

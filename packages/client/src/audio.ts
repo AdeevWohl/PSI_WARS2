@@ -6,7 +6,9 @@
 import { settings } from './settings';
 
 export type Sfx =
-  | 'draw' | 'play' | 'cuDeplete' | 'dice' | 'obliterate' | 'disorient' | 'destroy' | 'labHit' | 'trap' | 'victory' | 'defeat' | 'click' | 'phase';
+  | 'draw' | 'play' | 'cuDeplete' | 'dice' | 'obliterate' | 'disorient' | 'destroy' | 'labHit' | 'trap' | 'victory' | 'defeat' | 'click' | 'phase'
+  // Change Request 1, Part D
+  | 'showcase' | 'slam' | 'damage' | 'spell' | 'sweep' | 'shield' | 'revive';
 
 /** Real files go here, e.g. { draw: 'audio/draw.ogg' }. */
 export const AUDIO_FILES: Partial<Record<Sfx, string>> = {};
@@ -25,6 +27,13 @@ const SYNTH: Record<Sfx, { f: number; f2?: number; dur: number; type: Oscillator
   defeat: { f: 300, f2: 110, dur: 0.9, type: 'sine', gain: 0.3 },
   click: { f: 1500, dur: 0.02, type: 'square', gain: 0.06 },
   phase: { f: 520, f2: 640, dur: 0.12, type: 'sine', gain: 0.12 },
+  showcase: { f: 240, f2: 720, dur: 0.22, type: 'triangle', gain: 0.18 },
+  slam: { f: 110, f2: 38, dur: 0.28, type: 'square', gain: 0.4 },
+  damage: { f: 200, f2: 90, dur: 0.18, type: 'sawtooth', gain: 0.25 },
+  spell: { f: 380, f2: 1100, dur: 0.3, type: 'sine', gain: 0.22 },
+  sweep: { f: 900, f2: 120, dur: 0.5, type: 'sawtooth', gain: 0.2 },
+  shield: { f: 1400, f2: 900, dur: 0.12, type: 'triangle', gain: 0.16 },
+  revive: { f: 330, f2: 990, dur: 0.6, type: 'sine', gain: 0.22 },
 };
 
 let ctx: AudioContext | null = null;

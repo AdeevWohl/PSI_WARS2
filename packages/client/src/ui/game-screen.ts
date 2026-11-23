@@ -112,6 +112,10 @@ export class GameScreen {
       names: (s) => this.nameOf(s),
       onEvent: (i) => this.revealUpTo(i),
       onBattle: (ev) => this.showBattle(ev),
+      caption: (ev) => {
+        this.namer.learnEvent(ev);
+        return eventLine(ev, (s) => this.nameOf(s), this.namer, this.lastView?.viewer ?? null, 'normal');
+      },
     });
     if (opts.aiSeed) this.aiRng = seedRng(opts.aiSeed);
     if (opts.tutorial) this.el.append(opts.tutorial.el);
@@ -408,6 +412,15 @@ export class GameScreen {
 
   /** Commander halos + tethers to the units receiving the bonus; danger rim on likely losers. */
   private decorateExtras(view: GameView): void {
+    // "Waiting for …" on the area of whoever must decide (not you), so a pause is never a mystery.
+    for (const p of view.players) {
+      const area = this.board.areaFor(p.seat)?.root;
+      if (!area) continue;
+      area.querySelector(':scope > .wait-pill')?.remove();
+      if (view.prompt && view.prompt.seat === p.seat && p.seat !== view.viewer && !view.result) {
+        area.appendChild(h('div', { class: 'wait-pill' }, `Waiting for ${this.nameOf(p.seat)}…`));
+      }
+    }
     const els = this.board.elements();
     const tethers: string[] = [];
     const attacking = new Set((view.battle?.attacks ?? []).filter((a) => a.status === 'pending').flatMap((a) => a.units));
