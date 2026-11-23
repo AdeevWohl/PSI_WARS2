@@ -418,6 +418,7 @@ export class CardEditor {
   }
 
   private field(label: string, control: HTMLElement, hint?: string): HTMLElement {
+    if (!control.getAttribute('aria-label')) control.setAttribute('aria-label', label);
     return h('div', { class: 'set-row' }, h('label', { class: 'set-label' }, label, hint ? h('span', { class: 'set-hint' }, hint) : null), control);
   }
 }

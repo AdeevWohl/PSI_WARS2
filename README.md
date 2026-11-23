@@ -2,7 +2,7 @@
 
 Browser card game: a pure TypeScript rules engine, an art-driven client, AI opponents, and online play with room codes (2–4 players).
 
-> **Status: Stage 8 of 9 complete.** Rules engine, art-driven client with animation and settings, 2–4 player games with any mix of people and computer players (Easy / Normal / Hard), locally or online (host a room, share its code or invite link), a deck builder, a guided tutorial, the full searchable rules reference, a results screen, and the balance tools: card editor, replayable game logs and an AI-vs-AI simulator. Stage 9 (final polish and the acceptance pass) comes next.
+> **Status: complete (all 9 build stages).** Rules engine with all 29 Part B cards, an art-driven client with animation and live settings, Easy/Normal/Hard computer players, hot-seat with hidden-hand curtains, online play by room code (2–4 players, any mix of people and computers), deck builder, tutorial, searchable rules reference, results screen, and balance tools. The acceptance checklist, with evidence for each item, is in [ACCEPTANCE.md](ACCEPTANCE.md).
 
 ## Requirements
 
@@ -27,6 +27,19 @@ Open http://localhost:5173 and choose **Play vs AI** or **Hot-seat**. Both let y
 New players: **How to Play → Start the tutorial** is a guided game against an Easy computer that explains each phase as you reach it (skip any time; replay from the same screen). **How to Play → Rules reference** has every rule, the House Rules with their settings, the rulings index and the card reference, all searchable — it is also in the in-game **Menu**.
 
 **Deck Builder** makes your own decks within the deck rules (Battle Deck 30–40 with at least 12 Battle Units, Resource Deck 18–24, at most 3 copies of a card, at most 20 Creation Units and 8 of one type). Decks are saved in this browser; **Export** writes a `.json` file and **Import…** reads one (or pasted JSON), so you can share decks. Legal saved decks appear in every deck picker, including online lobbies.
+
+## Controls
+
+| To | Mouse / touch | Keyboard |
+|---|---|---|
+| Play a card, pick an attacker, blocker or target | Click or tap it, or drag it where it goes | **Tab** or the arrow keys to reach a card, then **Enter** |
+| Main action (Go to Battle, Attack, Confirm, Pass…) | The highlighted button in the side panel | **Space** or **Enter** |
+| Cancel a half-made choice | Click the selected card again, or **Cancel** | **Esc** |
+| Read a card in full | Hover over it (or focus it with the keyboard) | **Tab** to it |
+| Skip the current animation | Click anywhere | **Space**, **Enter** or **Esc** |
+| Rules, settings, export log, concede, quit | **☰ Menu** (top right) | **Tab** to the Menu button |
+
+Only legal choices light up. A dimmed card says what it is missing when you hover it (for example "Needs 1 more Neurogenesis"). Settings (animation speed, effects, sound, text size, high contrast, colourblind-safe mode and more) are on the main menu and in the in-game Menu, and apply immediately.
 
 ## Play online with friends — the quick way (no account)
 
@@ -109,6 +122,16 @@ npm run sim -- --games 1000 --balance data/balance/example-robot-buff.json
 ```
 
 It reports the win rate of each deck (and per seat order), the first-player win rate, game length, how games ended, the most common first unit destroyed, and a win rate for each card (in decks that contain it, and in games where it was actually played, compared against its deck's average). Other options: `--ai easy|normal|hard`, `--players 2-4`, `--decks id-or-file,...`, `--seed`, `--hp`, `--mirrors`, `--out report.json` (or `.md`), `--help`. The same seed and data always give the same numbers, so before/after comparisons are fair.
+
+## Troubleshooting
+
+- **"npm is not recognized"** — Node.js isn't installed, or the terminal was opened before it was. Install Node.js 20+ from nodejs.org, then open a new terminal.
+- **"cloudflared is not recognized"** right after installing it — close the terminal and open a new one.
+- **"Port 8787 (or 5173) is already in use"** — an earlier copy is still running. Close that terminal window, or run the server on another port: `$env:PORT=8788; npm run serve`, then tunnel to `http://localhost:8788`.
+- **"This room runs game version …"** when joining — the host updated the game. Refresh the page (Ctrl+F5) and join again.
+- **A friend can't reach the room** — everyone must use the same address (the tunnel or workers.dev address), not `localhost`. Quick Tunnel addresses change every time the tunnel restarts.
+- **The game feels slow on an older laptop** — Settings → **Performance preset**. The game also switches to it automatically if animations drop below about 40 frames per second, and tells you (with an Undo button).
+- **Start over with the standard cards** — if a custom card balance is in force, the main menu says so and has a **Use standard cards** button.
 
 ## Tests
 

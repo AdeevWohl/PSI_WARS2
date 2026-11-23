@@ -338,5 +338,7 @@ async function boot(): Promise<void> {
 }
 
 stage.appendChild(h('div', { id: 'toasts' }));
+const rotateHint = h('div', { class: 'rotate-hint', role: 'status' }, h('span', null, '↻ Turn your device sideways — Psi Wars is designed for a landscape screen.'), h('button', { class: 'btn small', onclick: () => rotateHint.classList.add('dismissed') }, 'OK'));
+document.body.appendChild(rotateHint);
 (window as any).__psiSettings = { settings, updateSettings };
 void boot();

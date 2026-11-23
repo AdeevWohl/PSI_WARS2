@@ -7,7 +7,9 @@ type Opt<T> = { value: T; label: string };
 
 function row(label: string, control: HTMLElement, hint?: string): HTMLElement {
   const id = `set-${label.replace(/\W+/g, '-').toLowerCase()}`;
-  control.id = id;
+  // Label the actual form control (range sliders come wrapped with their value readout).
+  const target = control.matches('input, select, textarea') ? control : (control.querySelector('input, select, textarea') as HTMLElement | null) ?? control;
+  target.id = id;
   return h('div', { class: 'set-row' }, h('label', { for: id, class: 'set-label' }, label, hint ? h('span', { class: 'set-hint' }, hint) : null), control);
 }
 
@@ -84,7 +86,7 @@ export function settingsPanel(onClose?: () => void): HTMLElement {
       ),
       h('section', { class: 'set-group' },
         h('h3', null, 'Accessibility'),
-        row('Font size', range('fontScale', 0.9, 1.4, 0.05, pct)),
+        row('Font size', range('fontScale', 0.9, 1.3, 0.05, pct), 'all interface text; card faces keep their printed text'),
         row('High contrast', toggle('highContrast')),
         h('p', { class: 'dim', style: 'font-size:13px' }, 'Every control is keyboard-reachable (Tab, Space/Enter, Esc). Cards and controls carry screen-reader labels.'),
       ),

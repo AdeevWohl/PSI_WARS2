@@ -8,7 +8,7 @@ import type { Attack, CardDef, GameView } from '@psi-wars/engine';
 import { artUrl } from '../assets';
 import { snap, toStage, type Snap } from '../anim/flip';
 import { h } from '../ui/dom';
-import { createCardEl, setMarkers, updateOverlays } from './card';
+import { createCardEl, describe, setMarkers, updateOverlays } from './card';
 
 export type Zone = 'hand' | 'lab' | 'trapped' | 'battle' | 'equip' | 'discard' | 'stackItem';
 
@@ -353,6 +353,9 @@ export class Board {
       el.addEventListener('pointerenter', () => this.hooks.hover((el as any).__ctx ?? null, el));
       el.addEventListener('pointerleave', () => this.hooks.hover(null));
       el.addEventListener('focus', () => this.hooks.hover((el as any).__ctx ?? null, el));
+      el.addEventListener('blur', () => this.hooks.hover(null));
+      // Keyboard play (§7 accessibility): Enter/Space acts like a click, arrows move between cards.
+      el.addEventListener('keydown', (ev) => this.cardKey(el!, ev));
     }
     seen.add(uid);
     if (!def || !c) return el;
@@ -369,7 +372,40 @@ export class Board {
     if (c.disoriented) el.classList.add('disoriented');
     setMarkers(el, markers);
     this.hooks.decorate(el, ctx);
+    const interactive = el.classList.contains('interactive');
+    el.tabIndex = 0;
+    el.setAttribute('role', interactive ? 'button' : 'img');
+    if (interactive) el.setAttribute('aria-pressed', String(el.classList.contains('selected')));
+    else el.removeAttribute('aria-pressed');
+    const dimmed = el.classList.contains('dimmed');
+    const state = !interactive ? '' : dimmed ? 'cannot be played now' : el.classList.contains('target') ? 'can be chosen as the target' : el.classList.contains('selected') ? 'selected' : 'available';
+    const extra = [state, el.title, c.depleted && zone !== 'hand' ? 'depleted' : '', ...markers.map((m) => m.label)].filter(Boolean);
+    el.setAttribute('aria-label', [describe(def), ...extra].map((x) => x.trim().replace(/\.+$/, '')).join('. '));
     return el;
+  }
+
+  private cardKey(el: HTMLElement, ev: KeyboardEvent): void {
+    const ctx = (el as any).__ctx as CardCtx | undefined;
+    if (!ctx) return;
+    if (ev.key === 'Enter' || ev.key === ' ') {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (el.classList.contains('interactive')) this.hooks.click(ctx, new MouseEvent('click', { shiftKey: ev.shiftKey }));
+      return;
+    }
+    const moves: Record<string, number> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+    if (!(ev.key in moves) && ev.key !== 'Home' && ev.key !== 'End') return;
+    // Interactive cards first when there are any, so arrows walk through the current choices.
+    const all = [...this.root.querySelectorAll<HTMLElement>('.card[tabindex="0"]')].filter((x) => x.offsetParent !== null);
+    const live = all.filter((x) => x.classList.contains('interactive'));
+    const list = live.length && el.classList.contains('interactive') ? live : all;
+    const i = list.indexOf(el);
+    const next = ev.key === 'Home' ? list[0] : ev.key === 'End' ? list[list.length - 1] : list[(i + moves[ev.key]! + list.length) % list.length];
+    if (next) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      next.focus({ preventScroll: true });
+    }
   }
 
   private isDisabled(uid: string): boolean {

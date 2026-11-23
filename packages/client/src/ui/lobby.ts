@@ -194,5 +194,7 @@ function balanceRowFor(lobby: LobbyState, host: boolean, g: RemoteGame): HTMLEle
 }
 
 function row(label: string, control: HTMLElement, hint?: string): HTMLElement {
+  const target = control.matches('input, select, textarea') ? control : control.querySelector('input, select, textarea');
+  if (target && !target.getAttribute('aria-label')) target.setAttribute('aria-label', label);
   return h('div', { class: 'set-row' }, h('label', { class: 'set-label' }, label, hint ? h('span', { class: 'set-hint' }, hint) : null), control);
 }

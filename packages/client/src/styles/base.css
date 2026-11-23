@@ -22,8 +22,8 @@ img { user-select: none; -webkit-user-drag: none; }
 .btn.primary { background: linear-gradient(180deg, #1d6a8f, #12466a); border-color: var(--accent); color: #fff; box-shadow: 0 0 0 1px rgba(79, 209, 255, 0.25), 0 0 18px rgba(79, 209, 255, 0.18); }
 .btn.danger { border-color: var(--danger); background: linear-gradient(180deg, #5a1a2a, #3a101c); }
 .btn.ghost { background: transparent; }
-.btn.small { padding: 6px 10px; font-size: 13px; }
-.btn kbd { font-family: var(--font-ui); font-size: 11px; opacity: 0.7; border: 1px solid currentColor; border-radius: 3px; padding: 0 4px; margin-left: 8px; }
+.btn.small { padding: 6px 10px; font-size: calc(13px * var(--font-scale)); }
+.btn kbd { font-family: var(--font-ui); font-size: calc(11px * var(--font-scale)); opacity: 0.7; border: 1px solid currentColor; border-radius: 3px; padding: 0 4px; margin-left: 8px; }
 
 .h-display { font-family: var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; }
 .dim { color: var(--text-dim); }
@@ -34,7 +34,7 @@ img { user-select: none; -webkit-user-drag: none; }
 
 /* Toasts */
 #toasts { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 900; pointer-events: none; }
-.toast { pointer-events: auto; background: var(--panel-solid); border: 1px solid var(--line-bright); border-radius: 8px; padding: 10px 16px; font-size: 15px; box-shadow: var(--shadow-hover); animation: toast-in var(--dur-std) var(--ease-out-quint); }
+.toast { pointer-events: auto; background: var(--panel-solid); border: 1px solid var(--line-bright); border-radius: 8px; padding: 10px 16px; font-size: calc(15px * var(--font-scale)); box-shadow: var(--shadow-hover); animation: toast-in var(--dur-std) var(--ease-out-quint); }
 .toast.warn { border-color: var(--gold); }
 .toast.error { border-color: var(--danger); }
 @keyframes toast-in { from { opacity: 0; transform: translateY(-8px); } }
@@ -42,7 +42,7 @@ img { user-select: none; -webkit-user-drag: none; }
 /* Modals */
 .modal-backdrop { position: absolute; inset: 0; background: rgba(2, 5, 12, 0.66); display: grid; place-items: center; z-index: 700; animation: fade-in var(--dur-std) var(--ease-out-cubic); }
 .modal { min-width: 460px; max-width: 1400px; max-height: 960px; overflow: auto; padding: 26px 30px; }
-.modal h2 { margin: 0 0 6px; font-family: var(--font-display); font-size: 22px; letter-spacing: 0.06em; }
+.modal h2 { margin: 0 0 6px; font-family: var(--font-display); font-size: calc(22px * var(--font-scale)); letter-spacing: 0.06em; }
 .modal .sub { color: var(--text-dim); margin: 0 0 18px; }
 .modal .row { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap; }
 .choice-grid { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
@@ -52,4 +52,14 @@ img { user-select: none; -webkit-user-drag: none; }
 
 @media (prefers-reduced-motion: reduce) {
   :root { --speed: 0.001; }
+}
+
+/* Touch: no double-tap zoom on the board; cards can be dragged with a finger. */
+#viewport { touch-action: manipulation; }
+.game-screen .card, .game-screen .cu-group { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+
+/* Portrait screens: the board is landscape, so suggest turning the device. */
+.rotate-hint { display: none; }
+@media (orientation: portrait) and (max-aspect-ratio: 4/5) {
+  .rotate-hint:not(.dismissed) { display: flex; position: fixed; left: 12px; right: 12px; top: 12px; z-index: 1000; gap: 12px; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 10px; background: var(--panel-solid); border: 1px solid var(--accent); color: var(--text); font: 600 15px var(--font-ui); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); }
 }
