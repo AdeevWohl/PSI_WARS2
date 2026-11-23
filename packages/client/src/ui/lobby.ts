@@ -4,6 +4,7 @@ import { artUrl, preload } from '../assets';
 import { currentDefs, starterDecks, type StoredDeck } from '../data';
 import type { RemoteGame } from '../net/remote';
 import { SEAT_COLORS } from '../render/board';
+import { playableDecks } from '../decks';
 import { h, toast } from './dom';
 
 export function deckPayload(d: StoredDeck): DeckPayload {
@@ -27,7 +28,7 @@ function saveName(n: string): void {
 
 /** Host or join: nickname, deck, and (for join) the room code. */
 export function onlineEntry(mode: 'host' | 'join', prefill: string, onGo: (code: string | null, name: string, deck: StoredDeck) => void, onBack: () => void): HTMLElement {
-  const decks = starterDecks;
+  const decks = playableDecks();
   let deck = decks[0]!;
   const name = h('input', { class: 'text-input', value: savedName(), placeholder: 'Your nickname', maxlength: '20', 'aria-label': 'Nickname' }) as HTMLInputElement;
   const code = h('input', { class: 'text-input code-input', value: prefill, placeholder: 'ROOM CODE', maxlength: '6', 'aria-label': 'Room code', autocapitalize: 'characters', spellcheck: 'false' }) as HTMLInputElement;
@@ -139,7 +140,7 @@ export class LobbyScreen {
     );
 
     const mySeat = me !== null ? lobby.seats[me] : undefined;
-    const decks = starterDecks;
+    const decks = playableDecks();
     const mine = mySeat
       ? h('div', { class: 'lobby-me' },
           h('h3', null, 'You'),

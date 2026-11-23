@@ -16,8 +16,13 @@ import { LobbyScreen, deckPayload, onlineEntry } from './ui/lobby';
 import type { StoredDeck } from './data';
 import { GameScreen } from './ui/game-screen';
 import { openModal } from './ui/modals';
+import { DeckBuilder } from './ui/deckbuilder';
+import { playableDecks } from './decks';
 import { localSetup, mainMenu, titleScreen, type LocalConfig } from './ui/screens';
 import { settingsPanel } from './ui/settings-screen';
+import { rulesReference } from './ui/rules';
+import { Tutorial } from './ui/tutorial';
+import tutorialCfg from '@data/tutorial.json';
 
 const stage = document.getElementById('stage')!;
 let current: { el: HTMLElement; destroy?: () => void } | null = null;
@@ -48,8 +53,8 @@ function toMenu(): void {
       { label: 'Host Game', sub: 'Create an online room and share its code', onClick: () => toOnline('host') },
       { label: 'Join Game', sub: 'Enter a room code from a friend', onClick: () => toOnline('join') },
       { label: 'Hot-seat', sub: '2–4 players on one device, hidden-hand curtains; mix in computers', onClick: () => toLocal('hotseat') },
-      { label: 'Deck Builder', sub: 'Build and save decks', disabledReason: 'Arrives in Stage 7' },
-      { label: 'How to Play', sub: 'Rules reference and tutorial', disabledReason: 'Arrives in Stage 7' },
+      { label: 'Deck Builder', sub: 'Build, save, import and export decks', onClick: () => { const db = new DeckBuilder(() => toMenu()); show(db.el); } },
+      { label: 'How to Play', sub: 'Guided first game and the full rules reference', onClick: () => toHowTo() },
       { label: 'Settings', sub: 'Animation, effects, audio, gameplay, accessibility', onClick: () => toSettings() },
     ]),
   );
@@ -57,6 +62,60 @@ function toMenu(): void {
 
 function toSettings(): void {
   show(h('div', { class: 'screen settings-screen' }, h('div', { class: 'menu-bg' }), h('div', { class: 'settings-page panel' }, h('h2', { class: 'h-display' }, 'Settings'), settingsPanel(() => toMenu()))));
+}
+
+function toHowTo(): void {
+  let done = false;
+  try {
+    done = localStorage.getItem('psiwars.tutorialDone') === '1';
+  } catch {
+    /* ignore */
+  }
+  const choice = (title: string, text: string, onClick: () => void) =>
+    h('button', { class: 'howto-choice', onclick: onClick }, h('h3', null, title), h('p', { class: 'dim' }, text));
+  show(h('div', { class: 'screen howto-screen' }, h('div', { class: 'menu-bg' }),
+    h('div', { class: 'panel howto-panel' },
+      h('h2', { class: 'h-display' }, 'How to Play'),
+      h('p', { class: 'dim' }, 'New to Psi Wars? The tutorial is a real game against an Easy computer that explains each phase as you reach it. The rules reference holds every rule, ruling and House Rule, searchable.'),
+      h('div', { class: 'howto-choices' },
+        choice(done ? 'Replay the tutorial' : 'Start the tutorial', 'A guided first game: one full turn of every phase, with highlights. About 10 minutes; skip at any time.', () => startTutorial()),
+        choice('Rules reference', 'The complete rules, House Rules, rulings index and card reference.', () => toRules())),
+      h('div', { class: 'row', style: 'margin-top:20px' }, h('button', { class: 'btn', onclick: () => toMenu() }, 'Back')))));
+}
+
+function toRules(): void {
+  show(h('div', { class: 'screen rules-screen' }, h('div', { class: 'menu-bg' }), h('div', { class: 'panel rules-page' }, rulesReference(() => toHowTo()))));
+}
+
+/** The guided first game (data/tutorial.json): fixed seeds so every player sees the same game. */
+function startTutorial(): void {
+  const deckOf = (id: string) => starterDecks.find((d) => d.id === id) ?? starterDecks[0]!;
+  const names = [tutorialCfg.playerName, 'Computer (Easy)'];
+  const game = new LocalGame(
+    [{ seat: 0, name: names[0]!, kind: 'local' }, { seat: 1, name: names[1]!, kind: 'ai', aiLevel: tutorialCfg.aiLevel as 'easy' }],
+    {
+      defs: currentDefs(),
+      rules,
+      seed: tutorialCfg.seed,
+      players: [{ name: names[0]!, deck: deckOf(tutorialCfg.playerDeck) }, { name: names[1]!, deck: deckOf(tutorialCfg.aiDeck) }],
+      startingHP: tutorialCfg.startingHP,
+      autoPassNoPlay: true,
+    },
+  );
+  const tutorial = new Tutorial(() => undefined);
+  const screen = new GameScreen(game, game.initialEvents(), {
+    onExit: () => toMenu(),
+    onRematch: () => startTutorial(),
+    openSettings: (host) => openSettingsModal(host),
+    aiSeed: tutorialCfg.aiSeed,
+    tutorial,
+  });
+  show(screen.el, () => {
+    tutorial.end();
+    screen.destroy();
+    game.dispose();
+  });
+  (window as any).__psi = { game, screen, perf, tutorial };
 }
 
 function toLocal(preset: 'vsai' | 'hotseat'): void {
@@ -191,7 +250,7 @@ async function boot(): Promise<void> {
     session = null;
   }
   // A reload in the same tab goes straight back to the seat (same client id, §4.1 reconnect).
-  if (room && session?.code === room) goOnline(room, session.name, starterDecks.find((d) => d.id === session!.deckId) ?? starterDecks[0]!);
+  if (room && session?.code === room) goOnline(room, session.name, playableDecks().find((d) => d.id === session!.deckId) ?? starterDecks[0]!);
   else if (room) toOnline('join', room);
   else show(titleScreen(() => toMenu()));
 }

@@ -34,7 +34,7 @@ export function unplayableReasons(s: GameState, seat: Seat, p: Prompt): Record<s
     }
     const short = shortfall(s, seat, d.cost ?? ZERO_COST);
     if (short.length) {
-      out[uid] = 'Needs ' + short.map((x) => `${x.missing} more ${CU_NAME[x.type]}${x.missing > 1 && x.type !== 'W' ? 's' : ''}`).join(', ');
+      out[uid] = 'Needs ' + short.map((x) => (x.type === 'W' ? `${x.missing} more Creation Unit${x.missing > 1 ? 's' : ''} to destroy` : `${x.missing} more ${CU_NAME[x.type]}`)).join(', ');
       continue;
     }
     if (d.cardType === 'Equipment') out[uid] = `No unit can hold it (needs an un-equipped ${d.equip?.allowed.join(' or ')} with ${d.equip?.ability} above 0)`;

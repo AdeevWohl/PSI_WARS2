@@ -1,0 +1,10 @@
+{
+  "comment": "Guided first game. The seed is chosen (tools/dev/tutorial-seed.ts) so the player goes first, has no Creation Oracle decision on turn 1, can afford a Battle Unit on turn 3 and Equipment on turn 5.",
+  "seed": "tutorial-55",
+  "aiSeed": "tutorial-ai-1",
+  "playerName": "You",
+  "playerDeck": "creature-commander",
+  "aiDeck": "robot-commander",
+  "aiLevel": "easy",
+  "startingHP": 15
+}

@@ -16,6 +16,8 @@ import { DragManager } from './drag';
 import { h, toast } from './dom';
 import { openModal } from './modals';
 import { Preview } from './preview';
+import { rulesReference } from './rules';
+import type { Tutorial } from './tutorial';
 
 const PHASES = ['replenish', 'draw', 'creation', 'battle', 'cleanup'] as const;
 const PHASE_LABEL = { replenish: 'Replenish', draw: 'Draw', creation: 'Create', battle: 'Battle', cleanup: 'Cleanup' };
@@ -26,6 +28,10 @@ export interface GameScreenOpts {
   onExit: () => void;
   onRematch?: () => void;
   openSettings?: (host: HTMLElement) => void;
+  /** Seed for the computer players' choices (the tutorial uses a fixed one). */
+  aiSeed?: string;
+  /** Guided-game overlay, fed the current state after every settled render. */
+  tutorial?: Tutorial;
 }
 
 /**
@@ -103,6 +109,8 @@ export class GameScreen {
       onEvent: (i) => this.revealUpTo(i),
       onBattle: (ev) => this.showBattle(ev),
     });
+    if (opts.aiSeed) this.aiRng = seedRng(opts.aiSeed);
+    if (opts.tutorial) this.el.append(opts.tutorial.el);
     this.events.push(...initialEvents);
     this.unsub = source.onUpdate((u) => {
       this.queue.push(u.events);
@@ -292,6 +300,9 @@ export class GameScreen {
     this.board.root.toggleAttribute('inert', curtained);
     this.syncTimer(view, legal);
     this.maybeRunAi();
+    if (this.opts.tutorial && !this.playing && !curtained && viewer !== null) {
+      this.opts.tutorial.update({ view, legal, events: this.source.eventsFor(this.events, viewer), me: viewer });
+    }
   }
 
   /** Online: show the server's countdown (response window / turn timer); the server acts on expiry. */
@@ -567,6 +578,7 @@ export class GameScreen {
   private openMenu(): void {
     let m: ReturnType<typeof openModal>;
     const actions = [
+      { label: 'Rules reference', onClick: () => { m.close(); this.openRules(); } },
       { label: 'Export game log', onClick: () => this.exportLog() },
       ...(this.opts.openSettings ? [{ label: 'Settings', onClick: () => { m.close(); this.opts.openSettings!(this.el); } }] : []),
       { label: 'Concede', danger: true, onClick: () => { m.close(); if (this.viewer !== null) void this.source.send(this.viewer, { type: 'Concede' }); } },
@@ -576,24 +588,101 @@ export class GameScreen {
     m = openModal(this.el, 'Game menu', null, null, actions, { dismissable: true });
   }
 
+  private openRules(): void {
+    const close = () => {
+      wrap.remove();
+      document.removeEventListener('keydown', esc, true);
+    };
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        close();
+      }
+    };
+    const wrap: HTMLElement = h('div', {
+      class: 'modal-backdrop rules-modal-wrap', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Rules reference',
+      onclick: (e: MouseEvent) => { if (e.target === wrap) close(); },
+    }, h('div', { class: 'rules-modal panel' }, rulesReference(close)));
+    document.addEventListener('keydown', esc, true);
+    this.el.appendChild(wrap);
+  }
+
+  /** Per-player statistics for the results screen, derived from the game's public events. */
+  private gameStats(view: GameView): Map<Seat, { damage: number; killed: number; lost: number; played: number; won: number; fought: number }> {
+    const out = new Map(view.players.map((p): [Seat, { damage: number; killed: number; lost: number; played: number; won: number; fought: number }] => [p.seat, { damage: 0, killed: 0, lost: 0, played: 0, won: 0, fought: 0 }]));
+    const events = this.source.eventsFor(this.events, null);
+    const attackSeat = new Map<string, Seat>();
+    const fights = new Map<string, { att: Seat; def: Seat }>();
+    for (const e of events) {
+      if (e.type === 'UnblockedHit') attackSeat.set(e.attackId as string, e.seat as Seat);
+      if (e.type === 'BattleResolved') {
+        const att = (e.att as { seat: Seat }).seat;
+        const def = (e.def as { seat: Seat }).seat;
+        fights.set(e.attackId as string, { att, def });
+        out.get(att)!.fought++;
+        out.get(def)!.fought++;
+        const w = (e.winners as { physical: 'att' | 'def' | null }).physical;
+        if (w) out.get(w === 'att' ? att : def)!.won++;
+      }
+    }
+    for (const e of events) {
+      if (e.type === 'CardPlayed' && e.cardType !== 'Resource') out.get(e.seat as Seat)!.played++;
+      if (e.type === 'LabDamaged') {
+        const src = e.source as string | null;
+        const dealer = src ? attackSeat.get(src) ?? view.cards[src]?.owner : undefined;
+        if (dealer !== undefined && dealer !== e.seat) out.get(dealer)!.damage += e.amount as number;
+      }
+      if (e.type === 'UnitDestroyed') {
+        const owner = e.seat as Seat;
+        out.get(owner)!.lost++;
+        const f = e.attackId ? fights.get(e.attackId as string) : undefined;
+        if (f) out.get(f.att === owner ? f.def : f.att)!.killed++;
+      }
+    }
+    return out;
+  }
+
   private showResults(view: GameView): void {
     const r = view.result!;
-    const title = r.draw ? 'Draw' : `${r.winners.map((w) => this.nameOf(w)).join(', ')} wins!`;
+    const me = this.viewer;
+    const won = me !== null && r.winners.includes(me);
+    const solo = this.source.seats.filter((s) => s.kind === 'local').length === 1 && me !== null;
+    const title = r.draw ? 'Draw' : solo ? (won ? 'Victory!' : 'Defeat') : `${r.winners.map((w) => this.nameOf(w)).join(', ')} wins!`;
     const reason = { labDestroyed: 'Lab destroyed', noBattleUnits: 'No Battle Units left', simultaneousLoss: 'Simultaneous loss', conceded: 'Concession', turnLimit: 'Turn limit reached' }[r.reason] ?? r.reason;
+    const st = this.gameStats(view);
+    const heads = ['Player', 'Lab HP', 'Damage dealt', 'Units destroyed', 'Units lost', 'Battles won', 'Cards played', 'Units left'];
     const stats = h(
       'table',
       { class: 'results-table' },
-      h('tr', null, h('th', null, 'Player'), h('th', null, 'Lab HP'), h('th', null, 'Units in Lab'), h('th', null, 'Discard')),
-      ...view.players.map((p) => h('tr', null, h('td', { style: { color: SEAT_COLORS[p.seat] } }, p.name), h('td', null, String(p.labHP)), h('td', null, String(p.lab.length)), h('td', null, String(p.discard.length)))),
+      h('tr', null, ...heads.map((t) => h('th', null, t))),
+      ...view.players.map((p) => {
+        const x = st.get(p.seat)!;
+        const units = p.lab.filter((u) => view.defs[view.cards[u]!.cardId]?.cardType === 'BattleUnit').length;
+        const win = r.winners.includes(p.seat);
+        return h('tr', { class: win ? 'winner' : '' },
+          h('td', { style: { color: SEAT_COLORS[p.seat] } }, win ? '★ ' : '', this.nameOf(p.seat)),
+          h('td', null, String(Math.max(0, p.labHP))), h('td', null, String(x.damage)), h('td', null, String(x.killed)), h('td', null, String(x.lost)),
+          h('td', null, `${x.won} / ${x.fought}`), h('td', null, String(x.played)), h('td', null, String(units)));
+      }),
     );
-    const body = h('div', null, h('p', { class: 'dim' }, `${reason} · ${view.turn.number} turns`), stats);
+    const sub = `${r.draw || !solo ? '' : `${r.winners.map((w) => this.nameOf(w)).join(', ')} won · `}${reason} · ${view.turn.number} turns`;
+    const body = h('div', null, h('p', { class: 'dim results-sub' }, sub), stats);
     let m: ReturnType<typeof openModal>;
-    const actions = [
+    const actions: { label: string; primary?: boolean; onClick: () => void }[] = [
+      { label: 'View board', onClick: () => { m.close(); this.showGameOverBar(); } },
       { label: 'Export log', onClick: () => this.exportLog() },
       { label: 'Main menu', onClick: () => { m.close(); this.opts.onExit(); } },
     ];
-    if (this.opts.onRematch) actions.push({ label: 'Rematch', onClick: () => { m.close(); this.opts.onRematch!(); } });
-    m = openModal(this.el, title, null, body, actions, { className: 'results' });
+    if (this.opts.onRematch) actions.push({ label: 'Rematch', primary: true, onClick: () => { m.close(); this.opts.onRematch!(); } });
+    else actions[2]!.primary = true;
+    m = openModal(this.el, title, null, body, actions, { className: `results${won ? ' won' : r.draw || me === null ? '' : ' lost'}` });
+  }
+
+  /** After "View board": a slim bar to get back to the results. */
+  private showGameOverBar(): void {
+    this.el.querySelector('.gameover-bar')?.remove();
+    const bar = h('div', { class: 'gameover-bar panel' }, h('span', null, 'Game over'), h('button', { class: 'btn small primary', onclick: () => { bar.remove(); this.showResults(this.source.view(this.viewer)); } }, 'Show results'));
+    this.el.appendChild(bar);
   }
 
   private onKey(e: KeyboardEvent): void {

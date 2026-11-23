@@ -3,6 +3,7 @@ import type { Seat } from '@psi-wars/shared';
 import { artUrl, preload } from '../assets';
 import { currentDefs, rules, starterDecks, type StoredDeck } from '../data';
 import { settings } from '../settings';
+import { playableDecks } from '../decks';
 import { h } from './dom';
 
 export function titleScreen(onContinue: () => void): HTMLElement {
@@ -72,7 +73,7 @@ const SEAT_COLORS = ['#4fd1ff', '#ff8a4c', '#c77dff', '#5ee6a8'];
  * "vsai" starts as you vs one computer; "hotseat" as two humans sharing the device.
  */
 export function localSetup(preset: 'vsai' | 'hotseat', onStart: (cfg: LocalConfig) => void, onBack: () => void): HTMLElement {
-  const decks = starterDecks;
+  const decks = playableDecks();
   const seats: LocalSeat[] =
     preset === 'vsai'
       ? [{ kind: 'human', name: 'You', deck: decks[0]! }, { kind: 'normal', name: 'Computer', deck: decks[1]! }]

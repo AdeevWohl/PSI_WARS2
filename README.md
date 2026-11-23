@@ -2,7 +2,7 @@
 
 Browser card game: a pure TypeScript rules engine, an art-driven client, AI opponents, and online play with room codes (2–4 players).
 
-> **Status: Stage 6 of 9 complete.** Rules engine, art-driven client with animation and settings, 2–4 player games with any mix of people and computer players (Easy / Normal / Hard), locally or online (host a room, share its code or invite link). The deck builder and tutorial (Stage 7) and the balance tools (Stage 8) come next.
+> **Status: Stage 7 of 9 complete.** Rules engine, art-driven client with animation and settings, 2–4 player games with any mix of people and computer players (Easy / Normal / Hard), locally or online (host a room, share its code or invite link), a deck builder, a guided tutorial, the full searchable rules reference and a results screen. The balance tools (Stage 8) come next.
 
 ## Requirements
 
@@ -23,6 +23,10 @@ npm run dev
 ```
 
 Open http://localhost:5173 and choose **Play vs AI** or **Hot-seat**. Both let you set 2–4 seats, each a person at this device or a computer player.
+
+New players: **How to Play → Start the tutorial** is a guided game against an Easy computer that explains each phase as you reach it (skip any time; replay from the same screen). **How to Play → Rules reference** has every rule, the House Rules with their settings, the rulings index and the card reference, all searchable — it is also in the in-game **Menu**.
+
+**Deck Builder** makes your own decks within the deck rules (Battle Deck 30–40 with at least 12 Battle Units, Resource Deck 18–24, at most 3 copies of a card, at most 20 Creation Units and 8 of one type). Decks are saved in this browser; **Export** writes a `.json` file and **Import…** reads one (or pasted JSON), so you can share decks. Legal saved decks appear in every deck picker, including online lobbies.
 
 ## Play online with friends — the quick way (no account)
 
