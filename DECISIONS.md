@@ -44,3 +44,13 @@ Decisions not settled by the build prompt, the Q&A or the spec. Each one is reve
 32. **Commands are queued, never dropped,** and only one answer per prompt can be queued (double-click guard). This replaced a "busy" flag that silently dropped a fast click; that race would have bitten online play.
 33. **Interaction is click-to-select** for everything (play, target, pay, attack, block, stack, move/discard Equipment), plus Space/Enter for the primary action and Esc to cancel. Drag-and-drop lands with the Stage 3 animation system, because it shares the elevation and FLIP machinery.
 34. **The final board stays intact at game over.** House rule D's "an eliminated player's cards leave the game" applies only while the game continues.
+
+## Stage 3 — animation, effects, settings
+
+35. **Presentation model.** The board is rendered in its final state, then each card that moved is pinned at its old position with a paused FLIP. The event that moved it releases the pin. Cards that left the board become ghosts. Overlays (dice, banners, damage numbers, particles) play in event order. Skip or Instant finishes everything at once; the engine state was committed first, so outcomes never depend on animation (§6.1). A check after every animated batch (three full games, Fast/Normal/Cinematic, 125 random skips) found the board identical to a clean render each time.
+36. **Hidden tabs present instantly.** Browsers may stop advancing animation timelines in background tabs, which would stall the queue.
+37. **Auto-degrade ignores throttling.** Frame gaps over 200 ms (an occluded or background window) are discarded, and the decision uses the median frame time over ~1 s. The toast offers Undo.
+38. **Danger rim threshold:** a side with at least a 55% chance of being destroyed, using the engine's exact `battleOdds` (no re-rolls; unrolled X counted as 3 for stacks).
+39. **Turn timer in local games** applies per decision, and expiry applies the prompt's default answer. Online, the server owns the timer (Stage 5). "Confirm before ending phase" asks only when something is still playable.
+40. **Audio.** No assets were supplied. Every hook plays a short synthesized placeholder (switchable). Real files are a data change in `AUDIO_FILES`. The music slider is wired, but there is no music yet.
+41. **Victory/defeat** zoom toward the winning Lab, with a burst and a banner; a loss also desaturates the board. The results modal follows.

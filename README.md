@@ -2,7 +2,7 @@
 
 Browser card game: a pure TypeScript rules engine, an art-driven client, AI opponents, and online play with room codes (2–4 players).
 
-> **Status: Stage 2 of 9 complete.** The rules engine (149 tests) and a playable browser client: a full 2-player hot-seat game with the real card art and hidden-hand curtains. Animation and settings (Stage 3) come next. Tunnel and deploy sections will be filled in as those stages land.
+> **Status: Stage 3 of 9 complete.** The rules engine (155 tests) and a playable browser client: 2-player hot-seat with the real card art, hidden-hand curtains, a full animation and effects system, drag-and-drop, and the settings screen. AI opponents (Stage 4) come next. Tunnel and deploy sections will be filled in as those stages land.
 
 ## Play it (on this computer)
 
