@@ -103,15 +103,18 @@ export function updateOverlays(el: HTMLElement, def: CardDef, opts: CardRenderOp
     for (const a of ABILITIES) {
       const printed = printedStats[a];
       const current: StatValue | number = opts.stats ? opts.stats[a] : def.stats[a];
-      if (!opts.alwaysChips && current === printed) continue;
+      const xb = current === 'X' ? opts.stats?.xBonus?.[a] ?? 0 : 0;
+      if (!opts.alwaysChips && current === printed && !xb) continue;
       let tone = 'same';
       if (typeof current === 'number' && typeof printed === 'number') tone = current > printed ? 'up' : current < printed ? 'down' : 'same';
       else if (typeof current === 'number' && printed === 'X') tone = 'x';
+      else if (xb) tone = xb > 0 ? 'up' : 'down';
+      const text = xb ? `X${xb > 0 ? '+' : ''}${xb}` : statText(current);
       chips.push(
         h(
           'span',
-          { class: `chip stat-chip ${tone} c-${a}`, style: { left: `${STAT_POS[a] * 100}%`, top: `${STAT_Y * 100}%` }, title: `${ABILITY_NAME[a]} ${statText(current)} (printed ${printed})` },
-          statText(current),
+          { class: `chip stat-chip ${tone} c-${a}`, style: { left: `${STAT_POS[a] * 100}%`, top: `${STAT_Y * 100}%` }, title: `${ABILITY_NAME[a]} ${text} (printed ${printed})` },
+          text,
         ),
       );
     }

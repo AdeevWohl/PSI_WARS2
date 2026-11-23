@@ -59,6 +59,8 @@ export interface UnitStats {
   psionic: number | 'X';
   physical: number | 'X';
   attacking: boolean;
+  /** Bonuses already waiting on an unrolled X (Equipment, auras, modifiers): shown as "X+1". */
+  xBonus?: Partial<Record<'cyber' | 'psionic' | 'physical', number>>;
 }
 
 export function unitStatsFor(s: GameState): Record<string, UnitStats> {
@@ -68,7 +70,13 @@ export function unitStatsFor(s: GameState): Record<string, UnitStats> {
     for (const uid of [...p.lab, ...p.trapped]) {
       const att = attacking.has(uid);
       const st = { attacking: att } as UnitStats;
-      for (const ab of ABILITIES) st[ab] = isX(s, uid, ab) && baseValue(s, uid, ab) === null ? 'X' : unitStrength(s, uid, ab, att);
+      for (const ab of ABILITIES) {
+        if (isX(s, uid, ab) && baseValue(s, uid, ab) === null) {
+          st[ab] = 'X';
+          const bonus = unitStrength(s, uid, ab, att); // the unrolled X counts as 0 here, so this is the bonus
+          if (bonus) (st.xBonus ??= {})[ab] = bonus;
+        } else st[ab] = unitStrength(s, uid, ab, att);
+      }
       out[uid] = st;
     }
   }

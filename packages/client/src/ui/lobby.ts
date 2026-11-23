@@ -119,6 +119,8 @@ export class LobbyScreen {
       const right: Node[] = [];
       if (s.kind === 'open') {
         if (host) for (const lv of ['easy', 'normal', 'hard'] as const) right.push(h('button', { class: 'btn small', onclick: () => g.lobbyAction({ t: 'seatAi', seat: s.seat, level: lv }) }, `+ ${lv[0]!.toUpperCase()}${lv.slice(1)} AI`));
+        // The last open seat can be removed again (never below 2 players).
+        if (host && s.seat === lobby.seats.length - 1 && lobby.seats.length > 2) right.push(h('button', { class: 'btn small ghost', 'aria-label': `Remove seat ${s.seat + 1}`, title: 'Remove this seat', onclick: () => g.lobbyAction({ t: 'config', config: { seats: lobby.seats.length - 1 } }) }, '✕'));
         else if (me !== null) right.push(h('button', { class: 'btn small', onclick: () => g.lobbyAction({ t: 'takeSeat', seat: s.seat }) }, 'Sit here'));
       } else if (s.kind === 'ai' && host) right.push(h('button', { class: 'btn small ghost', onclick: () => g.lobbyAction({ t: 'seatAi', seat: s.seat, level: null }) }, 'Remove'));
       else if (s.kind === 'human' && host && !mine) right.push(h('button', { class: 'btn small ghost', onclick: () => g.lobbyAction({ t: 'kick', seat: s.seat }) }, 'Kick'));
@@ -162,7 +164,10 @@ export class LobbyScreen {
           h('button', { class: 'btn', onclick: () => copy(link, 'Invite link') }, 'Copy invite link'),
           h('button', { class: 'btn ghost', onclick: () => copy(code, 'Code') }, 'Copy code'))),
       h('div', { class: 'lobby-grid' },
-        h('div', { class: 'lobby-seats' }, h('h3', null, `Players (${lobby.seats.filter((s) => s.kind !== 'open').length}/${lobby.seats.length})`), ...seatRows),
+        h('div', { class: 'lobby-seats' }, h('h3', null, `Players (${lobby.seats.filter((s) => s.kind !== 'open').length}/${lobby.seats.length})`), ...seatRows,
+          host && lobby.phase !== 'game' && lobby.seats.length < 4
+            ? h('button', { class: 'btn ghost add-seat', onclick: () => g.lobbyAction({ t: 'config', config: { seats: lobby.seats.length + 1 } }) }, `+ Add a seat (up to 4) — for another friend or a computer player`)
+            : null),
         h('div', null, mine, settings)),
       h('div', { class: 'row' },
         h('button', { class: 'btn', onclick: this.onLeave }, 'Leave room'),

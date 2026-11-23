@@ -41,13 +41,19 @@ export class DeckBuilder {
           h('div', { class: 'db-head-actions' },
             h('button', { class: 'btn', onclick: () => this.newDeck() }, 'New deck'),
             h('button', { class: 'btn', onclick: () => this.importDeck() }, 'Import…'),
-            h('button', { class: 'btn ghost', onclick: () => this.leave() }, 'Back to menu'))),
+            h('button', { class: 'btn ghost', type: 'button', title: 'Back to the main menu (Esc)', onclick: () => this.leave() }, 'Back to menu'))),
         h('div', { class: 'db-body' },
           h('aside', { class: 'db-side' }, h('h3', null, 'Your decks'), this.listEl),
           h('section', { class: 'db-main' }, this.filterEl, this.poolEl),
           h('aside', { class: 'db-right' }, this.deckEl))),
       this.preview.el);
     this.renderAll();
+    // Esc leaves too (asks first if there are unsaved changes).
+    const onKey = (e: KeyboardEvent) => {
+      if (!this.el.isConnected) return document.removeEventListener('keydown', onKey);
+      if (e.key === 'Escape' && !this.el.querySelector('.modal')) this.leave();
+    };
+    document.addEventListener('keydown', onKey);
   }
 
   private renderAll(): void {

@@ -22,6 +22,7 @@ export interface Settings {
   alwaysChips: boolean;
   uiScale: number;
   colorblind: boolean;
+  autoReduce: boolean;
   // Audio
   volMaster: number;
   volMusic: number;
@@ -60,6 +61,7 @@ export const DEFAULTS: Settings = {
   alwaysChips: false,
   uiScale: 1,
   colorblind: false,
+  autoReduce: true,
   volMaster: 0.8,
   volMusic: 0.5,
   volSfx: 0.8,

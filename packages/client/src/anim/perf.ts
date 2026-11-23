@@ -13,6 +13,9 @@ export class PerfMonitor {
   private last = 0;
   private raf = 0;
   private degraded = false;
+  private screen: Element | null = null;
+  private settledAt = 0;
+  private slowSince = 0;
   fps = 60;
 
   start(): void {
@@ -33,8 +36,18 @@ export class PerfMonitor {
         const sorted = [...this.samples].sort((a, b) => a - b);
         const median = sorted[Math.floor(sorted.length / 2)] ?? 16.7;
         this.fps = Math.round(1000 / median);
-        const animating = document.getAnimations().length > 0;
-        if (animating && this.samples.length === WINDOW && median > BUDGET_MS && !this.degraded && settings().speed !== 'instant') this.degrade();
+        // Only judge real game animations on a visible, focused page, after the screen has settled,
+        // and only a sustained slowdown (3 s) — menus, background tabs and screen changes never count.
+        const screen = document.querySelector('.game-screen');
+        if (screen !== this.screen) {
+          this.screen = screen;
+          this.settledAt = t + 1000;
+          this.slowSince = 0;
+        }
+        const judging = !!screen && t > this.settledAt && document.hasFocus() && document.getAnimations().length > 0 && this.samples.length === WINDOW;
+        if (judging && median > BUDGET_MS) this.slowSince ||= t;
+        else this.slowSince = 0;
+        if (this.slowSince && t - this.slowSince > 3000 && !this.degraded && settings().speed !== 'instant' && settings().autoReduce) this.degrade();
       }
       this.last = document.hidden ? 0 : t;
       this.raf = requestAnimationFrame(loop);

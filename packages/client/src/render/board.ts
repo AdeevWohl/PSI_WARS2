@@ -322,7 +322,11 @@ export class Board {
       this.slotEls.set(uid, s);
     }
     seen.add(`slot:${uid}`);
-    s.classList.toggle('depleted', c.depleted && zone !== 'trapped');
+    // On the battlefield an attacker is depleted by attacking, but it is shown as attacking, not spent.
+    const attacking = zone === 'battle' && v.battle?.attacks.some((x) => x.units.includes(uid));
+    s.classList.toggle('depleted', c.depleted && zone !== 'trapped' && !attacking);
+    s.classList.toggle('attacking', !!attacking);
+    if (attacking) s.style.setProperty('--seat-color', SEAT_COLORS[owner] ?? '');
     s.classList.toggle('has-equip', !!c.equipment);
     const unit = this.cardEl(uid, zone, owner, seen, attackId);
     unit.classList.add('unit');
