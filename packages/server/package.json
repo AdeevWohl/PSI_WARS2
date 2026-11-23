@@ -1,0 +1,18 @@
+{
+  "name": "@psi-wars/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@psi-wars/room": "0.1.0",
+    "@psi-wars/shared": "0.1.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241205.0",
+    "wrangler": "^4.166.0"
+  }
+}

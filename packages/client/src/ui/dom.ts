@@ -10,7 +10,13 @@ export function h<K extends keyof HTMLElementTagNameMap>(tag: K, attrs?: Attrs |
       if (k === 'class') el.className = String(v);
       else if (k === 'style') {
         if (typeof v === 'string') el.setAttribute('style', v);
-        else Object.assign(el.style, v);
+        else
+          for (const [prop, val] of Object.entries(v as Record<string, unknown>)) {
+            if (val === undefined || val === null) continue;
+            // Custom properties (--seat-color etc.) need setProperty; plain assignment drops them.
+            if (prop.startsWith('--')) el.style.setProperty(prop, String(val));
+            else (el.style as unknown as Record<string, unknown>)[prop] = val;
+          }
       } else if (k === 'dataset') Object.assign(el.dataset, v);
       else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2).toLowerCase(), v as EventListener);
       else if (v === true) el.setAttribute(k, '');

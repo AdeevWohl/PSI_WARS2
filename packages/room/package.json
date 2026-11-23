@@ -1,0 +1,10 @@
+{
+  "name": "@psi-wars/room",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": { "@psi-wars/engine": "0.1.0", "@psi-wars/shared": "0.1.0" }
+}

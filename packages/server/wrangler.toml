@@ -1,0 +1,20 @@
+# Psi Wars game server on Cloudflare Workers + Durable Objects (free plan friendly).
+# Deploy: see README "Put it on the internet with Cloudflare".
+name = "psi-wars"
+main = "src/worker.ts"
+compatibility_date = "2025-06-01"
+
+# The built client (npm run build) is served from the same origin as the WebSocket endpoint.
+[assets]
+directory = "../client/dist"
+binding = "ASSETS"
+run_worker_first = true
+
+# One Durable Object per room; SQLite-backed (required on the free plan).
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "RoomDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RoomDO"]

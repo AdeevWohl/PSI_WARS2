@@ -7,19 +7,24 @@
   "workspaces": [
     "packages/shared",
     "packages/engine",
-    "packages/client"
+    "packages/room",
+    "packages/client",
+    "packages/server-local",
+    "packages/server"
   ],
   "scripts": {
-    "typecheck": "tsc -b && tsc -p packages/client --noEmit",
+    "typecheck": "tsc -b && tsc -p packages/client --noEmit && tsc -p packages/server-local --noEmit && tsc -p packages/server --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "assets:extract": "python tools/assets/extract_psd.py",
     "assets:build": "node tools/assets/build.mjs",
     "dev": "npm run dev -w @psi-wars/client",
     "build": "npm run build -w @psi-wars/client",
-    "serve": "npm run start -w @psi-wars/server-local",
+    "serve": "npm run build && npm run start -w @psi-wars/server-local",
     "sim": "tsx tools/sim/run.ts",
-    "deploy": "npm run build && npm run deploy -w @psi-wars/server"
+    "deploy": "npm run build && npm run deploy -w @psi-wars/server",
+    "cf:dev": "npm run build && npm run dev -w @psi-wars/server",
+    "test:cloudflare": "vitest run packages/server-local"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

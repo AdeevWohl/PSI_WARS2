@@ -294,6 +294,33 @@ export class GameScreen {
     this.maybeRunAi();
   }
 
+  /** Online: show the server's countdown (response window / turn timer); the server acts on expiry. */
+  private syncServerTimer(legal: LegalView | null): void {
+    const d = this.source.deadline!();
+    const key = d && legal && d.seat === legal.seat ? `${d.kind}:${d.at}` : '';
+    if (!key) {
+      if (this.timer) clearInterval(this.timer.id);
+      this.timer = null;
+      return;
+    }
+    if (this.timer?.key === key) {
+      for (const el of this.timer.els) if (!el.isConnected) this.promptBox.append(el);
+      return;
+    }
+    if (this.timer) clearInterval(this.timer.id);
+    const total = Math.max(1, d!.at - Date.now());
+    const bar = h('div', { class: 'timer-bar' }, h('div', { class: 'timer-fill' }));
+    const label = h('div', { class: 'timer-label' });
+    this.promptBox.append(bar, label);
+    const tick = () => {
+      const left = Math.max(0, d!.at - Date.now());
+      (bar.firstChild as HTMLElement).style.transform = `scaleX(${left / total})`;
+      label.textContent = d!.kind === 'response' ? `Response window ${Math.ceil(left / 1000)} s` : `${Math.ceil(left / 1000)} s`;
+    };
+    this.timer = { key, deadline: d!.at, id: window.setInterval(tick, 200), els: [bar, label] };
+    tick();
+  }
+
   /**
    * Computer seats in local games act after the animation queue settles, with a short
    * delay (scaled by the animation speed) so a human can follow (spec C5).
@@ -324,6 +351,7 @@ export class GameScreen {
    * the configured time; on expiry its default answer is applied. Online, the server owns it.
    */
   private syncTimer(view: GameView, legal: LegalView | null): void {
+    if (this.source.deadline) return this.syncServerTimer(legal);
     const secs = settings().turnTimer;
     const key = legal ? `${view.commandCount}:${legal.prompt.kind}:${legal.seat}` : '';
     if (!secs || !legal || this.source.seats[legal.seat]?.kind !== 'local') {

@@ -20,3 +20,4 @@ export { EFFECTS } from './effects';
 export type { PlayOption } from './plays';
 export { battleOdds, type BattleOdds, type SideStrength } from './odds';
 export { chooseCommand, type AiLevel } from './ai';
+export { validateDeck, type DeckProblem } from './decks';

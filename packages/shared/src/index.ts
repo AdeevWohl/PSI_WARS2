@@ -63,3 +63,5 @@ export interface GameEvent {
   redacted?: GameEvent;
   [k: string]: unknown;
 }
+
+export * from './protocol';

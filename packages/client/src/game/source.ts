@@ -28,6 +28,8 @@ export interface GameSource {
   onUpdate(cb: (u: Update) => void): () => void;
   /** Events filtered for a viewer (redacts private information). */
   eventsFor(events: GameEvent[], viewer: Seat | null): GameEvent[];
+  /** Server-enforced countdown (online games), in local clock ms. */
+  deadline?(): { seat: Seat; kind: string; at: number } | null;
   /** Full replayable log (seed + commands), for export. */
   exportLog?(): unknown;
   dispose(): void;
