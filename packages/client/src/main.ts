@@ -1,0 +1,84 @@
+import './styles/tokens.css';
+import './styles/base.css';
+import './styles/card.css';
+import './styles/board.css';
+import './styles/screens.css';
+import { artUrl, loadManifest } from './assets';
+import { currentDefs, rules } from './data';
+import { LocalGame, randomSeed } from './game/local';
+import { h } from './ui/dom';
+import { GameScreen } from './ui/game-screen';
+import { hotseatSetup, mainMenu, titleScreen, type HotseatConfig } from './ui/screens';
+
+const stage = document.getElementById('stage')!;
+let current: { el: HTMLElement; destroy?: () => void } | null = null;
+
+function uiScale(): number {
+  return 1;
+}
+
+function fitStage(): void {
+  const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+  stage.style.transform = `translate(-50%, -50%) scale(${s * uiScale()})`;
+}
+window.addEventListener('resize', fitStage);
+fitStage();
+
+function show(el: HTMLElement, destroy?: () => void): void {
+  current?.destroy?.();
+  current?.el.remove();
+  current = { el, destroy };
+  stage.prepend(el);
+}
+
+function toMenu(): void {
+  show(
+    mainMenu([
+      { label: 'Play vs AI', sub: 'You against the computer', disabledReason: 'Arrives in Stage 4 (AI opponents)' },
+      { label: 'Host Game', sub: 'Online room with a code', disabledReason: 'Arrives in Stage 5 (online play)' },
+      { label: 'Join Game', sub: 'Enter a room code', disabledReason: 'Arrives in Stage 5 (online play)' },
+      { label: 'Hot-seat', sub: 'Two players, one device, hidden-hand curtains', onClick: () => toHotseat() },
+      { label: 'Deck Builder', sub: 'Build and save decks', disabledReason: 'Arrives in Stage 7' },
+      { label: 'How to Play', sub: 'Rules reference and tutorial', disabledReason: 'Arrives in Stage 7' },
+      { label: 'Settings', sub: 'Animation, effects, audio, accessibility', disabledReason: 'Arrives in Stage 3' },
+    ]),
+  );
+}
+
+function toHotseat(): void {
+  show(hotseatSetup((cfg) => startHotseat(cfg), () => toMenu()));
+}
+
+function startHotseat(cfg: HotseatConfig): void {
+  const game = new LocalGame(
+    cfg.seats.map((s, seat) => ({ seat, name: s.name, kind: 'local' as const })),
+    {
+      defs: currentDefs(),
+      rules,
+      seed: randomSeed(),
+      players: cfg.seats.map((s) => ({ name: s.name, deck: s.deck })),
+      startingHP: cfg.startingHP,
+      diceVariant: cfg.diceVariant,
+      autoPassNoPlay: true,
+    },
+  );
+  const screen = new GameScreen(game, game.initialEvents(), {
+    onExit: () => toMenu(),
+    onRematch: () => startHotseat(cfg),
+  });
+  show(screen.el, () => {
+    screen.destroy();
+    game.dispose();
+  });
+  (window as any).__psi = { game, screen };
+}
+
+async function boot(): Promise<void> {
+  await loadManifest();
+  const bg = artUrl('ui/menu-bg', '1920');
+  if (bg) document.documentElement.style.setProperty('--menu-bg-url', `url("${bg}")`);
+  show(titleScreen(() => toMenu()));
+}
+
+stage.appendChild(h('div', { id: 'toasts' }));
+void boot();

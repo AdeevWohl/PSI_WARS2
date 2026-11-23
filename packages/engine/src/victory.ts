@@ -86,12 +86,18 @@ export function checkVictory(ctx: Ctx): boolean {
     finish(ctx, [], true, 'simultaneousLoss');
     return true;
   }
-  for (const seat of losers) eliminate(ctx, seat, reasonOf(seat));
-  const left = liveSeats(s);
-  if (left.length === 1) {
-    finish(ctx, left, false, reasonOf(losers[0]!));
+  const survivors = live.filter((seat) => !losers.includes(seat));
+  if (survivors.length === 1) {
+    // Game over: mark the losers out but leave the final board intact (house rule D's
+    // "cards leave the game" only matters while the game continues).
+    for (const seat of losers) {
+      player(s, seat).eliminated = true;
+      emit(ctx, { type: 'PlayerEliminated', seat, reason: reasonOf(seat) });
+    }
+    finish(ctx, survivors, false, reasonOf(losers[0]!));
     return true;
   }
+  for (const seat of losers) eliminate(ctx, seat, reasonOf(seat));
   if (player(s, s.turn.active).eliminated) {
     abortTurn(ctx);
     return true;
@@ -103,12 +109,15 @@ export function concede(ctx: Ctx, seat: Seat): void {
   const s = ctx.s;
   const wasActive = s.turn.active === seat;
   const prompt = s.prompt;
-  eliminate(ctx, seat, 'conceded');
-  const left = liveSeats(s);
-  if (left.length === 1) {
-    finish(ctx, left, false, 'conceded');
+  const others = liveSeats(s).filter((x) => x !== seat);
+  if (others.length === 1) {
+    player(s, seat).eliminated = true;
+    emit(ctx, { type: 'PlayerEliminated', seat, reason: 'conceded' });
+    finish(ctx, others, false, 'conceded');
     return;
   }
+  eliminate(ctx, seat, 'conceded');
+  const left = liveSeats(s);
   if (left.length === 0) {
     finish(ctx, [], true, 'conceded');
     return;

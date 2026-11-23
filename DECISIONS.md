@@ -34,3 +34,13 @@ Decisions not settled by the build prompt, the Q&A or the spec. Each one is reve
 25. **Eliminations (house rule D).** If the active player is eliminated mid-turn, the turn aborts and anything on the stack is discarded. If a player who holds a prompt is eliminated or concedes, the prompt's default answer is applied.
 26. **Surviving attackers are replenished** when the Battle phase ends (§A9.1). Stacks split and Disoriented ends at the same moment.
 27. **`config.maxTurns`** (default 0 = off) ends a game as a draw. It is a safety valve for AI-vs-AI simulation only.
+
+## Stage 2 — client and hot-seat
+
+28. **No UI framework.** Vanilla TypeScript with a tiny `h()` helper. The board is a keyed renderer: each visible card keeps one DOM element for life and is re-parented as it changes zone. That is exactly what the FLIP animations in Stage 3 need.
+29. **A fixed 1920×1080 stage scaled to fit the window** (letterboxed). The layout is identical at every aspect ratio and on tablets, and the Stage 3 UI-scale setting multiplies the fit.
+30. **The engine computes, the client displays.** The view now carries each unit's live strengths (`unitStats`, auras included), each playable card carries its auto-pay suggestion, and each unplayable card carries the exact reason ("Needs 1 more Neurogenesis"). The client re-implements no rules.
+31. **Hot-seat curtains follow the current decision.** Whenever a decision belongs to a different person at the device, a full-screen curtain hides everything; the board underneath is re-rendered as a spectator, so no hidden card is even in the DOM. Hot-seat uses fast windows (no prompt when you have nothing to play), so a curtain for a Trap window does reveal that the other player *can* respond. On one shared screen that is unavoidable.
+32. **Commands are queued, never dropped,** and only one answer per prompt can be queued (double-click guard). This replaced a "busy" flag that silently dropped a fast click; that race would have bitten online play.
+33. **Interaction is click-to-select** for everything (play, target, pay, attack, block, stack, move/discard Equipment), plus Space/Enter for the primary action and Esc to cancel. Drag-and-drop lands with the Stage 3 animation system, because it shares the elevation and FLIP machinery.
+34. **The final board stays intact at game over.** House rule D's "an eliminated player's cards leave the game" applies only while the game continues.

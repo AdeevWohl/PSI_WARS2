@@ -2,14 +2,15 @@
   "name": "psi-wars",
   "private": true,
   "version": "0.1.0",
-  "description": "Psi Wars — browser card game: rules engine, client, multiplayer servers and balance tools",
+  "description": "Psi Wars - browser card game: rules engine, client, multiplayer servers and balance tools",
   "type": "module",
   "workspaces": [
     "packages/shared",
-    "packages/engine"
+    "packages/engine",
+    "packages/client"
   ],
   "scripts": {
-    "typecheck": "tsc -b",
+    "typecheck": "tsc -b && tsc -p packages/client --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "assets:extract": "python tools/assets/extract_psd.py",

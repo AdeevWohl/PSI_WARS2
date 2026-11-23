@@ -1,0 +1,21 @@
+{
+  "name": "@psi-wars/client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync-assets": "node scripts/sync-assets.mjs",
+    "predev": "node scripts/sync-assets.mjs",
+    "dev": "vite",
+    "prebuild": "node scripts/sync-assets.mjs",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@psi-wars/engine": "0.1.0",
+    "@psi-wars/shared": "0.1.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.7"
+  }
+}

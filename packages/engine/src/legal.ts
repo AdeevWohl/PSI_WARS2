@@ -1,9 +1,24 @@
 import type { Command, Payment, Seat } from '@psi-wars/shared';
 import { attacksAgainst, eligibleAttackers, eligibleBlockers } from './battle';
-import { discardableEquipment, movableEquipment, playOptions, validatePlay, type PlayOption } from './plays';
+import { discardableEquipment, movableEquipment, playOptions, unplayableReasons, validatePlay, type PlayOption } from './plays';
 import { fighterUnits } from './stats';
 import { card, defOf, opponentsOf, player } from './state';
 import type { GameState, Prompt } from './types';
+import type { PromptView } from './view';
+
+/** LegalActions safe to send over the wire: the prompt without the engine's internal continuation. */
+export type LegalView = Omit<LegalActions, 'prompt'> & {
+  prompt: PromptView;
+  /** Hand cards that cannot be played now, with the reason (tooltip text). */
+  unplayable: Record<string, string>;
+};
+
+export function getLegalView(s: GameState, seat: Seat): LegalView | null {
+  const la = getLegalActions(s, seat);
+  if (!la) return null;
+  const { resume: _resume, ...prompt } = la.prompt;
+  return { ...la, prompt: structuredClone(prompt), unplayable: unplayableReasons(s, seat, la.prompt) };
+}
 
 export interface LegalActions {
   seat: Seat;

@@ -2,7 +2,19 @@
 
 Browser card game: a pure TypeScript rules engine, an art-driven client, AI opponents, and online play with room codes (2–4 players).
 
-> **Status: Stage 1 of 9 complete.** The full rules engine runs headless with 149 tests (every §12 case, every card ability, 3–4 player rules, determinism, fuzz). The client (Stage 2) comes next. The run, tunnel and deploy sections will be filled in as those stages land.
+> **Status: Stage 2 of 9 complete.** The rules engine (149 tests) and a playable browser client: a full 2-player hot-seat game with the real card art and hidden-hand curtains. Animation and settings (Stage 3) come next. Tunnel and deploy sections will be filled in as those stages land.
+
+## Play it (on this computer)
+
+```powershell
+npm install
+```
+
+```powershell
+npm run dev
+```
+
+Then open http://localhost:5173 and choose **Hot-seat**. `npm run build` produces a static site in `packages/client/dist`.
 
 ## Requirements
 
@@ -47,7 +59,7 @@ python tools/assets/extract_psd.py --psd-dir "../Final Cards Single Number Full 
 packages/
   engine/        pure TS rules engine (no DOM, network or timers)   — done
   shared/        command & event types, protocol version             — done
-  client/        Vite + TS client                                    — Stage 2+
+  client/        Vite + TS client (render/, ui/, game/, anim/)       — hot-seat done
   server/        Cloudflare Worker + Durable Object                  — Stage 5
   server-local/  Node WebSocket server, same protocol                — Stage 5
 data/

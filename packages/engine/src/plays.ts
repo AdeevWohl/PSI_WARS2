@@ -1,6 +1,6 @@
 import type { Command, Payment } from '@psi-wars/shared';
 import { EFFECTS } from './effects';
-import { autoPayment, canAfford, enumeratePayments, isValidPayment, pay, ZERO_COST } from './payment';
+import { autoPayment, canAfford, enumeratePayments, isValidPayment, pay, shortfall, ZERO_COST } from './payment';
 import { canHoldEquipment } from './stats';
 import { card, defOf, emit, moveCard, player, turnOrderFrom } from './state';
 import { push } from './tasks';
@@ -14,6 +14,34 @@ export interface PlayOption {
   targets: string[] | null;
   /** Distinct legal payments (by CU type destroyed). */
   payments: Payment[];
+  /** Auto-pay suggestion that preserves the most flexible CUs (§C3). */
+  suggested: Payment | null;
+}
+
+const CU_NAME: Record<string, string> = { G: 'Digital Splicing', B: 'Neurogenesis', R: 'Bio-Acceleration', P: 'Material Animation', W: 'Creation Unit to destroy' };
+
+/** Why each hand card cannot be played right now — shown as a tooltip on dimmed cards (§8). */
+export function unplayableReasons(s: GameState, seat: Seat, p: Prompt): Record<string, string> {
+  const types = allowedTypes(p);
+  const playable = new Set(playOptions(s, seat, p).map((o) => o.uid));
+  const out: Record<string, string> = {};
+  for (const uid of player(s, seat).hand) {
+    if (playable.has(uid)) continue;
+    const d = defOf(s, uid);
+    if (!types.has(d.cardType)) {
+      out[uid] = types.size === 0 ? 'Finish the current decision first' : types.has('Power') ? 'Only Power cards can be played now' : types.has('Trap') ? 'Only Traps can be played now' : 'Not playable now';
+      continue;
+    }
+    const short = shortfall(s, seat, d.cost ?? ZERO_COST);
+    if (short.length) {
+      out[uid] = 'Needs ' + short.map((x) => `${x.missing} more ${CU_NAME[x.type]}${x.missing > 1 && x.type !== 'W' ? 's' : ''}`).join(', ');
+      continue;
+    }
+    if (d.cardType === 'Equipment') out[uid] = `No unit can hold it (needs an un-equipped ${d.equip?.allowed.join(' or ')} with ${d.equip?.ability} above 0)`;
+    else if (d.cardType === 'Trap') out[uid] = 'No opposing unit to target';
+    else out[uid] = 'Nothing for it to do right now';
+  }
+  return out;
 }
 
 /** Which card types a prompt allows from hand. Only Traps are instant (house rule L). */
@@ -56,7 +84,7 @@ export function playOptions(s: GameState, seat: Seat, p: Prompt): PlayOption[] {
     const d = defOf(s, uid);
     if (!types.has(d.cardType)) continue;
     if (d.cardType === 'Resource') {
-      out.push({ uid, cardId: d.id, targets: null, payments: [{ destroy: {} }] });
+      out.push({ uid, cardId: d.id, targets: null, payments: [{ destroy: {} }], suggested: { destroy: {} } });
       continue;
     }
     const cost = d.cost ?? ZERO_COST;
@@ -70,7 +98,7 @@ export function playOptions(s: GameState, seat: Seat, p: Prompt): PlayOption[] {
       if (!r.ok) continue;
       targets = r.targets;
     }
-    out.push({ uid, cardId: d.id, targets, payments: enumeratePayments(s, seat, cost) });
+    out.push({ uid, cardId: d.id, targets, payments: enumeratePayments(s, seat, cost), suggested: autoPayment(s, seat, cost) });
   }
   return out;
 }

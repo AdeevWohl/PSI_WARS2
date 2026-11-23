@@ -1,0 +1,86 @@
+/* Cards: art full-bleed at 788:1088, never stretched. */
+.card {
+  position: relative; width: var(--w, var(--card-w-unit)); aspect-ratio: 788 / 1088; flex: none;
+  border-radius: var(--card-radius); perspective: 1200px; cursor: default;
+  transition: transform var(--dur-std) var(--ease-out-cubic), filter var(--dur-std) var(--ease-out-cubic), opacity var(--dur-std);
+}
+.card-inner { position: absolute; inset: 0; transform-style: preserve-3d; border-radius: inherit; }
+.card .face { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; backface-visibility: hidden; background: #0a0f1a; }
+.card .face.back { transform: rotateY(180deg); }
+.card.face-down .card-inner { transform: rotateY(180deg); }
+.card .art { width: 100%; height: 100%; object-fit: contain; display: block; background-size: cover; background-color: #080c16; }
+
+/* Elevation: two pre-rendered shadow layers cross-faded (never animate blur). */
+.card::before, .card::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; transition: opacity var(--dur-std) var(--ease-out-cubic); }
+.card::before { box-shadow: var(--shadow-rest); opacity: 1; z-index: -1; }
+.card::after { box-shadow: var(--shadow-hover); opacity: 0; z-index: -1; }
+:root[data-shadows='off'] .card::before, :root[data-shadows='off'] .card::after { display: none; }
+
+.card.interactive { cursor: pointer; }
+.card.interactive:hover { transform: translateY(-8px); }
+.card.interactive:hover::after { opacity: 1; }
+
+/* Glow layer: blurred pseudo-element substitute — a sibling halo whose opacity/scale animate. */
+.card .glow { position: absolute; inset: -6px; border-radius: 12px; pointer-events: none; opacity: 0; transition: opacity var(--dur-std); }
+.card.selectable .overlays { box-shadow: inset 0 0 0 2px rgba(79, 209, 255, 0.55); border-radius: inherit; }
+.card.selected { transform: translateY(-14px); }
+.card.selected .overlays { box-shadow: inset 0 0 0 3px #fff, 0 0 0 3px var(--accent), 0 0 22px 6px rgba(79, 209, 255, 0.55); border-radius: inherit; }
+.card.target .overlays { animation: target-pulse calc(1400ms * max(var(--speed), 0.6)) ease-in-out infinite; border-radius: inherit; }
+@keyframes target-pulse { 0%, 100% { box-shadow: inset 0 0 0 2px rgba(255, 200, 87, 0.6), 0 0 8px 2px rgba(255, 200, 87, 0.25); } 50% { box-shadow: inset 0 0 0 3px rgba(255, 200, 87, 1), 0 0 22px 8px rgba(255, 200, 87, 0.55); } }
+:root[data-glow='off'] .card.target .overlays { animation: none; box-shadow: inset 0 0 0 3px var(--gold); }
+.card.dimmed { filter: grayscale(0.7) brightness(0.55); }
+.card.attacking-pick .overlays { box-shadow: inset 0 0 0 3px var(--physical), 0 0 18px 4px rgba(255, 74, 74, 0.5); border-radius: inherit; }
+.card.danger .overlays { box-shadow: inset 0 0 0 3px var(--danger), 0 0 16px 3px rgba(255, 77, 109, 0.55); border-radius: inherit; }
+
+/* Depleted: rotated 90° (physical game) + desaturated (accessibility backup). */
+.slot.depleted .card.unit, .card.cu.depleted { transform: rotate(90deg) scale(0.86); filter: saturate(0.25) brightness(0.8); }
+.slot.depleted .card.unit.interactive:hover { transform: rotate(90deg) scale(0.9) translateX(-6px); }
+.card.disoriented { filter: saturate(0.4) hue-rotate(-20deg); animation: wobble 1.6s ease-in-out infinite; }
+@keyframes wobble { 0%, 100% { rotate: 0deg; } 25% { rotate: -2deg; } 75% { rotate: 2deg; } }
+.trapped-area .card { filter: saturate(0.3) brightness(0.85) hue-rotate(160deg); }
+.trapped-area .card .overlays { background: repeating-linear-gradient(135deg, rgba(120, 200, 255, 0.12) 0 6px, transparent 6px 14px); border-radius: inherit; box-shadow: inset 0 0 0 2px rgba(150, 220, 255, 0.6); }
+
+.overlays { position: absolute; inset: 0; pointer-events: none; border-radius: inherit; }
+.chip {
+  position: absolute; transform: translate(-50%, -50%); min-width: 17%; height: 9.5%; display: grid; place-items: center;
+  font: 800 calc(var(--w, 118px) * 0.11) / 1 var(--font-display); border-radius: 5px; color: #fff; padding: 0 3px;
+  background: #142036; border: 2px solid #9fb0cc; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  animation: chip-pop var(--dur-std) var(--ease-out-back);
+}
+.chip.up { background: #0f4a2a; border-color: #3ee08f; }
+.chip.down { background: #5a1424; border-color: #ff4d6d; }
+.chip.x { background: #2a2350; border-color: #b9a6ff; }
+.cost-chip { left: 14%; min-width: 13%; height: 6%; font-size: calc(var(--w, 118px) * 0.085); }
+:root[data-cb='on'] .chip.up::after { content: '▲'; font-size: 0.5em; margin-left: 1px; }
+:root[data-cb='on'] .chip.down::after { content: '▼'; font-size: 0.5em; margin-left: 1px; }
+@keyframes chip-pop { from { transform: translate(-50%, -50%) scale(0.4); opacity: 0; } }
+
+.markers { position: absolute; top: 4%; right: 4%; display: flex; flex-direction: column; gap: 3px; }
+.mk { width: calc(var(--w, 118px) * 0.2); height: calc(var(--w, 118px) * 0.2); display: grid; place-items: center; border-radius: 50%; background: rgba(8, 12, 22, 0.88); border: 1.5px solid var(--line-bright); font-size: calc(var(--w, 118px) * 0.12); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6); }
+.mk-disoriented { border-color: var(--cyber); }
+.mk-new { border-color: var(--gold); }
+.mk-disabled { border-color: var(--danger); }
+.mk-x { border-color: #b9a6ff; font-family: var(--font-display); font-weight: 800; }
+
+/* Procedural face (no art): the game's visual language, readable at small sizes. */
+.proc-face { position: absolute; inset: 0; background: linear-gradient(160deg, #1a2a46, #0b1426 60%, #050a14); border: 3px solid #4a6a96; border-radius: inherit; color: #e6eefc; font-family: var(--font-ui); }
+.proc-Equipment { border-color: #b867ff; }
+.proc-Power, .proc-Trap { border-color: #d6dfec; }
+.proc-CreationUnit, .proc-Resource { border-color: var(--gold); }
+.proc-name { position: absolute; left: 4%; top: 36%; writing-mode: vertical-rl; transform: rotate(180deg); font: 800 calc(var(--w, 118px) * 0.1) var(--font-display); letter-spacing: 0.04em; text-transform: uppercase; color: #8be9ff; }
+.proc-cost { position: absolute; left: 5%; top: 4%; display: flex; flex-direction: column; gap: 2px; }
+.proc-cost .light { width: calc(var(--w, 118px) * 0.15); height: calc(var(--w, 118px) * 0.1); border-radius: 3px; font: 700 calc(var(--w, 118px) * 0.08) / calc(var(--w, 118px) * 0.1) var(--font-display); text-align: center; color: #fff; }
+.light.l-G { background: var(--cu-G); } .light.l-B { background: var(--cu-B); } .light.l-R { background: var(--cu-R); } .light.l-P { background: var(--cu-P); } .light.l-W { background: #8794a8; }
+.light.off { opacity: 0.22; }
+.proc-cu { position: absolute; inset: 22% 22%; border-radius: 50%; box-shadow: 0 0 30px currentColor; }
+.proc-cu.l-G { background: radial-gradient(var(--cu-G), transparent 70%); } .proc-cu.l-B { background: radial-gradient(var(--cu-B), transparent 70%); }
+.proc-cu.l-R { background: radial-gradient(var(--cu-R), transparent 70%); } .proc-cu.l-P { background: radial-gradient(var(--cu-P), transparent 70%); }
+.proc-stats { position: absolute; left: 14%; right: 6%; top: 72%; display: flex; justify-content: space-around; }
+.proc-stats .box { width: 24%; aspect-ratio: 1.3; display: grid; place-items: center; border-radius: 4px; font: 800 calc(var(--w, 118px) * 0.12) var(--font-display); }
+.b-cyber { background: var(--cyber); } .b-psionic { background: var(--psionic); } .b-physical { background: var(--physical); }
+.proc-type { position: absolute; left: 14%; right: 4%; top: 84%; text-align: center; font: 700 calc(var(--w, 118px) * 0.075) var(--font-display); }
+.proc-text { position: absolute; left: 14%; right: 4%; top: 90%; text-align: center; font-size: calc(var(--w, 118px) * 0.062); line-height: 1.15; color: #cfe; }
+
+/* Dice */
+.die { flex: none; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6)); }
+.die.obliterated { opacity: 0.55; }

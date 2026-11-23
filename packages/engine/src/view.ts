@@ -1,4 +1,5 @@
-import { PROTOCOL_VERSION, type GameEvent, type Seat } from '@psi-wars/shared';
+import { ABILITIES, PROTOCOL_VERSION, type GameEvent, type Seat } from '@psi-wars/shared';
+import { baseValue, isX, unitStrength } from './stats';
 import type { BattleState, CardDef, CardInstance, GameConfig, GameResult, GameState, PromptKind, StackItem, TurnEffect } from './types';
 
 export type CardInstanceView = Omit<CardInstance, never>;
@@ -46,6 +47,32 @@ export interface GameView {
   result: GameResult | null;
   commandCount: number;
   defs: Record<string, CardDef>;
+  /**
+   * Current strengths of every unit in play, computed by the engine (base + Equipment +
+   * modifiers + Commander auras while attacking). 'X' = an X value not yet rolled this turn.
+   */
+  unitStats: Record<string, UnitStats>;
+}
+
+export interface UnitStats {
+  cyber: number | 'X';
+  psionic: number | 'X';
+  physical: number | 'X';
+  attacking: boolean;
+}
+
+export function unitStatsFor(s: GameState): Record<string, UnitStats> {
+  const attacking = new Set((s.battle?.attacks ?? []).filter((a) => a.status === 'pending').flatMap((a) => a.units));
+  const out: Record<string, UnitStats> = {};
+  for (const p of s.players) {
+    for (const uid of [...p.lab, ...p.trapped]) {
+      const att = attacking.has(uid);
+      const st = { attacking: att } as UnitStats;
+      for (const ab of ABILITIES) st[ab] = isX(s, uid, ab) && baseValue(s, uid, ab) === null ? 'X' : unitStrength(s, uid, ab, att);
+      out[uid] = st;
+    }
+  }
+  return out;
 }
 
 const PUBLIC_ZONES = new Set(['lab', 'cus', 'trapped', 'discard', 'attached', 'stack']);
@@ -105,6 +132,7 @@ export function viewFor(s: GameState, viewer: Seat | null): GameView {
     result: s.result ? structuredClone(s.result) : null,
     commandCount: s.commandCount,
     defs: s.defs,
+    unitStats: unitStatsFor(s),
   };
 }
 
