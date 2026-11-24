@@ -130,7 +130,10 @@
 .bd-result { margin-top: 8px; font-weight: 700; }
 .bd-note { color: var(--gold); font-size: calc(12px * var(--font-scale)); }
 
-.log { flex: 1; min-height: 120px; padding: 10px 12px; overflow-y: auto; font-size: calc(13px * var(--font-scale)); line-height: 1.45; }
+.log { flex: 0 0 auto; height: 150px; padding: 8px 12px; overflow-y: auto; font-size: calc(12px * var(--font-scale)); line-height: 1.4; transition: height var(--dur-std) var(--ease-out-cubic); margin-top: auto; }
+.log.expanded { height: 460px; }
+.log h3 { display: flex; justify-content: space-between; align-items: center; }
+.log-toggle { background: none; border: 0; color: var(--accent); font: 700 calc(11px * var(--font-scale)) var(--font-ui); cursor: pointer; padding: 0 2px; letter-spacing: 0.04em; }
 .log h3 { margin: 0 0 6px; font: 700 calc(12px * var(--font-scale)) var(--font-display); letter-spacing: 0.12em; color: var(--text-dim); position: sticky; top: -10px; background: var(--panel); padding: 4px 0; }
 .log .entry { color: var(--text-dim); }
 .log .entry b { color: var(--text); font-weight: 600; }

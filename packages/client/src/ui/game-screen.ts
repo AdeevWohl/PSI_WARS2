@@ -89,6 +89,12 @@ export class GameScreen {
       decorate: (el, ctx) => this.controller.decorate(el, ctx),
       click: (ctx, ev) => {
         if (this.drag.consumeClick()) return;
+        // A click while an animation is finishing skips it AND still counts as the choice.
+        if (this.playing) {
+          this.deferredClick = { ctx, ev };
+          this.tl.skip();
+          return;
+        }
         void this.controller.click(ctx, ev);
       },
       hover: (ctx, el) => this.hover(ctx, el),
@@ -259,6 +265,8 @@ export class GameScreen {
 
   // ---------- presentation queue ----------
 
+  private deferredClick: { ctx: CardCtx; ev: MouseEvent } | null = null;
+
   private async pump(): Promise<void> {
     if (this.playing) return;
     this.playing = true;
@@ -272,6 +280,13 @@ export class GameScreen {
       this.tl.settle();
     }
     this.refresh();
+    const d = this.deferredClick;
+    this.deferredClick = null;
+    if (d && d.ctx.uid) {
+      // Re-find the card's current context (the board was re-rendered).
+      const el = this.board.elements().get(d.ctx.uid) as (HTMLElement & { __ctx?: CardCtx }) | undefined;
+      if (el?.__ctx) void this.controller.click(el.__ctx, d.ev);
+    }
   }
 
   private async present(batch: GameEvent[]): Promise<void> {
@@ -642,7 +657,9 @@ export class GameScreen {
     const viewer = this.lastView?.viewer ?? null;
     const lines = visible.map((e) => eventLine(e, (s) => this.nameOf(s), this.namer, viewer, settings().logVerbosity)).filter((x): x is NonNullable<typeof x> => !!x).slice(-160);
     const atBottom = this.logEl.scrollTop + this.logEl.clientHeight >= this.logEl.scrollHeight - 30;
-    this.logEl.replaceChildren(h('h3', null, 'Battle log'), ...lines.map((l) => h('div', { class: `entry${l.kind ? ' ' + l.kind : ''}` }, l.text)));
+    const open = this.logEl.classList.contains('expanded');
+    const toggle = h('button', { class: 'log-toggle', 'aria-expanded': String(open), onclick: () => { this.logEl.classList.toggle('expanded'); this.renderLog(); } }, open ? '▴ less' : '▾ more');
+    this.logEl.replaceChildren(h('h3', null, 'Battle log', toggle), ...lines.map((l) => h('div', { class: `entry${l.kind ? ' ' + l.kind : ''}` }, l.text)));
     if (atBottom) this.logEl.scrollTop = this.logEl.scrollHeight;
   }
 

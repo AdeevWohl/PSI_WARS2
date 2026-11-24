@@ -112,7 +112,7 @@ export class BattleStage {
    * dice slowly, shows "strength + die = total", and says who won before the next row starts.
    * `ahead` = this battle's events that follow the dice in the same batch.
    */
-  async playDice(dice: GameEvent, ahead: GameEvent[], diceTable: Record<Ability, Record<string, { bonus: number }>>, makeDie: (ab: Ability, side: number, who: 'att' | 'def') => { el: HTMLElement; roll: (delay: number, duration: number) => Animation | null; shatter: () => void }, sfx: (n: 'dice' | 'obliterate' | 'disorient') => void): Promise<void> {
+  async playDice(dice: GameEvent, ahead: GameEvent[], diceTable: Record<Ability, Record<string, { bonus: number }>>, makeDie: (ab: Ability, side: number, who: 'att' | 'def') => { el: HTMLElement; roll: (delay: number, duration: number, dir: 1 | -1) => Animation | null; shatter: () => void }, sfx: (n: 'dice' | 'obliterate' | 'disorient') => void): Promise<void> {
     this.presented = true;
     const att = dice.att as Record<string, any>;
     const def = dice.def as Record<string, any>;
@@ -145,8 +145,8 @@ export class BattleStage {
       r.attDie.replaceChildren(dA.el);
       r.defDie.replaceChildren(dD.el);
       sfx('dice');
-      const a1 = dA.roll(0, 1700);
-      const a2 = dD.roll(140, 1700);
+      const a1 = dA.roll(0, 1900, 1);
+      const a2 = dD.roll(160, 1900, -1);
       await this.tl.done(a2 ?? a1);
       // Obliteration
       const obl = ahead.find((x) => x.type === 'Obliterated' && x.die === ab);

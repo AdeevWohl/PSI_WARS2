@@ -151,7 +151,7 @@ Traps are **instants**: a Trap may be played on an opposing Battle Unit at any t
 
 When a card goes on the stack, every player may respond with a Trap of their own. Responses resolve **last played, first resolved**. A player who plays a card keeps priority and may play another. When everyone passes in succession, the top card resolves. A Trap whose target is no longer a legal unit when it resolves has no effect.
 
-A trapped unit is set aside: it cannot attack, defend, or use or grant abilities (including Commander auras). It keeps its Equipment. Only Traps are instant — other Power cards are played in your own Creation phase and in Battle step 3.
+A trapped unit is set aside: it cannot attack, defend, or use or grant abilities (including Commander auras). It keeps its Equipment. Power cards and Traps are both instants: they can be played in any priority window, including in response to another card and during an opponent’s turn (house rule L).
 
 **Response windows online.** Every player gets the same short window (3 seconds by default), so a pause never reveals who holds a Trap. The optional *fast windows* setting skips players who cannot play anything — faster, but it leaks that information.
 

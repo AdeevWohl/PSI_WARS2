@@ -839,7 +839,7 @@ export class Presenter {
             this.dice.set(`${who}:${ab}`, die);
             return {
               el: die.el,
-              roll: (delay, duration) => die.roll(tl, face, delay, duration),
+              roll: (delay, duration, dir) => die.roll(tl, face, delay, duration, dir),
               shatter: () => {
                 const r = this.centre(die.el);
                 this.env.fx.shards({ x: r.x, y: r.y, w: r.w, h: r.h }, DIE_COLOR[ab]);

@@ -3,6 +3,7 @@
  * bounce and settle on the rolled face. Setting "2D flip" flips a flat face; "instant" shows it.
  */
 import type { Ability } from '@psi-wars/shared';
+import { playSfx } from '../audio';
 import { settings } from '../settings';
 import { dieSvg } from '../render/dice';
 import { h, svg } from '../ui/dom';
@@ -43,8 +44,13 @@ export class Die3D {
     this.flat.replaceChildren(svg(dieSvg(this.die, side, { size: this.size, variant: this.variant })));
   }
 
-  /** Tumble in and settle on `side`. */
-  roll(tl: Timeline, side: number, delay = 0, duration = 1150): Animation | null {
+  /**
+   * A realistic throw: the die comes in from its owner's side (`dir` +1 = from the left), tumbles
+   * along its direction of travel, bounces two or three times while slowing down, rocks a little
+   * and settles on `side`. Every keyframe uses the same transform functions so the cube really
+   * rotates in 3D the whole way (mismatched lists make browsers blend flat matrices).
+   */
+  roll(tl: Timeline, side: number, delay = 0, duration = 1150, dir: 1 | -1 = 1): Animation | null {
     this.side = side;
     const mode = settings().dice;
     this.setRest(side);
@@ -53,31 +59,30 @@ export class Die3D {
       return tl.animate(this.el, [{ transform: 'scaleX(0) translateY(-30px)' }, { transform: 'scaleX(-1) translateY(-12px)', offset: 0.4 }, { transform: 'scaleX(1) translateY(0)' }], { duration: 520, easing: EASE.outBack, delay, fill: 'backwards' });
     }
     const [x, y] = SHOW[side]!;
-    // Several whole turns on all three axes. Every keyframe lists the same transform functions
-    // in the same order, so the browser rotates the cube in 3D instead of blending flat matrices.
-    const turns = () => (2 + Math.floor(Math.random() * 2)) * 360 * (Math.random() < 0.5 ? -1 : 1);
-    const [tx, ty, tz] = [turns(), turns(), (Math.random() < 0.5 ? -1 : 1) * 180];
-    const rot = (a: number, b: number, c: number) => `${TILT} rotateX(${(x + a).toFixed(1)}deg) rotateY(${(y + b).toFixed(1)}deg) rotateZ(${c.toFixed(1)}deg)`;
-    const k = (f: number) => [tx * f, ty * f, tz * f] as const;
-    const drop = (t: number, sc: number) => `translateY(${t}px) scale(${sc})`;
-    tl.animate(this.el, [
-      { transform: drop(-120, 0.7), opacity: 0 },
-      { transform: drop(4, 1.04), opacity: 1, offset: 0.38 },
-      { transform: drop(-30, 1), offset: 0.55 },
-      { transform: drop(0, 1.02), offset: 0.72 },
-      { transform: drop(-9, 1), offset: 0.85 },
-      { transform: drop(0, 1) },
-    ], { duration, easing: 'cubic-bezier(0.25, 0.1, 0.25, 1)', delay, fill: 'backwards' });
+    const sz = this.size;
+    // Rolling to the right turns the cube about its Y axis (and a little about X): ~1.5 turns, decelerating.
+    const spinY = dir * (360 + 180 + Math.round(Math.random() * 2) * 90);
+    const spinX = (Math.random() < 0.5 ? -1 : 1) * (180 + Math.round(Math.random()) * 90);
+    const rot = (f: number, wob = 0) => `${TILT} rotateX(${(x + spinX * f).toFixed(1)}deg) rotateY(${(y + spinY * f).toFixed(1)}deg) rotateZ(${wob.toFixed(1)}deg)`;
+    const at = (fx: number, hy: number, sc = 1) => `translate(${(-dir * fx * sz * 2.6).toFixed(1)}px, ${(-hy * sz).toFixed(1)}px) scale(${sc})`;
+    // Path: in from the side and above, first impact, bounce, second impact, small hop, settle.
+    const path: [number, number, number, number][] = [
+      // offset, distance left (1 = start), height, remaining spin
+      [0, 1, 1.3, 1],
+      [0.26, 0.55, 0, 0.6],
+      [0.42, 0.34, 0.45, 0.4],
+      [0.58, 0.18, 0, 0.22],
+      [0.7, 0.09, 0.14, 0.11],
+      [0.82, 0.03, 0, 0.04],
+      [0.92, 0.01, 0, 0.01],
+      [1, 0, 0, 0],
+    ];
+    tl.animate(this.el, path.map(([o, d, hgt]) => ({ offset: o, transform: at(d, hgt, o === 0 ? 0.8 : 1), opacity: o === 0 ? 0 : 1 })), { duration, easing: 'linear', delay, fill: 'backwards' });
     const shadow = this.el.querySelector('.die-shadow');
-    if (shadow) tl.animate(shadow, [{ transform: 'scale(0.3)', opacity: 0.1 }, { transform: 'scale(1)', opacity: 1, offset: 0.38 }, { transform: 'scale(0.75)', opacity: 0.6, offset: 0.55 }, { transform: 'scale(1)', opacity: 1, offset: 0.72 }, { transform: 'scale(0.9)', opacity: 0.85, offset: 0.85 }, { transform: 'scale(1)', opacity: 1 }], { duration, delay, fill: 'backwards' });
-    return tl.animate(this.cube, [
-      { transform: rot(...k(1)) },
-      { transform: rot(...k(0.4)), offset: 0.38 },
-      { transform: rot(...k(0.12)), offset: 0.6 },
-      { transform: rot(-14, 16, 5), offset: 0.78 },
-      { transform: rot(5, -5, -2), offset: 0.9 },
-      { transform: rot(0, 0, 0) },
-    ], { duration, easing: 'cubic-bezier(0.2, 0.6, 0.35, 1)', delay, fill: 'backwards' });
+    if (shadow) tl.animate(shadow, path.map(([o, , hgt]) => ({ offset: o, transform: `translateY(${(hgt * sz).toFixed(1)}px) scale(${(1 - Math.min(hgt, 1) * 0.5).toFixed(2)})`, opacity: 1 - Math.min(hgt, 1) * 0.6 })), { duration, easing: 'linear', delay, fill: 'backwards' });
+    // A clack on each impact.
+    if (!tl.instant) for (const o of [0.26, 0.58, 0.82]) setTimeout(() => playSfx('dice'), tl.dur(delay + duration * o));
+    return tl.animate(this.cube, path.map(([o, , , spin]) => ({ offset: o, transform: rot(spin, o > 0.8 && o < 1 ? (o < 0.9 ? 4 : -2) : 0) })), { duration, easing: 'linear', delay, fill: 'backwards' });
   }
 
   /** Re-roll: the die lifts and spins in place, then lands on the new side. */

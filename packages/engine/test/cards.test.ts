@@ -182,6 +182,14 @@ describe('Jingwa Psi Avenger — Psionic win: the opponent discards a Power card
 });
 
 describe('Power cards', () => {
+  it("Power cards are instants: playable in an opponent's turn (house rule L)", () => {
+    const sc = scenario({ at: 'battle', active: 1, seats: [{ lab: ['BU_LQ'], hand: ['PW_HEP'], cus: { G: 2, P: 1 } }, { lab: ['BU_LS'] }] });
+    const d = drive(sc);
+    d.do({ type: 'DeclareAttackers', attacks: [{ uid: sc.ids[1]!.lab[0]!, target: 0 }] });
+    d.expectPrompt('priority', 0); // seat 0 may respond with a Power card during seat 1's turn
+    expect(getLegalActions(d.state, 0)!.plays.map((p) => p.uid)).toContain(sc.ids[0]!.hand[0]);
+  });
+
   it('Creature Regenerate returns a Creature or Cyborg to play, changed; not playable if none (Change Request 1)', () => {
     const none = scenario({ seats: [{ hand: ['PW_CR'], cus: { B: 2, R: 2 }, discard: ['BU_HB'] }, {}] });
     expect(getLegalActions(none.state, 0)!.plays).toHaveLength(0);
@@ -259,8 +267,10 @@ describe('Power cards', () => {
     const ls = sc.ids[1]!.lab[0]!;
     const d = drive(sc);
     d.do({ type: 'DeclareAttackers', attacks: [{ uid: ls, target: 0 }] });
+    // Power cards are instants (house rule L): seat 0 may respond now; it waits for the Power window.
+    d.passUntil(['declareBlockers']);
     d.do({ type: 'AssignBlockers', blocks: [{ blocker: sc.ids[0]!.lab[0]!, attacker: ls }] });
-    d.expectPrompt('priority', 0);
+    d.passUntil(['priority']);
     expect(d.state.step).toBe('power');
     d.do({ type: 'PlayCard', uid: sc.ids[0]!.hand[0]! });
     d.passUntil(['main']);

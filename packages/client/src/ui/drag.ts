@@ -9,7 +9,8 @@ import { flipFrom, snap, toStage } from '../anim/flip';
 import { EASE, type Timeline } from '../anim/timeline';
 import type { Controller, DragSpec } from './controller';
 
-const THRESHOLD = 7;
+// Movement (px) before a press becomes a drag; small hand jitter stays a click.
+const THRESHOLD = 12;
 
 export class DragManager {
   active = false;

@@ -180,7 +180,7 @@
     "MP_TEAMS": "freeForAll",
     "MP_FIRST_TURN": "onlyFirstPlayerSkipsDraw",
     "TRAP_RESPONSES": "stackLastInFirstOut",
-    "INSTANT_SCOPE": "trapsOnly",
+    "INSTANT_SCOPE": "all",
     "TRAP_WINDOW_MS": 3000,
     "FAST_WINDOWS": false,
     "TURN_TIMER_SEC": 0,

@@ -117,7 +117,7 @@ const STEPS: Step[] = [
   },
   {
     id: 'done', title: 'You know the basics', target: '.game-menu-btn',
-    text: 'That is a full turn of every phase. Traps can be played at any time; Power cards in your Creation phase and in the battle Power window. The Menu has the full rules reference. Finish this game, or quit to the main menu whenever you like. Good luck, Warlord!',
+    text: 'That is a full turn of every phase. Power cards and Traps can be played at any time, even in response to your opponent. The Menu has the full rules reference. Finish this game, or quit to the main menu whenever you like. Good luck, Warlord!',
   },
 ];
 

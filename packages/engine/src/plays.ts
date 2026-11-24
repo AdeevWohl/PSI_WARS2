@@ -22,7 +22,7 @@ const CU_NAME: Record<string, string> = { G: 'Digital Splicing', B: 'Neurogenesi
 
 /** Why each hand card cannot be played right now — shown as a tooltip on dimmed cards (§8). */
 export function unplayableReasons(s: GameState, seat: Seat, p: Prompt): Record<string, string> {
-  const types = allowedTypes(p);
+  const types = allowedTypes(s, p);
   const playable = new Set(playOptions(s, seat, p).map((o) => o.uid));
   const out: Record<string, string> = {};
   for (const uid of player(s, seat).hand) {
@@ -50,15 +50,17 @@ export function unplayableReasons(s: GameState, seat: Seat, p: Prompt): Record<s
 }
 
 /** Which card types a prompt allows from hand. Only Traps are instant (house rule L). */
-function allowedTypes(p: Prompt): Set<string> {
+function allowedTypes(s: GameState, p: Prompt): Set<string> {
+  // House rule L (INSTANT_SCOPE): "all" = Power cards are instants too, playable whenever a Trap is.
+  const instants = s.rules.houseRules.INSTANT_SCOPE === 'all' ? ['Power', 'Trap'] : ['Trap'];
   switch (p.kind) {
     case 'main':
       return new Set(['BattleUnit', 'Equipment', 'Power', 'Trap', 'Resource']);
     case 'declareAttackers':
     case 'declareBlockers':
-      return new Set(['Trap']);
+      return new Set(instants);
     case 'priority':
-      return p.allowed === 'powers' ? new Set(['Power', 'Trap']) : new Set(['Trap']);
+      return p.allowed === 'powers' ? new Set(['Power', 'Trap']) : new Set(instants);
     default:
       return new Set();
   }
@@ -82,7 +84,7 @@ function powerPlayable(s: GameState, seat: Seat, uid: string, d: CardDef): { ok:
 }
 
 export function playOptions(s: GameState, seat: Seat, p: Prompt): PlayOption[] {
-  const types = allowedTypes(p);
+  const types = allowedTypes(s, p);
   if (types.size === 0) return [];
   const out: PlayOption[] = [];
   for (const uid of player(s, seat).hand) {
