@@ -171,6 +171,8 @@ class Brain {
         return { type: 'UseAbility', use: this.optionalRoll() };
       case 'reroll':
         return { type: 'ChooseReroll', reroll: this.reroll() };
+      case 'decide':
+        return { type: 'ChooseFromList', choice: this.decideToken() };
     }
   }
 
@@ -178,13 +180,15 @@ class Brain {
 
   private main(): Command {
     const la = this.la;
+    const act = this.mainActivation();
+    if (act) return act;
     if (this.level === 'easy') {
       const units = la.plays.filter((p) => this.v.defs[p.cardId]!.cardType === 'BattleUnit');
       if (units.length) {
         const best = units.sort((a, b) => this.costSize(this.v.defs[b.cardId]!) - this.costSize(this.v.defs[a.cardId]!))[0]!;
         return this.playCmd(best.uid, null, best.suggested);
       }
-      const other = la.plays.filter((p) => this.v.defs[p.cardId]!.cardType !== 'Trap');
+      const other = la.plays.filter((p) => !isTrapLike(this.v.defs[p.cardId]!));
       if (other.length && this.rand() < 0.35) {
         const p = other[randInt(this.rng, other.length)]!;
         return this.playCmd(p.uid, p.targets ? p.targets[randInt(this.rng, p.targets.length)]! : null, p.suggested);
@@ -194,7 +198,7 @@ class Brain {
 
     // Normal / Hard: keep CUs back for an instant if we hold one.
     const hand = this.v.players[this.me]!.hand ?? [];
-    const reserve = hand.map((u) => this.def(u)).filter((d) => d.cardType === 'Trap' || d.effects.some((e) => e.effect === 'DisableUnits')).sort((a, b) => this.costSize(a) - this.costSize(b))[0] ?? null;
+    const reserve = hand.map((u) => this.def(u)).filter((d) => isTrapLike(d) || d.effects.some((e) => ['DisableUnits', 'DisableTargets', 'CounterPulse', 'Molting'].includes(e.effect))).sort((a, b) => this.costSize(a) - this.costSize(b))[0] ?? null;
 
     let best: { score: number; cmd: Command } | null = null;
     for (const p of la.plays) {
@@ -217,12 +221,12 @@ class Brain {
           }
         }
         score = 6 + this.cardStaticValue(d) * 2 + bestT * 0.3;
-      } else if (d.cardType === 'Power') {
+      } else if (d.cardType === 'Power' && !isTrapLike(d)) {
         const pick = this.powerPick(d, p.targets);
         score = pick.score;
         target = pick.target;
       }
-      else if (d.cardType === 'Trap' && p.targets) {
+      else if (isTrapLike(d) && p.targets) {
         // Hard holds Traps for the opponent's attack; Normal traps a big threat now.
         const t = this.bestTrapTarget(p.targets);
         if (t && (this.level === 'normal' ? t.value >= 5 : t.value >= 8)) {
@@ -276,6 +280,44 @@ class Brain {
       }
       return { score: net > 3 ? net : -Infinity, target: null };
     }
+    if (e && targets && targets.length) {
+      const enemy = targets.filter((x) => !x.startsWith('lab:') && this.v.cards[x] && this.v.cards[x]!.owner !== this.me);
+      const mine = targets.filter((x) => this.v.cards[x]?.owner === this.me);
+      const engaged = (u: string) => (this.v.battle?.attacks ?? []).some((a) => a.status === 'pending' && a.blockers.length > 0 && (a.units.includes(u) || a.blockers.includes(u)));
+      const byValue = (xs: string[]) => [...xs].sort((a, b) => this.unitValue(b) - this.unitValue(a));
+      switch (e.effect) {
+        case 'DamageTargets': {
+          const amount = Number(e.params.amount ?? 1);
+          const kills = byValue(enemy).filter((u) => this.strength(u, false).physical <= amount);
+          if (kills.length) return { score: 4 + this.unitValue(kills[0]!), target: kills[0]! };
+          return { score: enemy.length >= 2 ? 1.5 : -Infinity, target: byValue(enemy)[0] ?? null };
+        }
+        case 'DisableTargets': {
+          const inBattle = this.v.battle ? byValue(enemy.filter(engaged)) : [];
+          if (inBattle.length) return { score: 3 + this.unitValue(inBattle[0]!), target: inBattle[0]! };
+          const myAttackers = (this.v.players[this.me]!.lab).filter((u) => !this.v.cards[u]!.depleted).length;
+          if (!this.v.battle && myAttackers >= 2 && enemy.length) return { score: 2 + this.unitValue(byValue(enemy)[0]!) * 0.5, target: byValue(enemy)[0]! };
+          return { score: -Infinity, target: null };
+        }
+        case 'PowerRoll':
+        case 'StackBuff': {
+          const t = mine.find(engaged);
+          return t ? { score: 3.5, target: t } : { score: -Infinity, target: null };
+        }
+        case 'CannibalInstinct': {
+          const t = byValue(mine.filter(engaged))[0];
+          return t ? { score: 4, target: t } : { score: -Infinity, target: null };
+        }
+        case 'SignalJam': {
+          const t = enemy.find((u) => engaged(u) && this.def(u).effects.some((x) => ['LockOn', 'PayBoost', 'TargetingNode', 'NomisBoost', 'Intercept'].includes(x.effect)));
+          return t ? { score: 3, target: t } : { score: -Infinity, target: null };
+        }
+        case 'TrapUnit': {
+          const t = this.bestTrapTarget(targets);
+          return t && t.value >= 5 ? { score: 4 + t.value, target: t.uid } : { score: -Infinity, target: null };
+        }
+      }
+    }
     return { score: this.powerScore(d), target: null };
   }
 
@@ -295,6 +337,15 @@ class Brain {
       }
       case 'SearchDeck':
         return me.battleDeckCount > 0 ? 4 : -Infinity;
+      case 'TutorToHand':
+        return me.battleDeckCount > 0 ? 3.5 : -Infinity;
+      case 'EquipmentMechanic':
+      case 'ModularAssembly':
+        return 5;
+      case 'ReturnUpTo':
+        return 3.5;
+      case 'SalvageProtocol':
+        return Object.values(this.v.cards).some((c) => c.owner === this.me && c.zone === 'cus' && c.depleted) ? 2.5 : -Infinity;
       case 'ReviveToLab': {
         const types: string[] = e.params.filter?.unitType ?? [];
         const best = me.discard.map((u) => this.def(u)).filter((x) => x.cardType === 'BattleUnit' && types.includes(x.unitType ?? '')).map((x) => this.cardStaticValue(x));
@@ -449,7 +500,7 @@ class Brain {
   }
 
   private disabled(uid: string): boolean {
-    return this.v.turnEffects.some((te) => te.kind === 'disable' && this.disableHits(te.filter, uid));
+    return this.v.turnEffects.some((te) => te.kind === 'disable' && this.disableHits(te.filter ?? {}, uid));
   }
 
   // ---------- blocking ----------
@@ -464,7 +515,8 @@ class Brain {
     if (this.level === 'easy') {
       for (const a of attacks) {
         if (!free.size || this.rand() < 0.5) continue;
-        const arr = [...free];
+        const arr = [...free].filter((b) => !blk.forbidden?.some((f) => f.attacker === a.id && f.blocker === b));
+        if (!arr.length) continue;
         const b = arr[randInt(this.rng, arr.length)]!;
         free.delete(b);
         blocks.push({ blocker: b, attacker: a.id });
@@ -484,8 +536,12 @@ class Brain {
       for (const b of free) {
         const bu = this.fighter(b);
         const o = odds(this.rules, this.v.config.diceVariant, sa, this.fighterStrength(bu, false));
+        if (blk.forbidden?.some((f) => f.attacker === a.id && f.blocker === b)) continue;
         const bVal = bu.reduce((s, u) => s + this.unitValue(u), 0);
-        const score = o.attDestroyed * attVal - o.defDestroyed * bVal + dmgOf(a) * (hp <= 8 ? 0.6 : 0.3);
+        // Carrion Foundress feeds on what it kills: expensive blockers are a bigger risk.
+        const feeds = a.units.some((u) => this.def(u).effects.some((e) => e.effect === 'Feeding'));
+        const feedRisk = feeds ? o.defDestroyed * bu.reduce((s, u) => s + this.costSize(this.def(u)), 0) * 0.8 : 0;
+        const score = o.attDestroyed * attVal - o.defDestroyed * bVal - feedRisk + dmgOf(a) * (hp <= 8 ? 0.6 : 0.3);
         if (score > (best?.score ?? 0.4) && o.defDestroyed < (this.level === 'hard' ? 0.6 : 0.5)) best = { b, score };
       }
       if (best) {
@@ -498,7 +554,9 @@ class Brain {
     for (const a of sorted) {
       if (incoming < hp) break;
       if (chosen.has(a.id) || !free.size) continue;
-      const cheapest = [...free].sort((x, y) => this.unitValue(x) - this.unitValue(y))[0]!;
+      const legal = [...free].filter((b) => !blk.forbidden?.some((f) => f.attacker === a.id && f.blocker === b));
+      if (!legal.length) continue;
+      const cheapest = legal.sort((x, y) => this.unitValue(x) - this.unitValue(y))[0]!;
       chosen.set(a.id, cheapest);
       free.delete(cheapest);
       incoming -= dmgOf(a);
@@ -511,6 +569,8 @@ class Brain {
 
   private priority(): Command {
     const la = this.la;
+    const react = this.reactive();
+    if (react) return react;
     if (!la.plays.length) return { type: 'Pass' };
     const info = (la.prompt.info ?? {}) as { point?: string; stack?: { controller: number; target: string | null }[] };
     if (this.level === 'easy') {
@@ -530,7 +590,7 @@ class Brain {
 
     for (const p of la.plays) {
       const d = this.v.defs[p.cardId]!;
-      if (d.cardType === 'Trap' && p.targets) {
+      if (isTrapLike(d) && p.targets) {
         let best: { uid: string; score: number } | null = null;
         for (const t of p.targets) {
           let score = this.unitValue(t);
@@ -585,6 +645,12 @@ class Brain {
       return [...opts].sort((a, b) => (need[typeOf(b)] ?? 0) - have[typeOf(b)] - ((need[typeOf(a)] ?? 0) - have[typeOf(a)]))[0]!;
     }
     const value = (uid: string) => this.cardStaticValue(this.def(uid));
+    if ((info as { pickLow?: boolean }).pickLow) {
+      // Costs (Cannibalize, discards, removal): give up the least valuable card — or decline if optional.
+      const low = [...opts].sort((a, b) => value(a) - value(b))[0]!;
+      if (info.optional && value(low) > 6) return null;
+      return low;
+    }
     if (info.reveal) return [...opts].sort((a, b) => value(a) - value(b))[0]!; // show the least useful
     return [...opts].sort((a, b) => value(b) - value(a))[0]!;
   }
@@ -594,6 +660,58 @@ class Brain {
     // Commanders fight last so their auras help every earlier battle.
     const hasCommander = (id: string) => (this.v.battle?.attacks.find((a) => a.id === id)?.units ?? []).some((u) => this.def(u).isCommander);
     return [...opts].sort((a, b) => Number(hasCommander(a)) - Number(hasCommander(b)))[0] ?? null;
+  }
+
+  /** Generic decisions: the engine attaches public-information scores; add a little noise. */
+  private decideToken(): string | null {
+    const p = this.la.prompt;
+    const info = (p.info ?? {}) as { scores?: Record<string, number>; noneScore?: number };
+    const opts = (p.options ?? []).filter((o): o is string => o !== null);
+    const allowNone = (p.options ?? []).includes(null);
+    if (!opts.length) return null;
+    const noise = this.level === 'easy' ? 2 : this.level === 'normal' ? 0.4 : 0.1;
+    let best: string | null = allowNone ? null : opts[0]!;
+    let bestScore = allowNone ? (info.noneScore ?? 0) + (this.rand() - 0.5) * noise : -Infinity;
+    for (const o of opts) {
+      const sc = (info.scores?.[o] ?? 0) + (this.rand() - 0.5) * noise;
+      if (sc > bestScore) {
+        best = o;
+        bestScore = sc;
+      }
+    }
+    return best;
+  }
+
+  /** Creation-phase activated abilities worth using. */
+  private mainActivation(): Command | null {
+    const me = this.v.players[this.me]!;
+    for (const a of this.la.activations ?? []) {
+      if (a.ability === 'FabricatorDiscount' && (me.hand ?? []).some((u) => this.def(u).cardType === 'Equipment')) return { type: 'Activate', uid: a.uid, ability: a.ability };
+      if (a.ability === 'HarvestScrap' && (me.hand ?? []).length <= 4 && this.level !== 'easy') return { type: 'Activate', uid: a.uid, ability: a.ability };
+    }
+    return null;
+  }
+
+  /** Reactions: intercept an unblocked attacker, counter / soften Powers aimed at our units. */
+  private reactive(): Command | null {
+    const la = this.la;
+    const info = (la.prompt.info ?? {}) as { point?: string; stack?: { controller: number; target: string | null }[] };
+    for (const a of la.activations ?? []) {
+      if (a.ability !== 'Intercept') continue;
+      const atk = (this.v.battle?.attacks ?? []).filter((x) => x.status === 'pending' && x.target === this.me && !x.blockers.length);
+      const dmg = atk.reduce((s, x) => s + this.fighterStrength(x.units, true).physical, 0);
+      if (dmg >= 3 || dmg >= this.v.players[this.me]!.labHP) return { type: 'Activate', uid: a.uid, ability: a.ability };
+    }
+    const top = info.stack?.[info.stack.length - 1];
+    if (!top || top.controller === this.me) return null;
+    for (const p of la.plays) {
+      const d = this.v.defs[p.cardId]!;
+      const e = d.effects.find((x) => x.trigger === 'OnPlay');
+      if (!e || !p.targets?.length) continue;
+      if (e.effect === 'CounterPulse' || e.effect === 'Molting') return this.playCmd(p.uid, p.targets[0]!, this.pickPayment(p.payments, p.suggested));
+      if (e.effect === 'PreventDamage' && top.target && p.targets.includes(top.target)) return this.playCmd(p.uid, top.target, this.pickPayment(p.payments, p.suggested));
+    }
+    return null;
   }
 
   private optionalRoll(): boolean {
@@ -628,4 +746,9 @@ class Brain {
 /** Pick a command for the seat holding `legal.prompt`, from its filtered view only. */
 export function chooseCommand(level: AiLevel, view: GameView, legal: LegalView, rules: RulesData, rng: RngState): Command {
   return new Brain(level, view, legal, rules, rng).decide();
+}
+
+/** v0.4: containment Powers behave like the old Trap cards for the AI. */
+function isTrapLike(d: CardDef): boolean {
+  return d.cardType === 'Trap' || d.effects.some((e) => e.trigger === 'OnPlay' && e.effect === 'TrapUnit');
 }

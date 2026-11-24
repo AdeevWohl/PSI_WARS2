@@ -4,6 +4,9 @@ import { discardableEquipment, movableEquipment, playOptions, unplayableReasons,
 import { fighterUnits } from './stats';
 import { card, defOf, opponentsOf, player } from './state';
 import type { GameState, Prompt } from './types';
+import { activations, type Activation } from './v04';
+import { isValidPayment } from './payment';
+import { defOf as defOf2 } from './state';
 import type { PromptView } from './view';
 
 /** LegalActions safe to send over the wire: the prompt without the engine's internal continuation. */
@@ -24,12 +27,14 @@ export interface LegalActions {
   seat: Seat;
   prompt: Prompt;
   plays: PlayOption[];
-  moveEquipment: { equip: string; to: string[] }[];
+  moveEquipment: { equip: string; to: string[]; cost?: import('./types').Cost }[];
   discardEquipment: string[];
   stacks: { a: string; b: string }[];
   unstacks: string[];
   attack: { eligible: string[]; targets: Seat[] } | null;
-  block: { attackers: string[]; blockers: string[] } | null;
+  block: { attackers: string[]; blockers: string[]; forbidden?: { attacker: string; blocker: string }[] } | null;
+  /** v0.4 activated abilities available now. */
+  activations: Activation[];
   choices: (string | null)[] | null;
   canPass: boolean;
   canAdvance: boolean;
@@ -58,7 +63,8 @@ export function getLegalActions(s: GameState, seat: Seat): LegalActions | null {
   if (!p || p.seat !== seat || s.result) return null;
   const k = p.kind;
   const declaring = k === 'declareAttackers' || k === 'declareBlockers';
-  const manage = k === 'main' || declaring;
+  // v0.4: ordinary Equipment relocation only in your own Creation phase.
+  const manage = k === 'main';
   return {
     seat,
     prompt: p,
@@ -68,8 +74,9 @@ export function getLegalActions(s: GameState, seat: Seat): LegalActions | null {
     stacks: declaring ? stackOptions(s, seat) : [],
     unstacks: declaring ? unstackOptions(s, seat) : [],
     attack: k === 'declareAttackers' ? { eligible: eligibleAttackers(s, seat), targets: opponentsOf(s, seat) } : null,
-    block: k === 'declareBlockers' ? { attackers: attacksAgainst(s, seat).map((a) => a.id), blockers: eligibleBlockers(s, seat) } : null,
-    choices: k === 'oracle' || k === 'chooseCard' || k === 'battleOrder' ? (p.options ?? []) : null,
+    block: k === 'declareBlockers' ? blockInfo(s, seat) : null,
+    activations: activations(s, seat, p),
+    choices: k === 'oracle' || k === 'chooseCard' || k === 'battleOrder' || k === 'decide' ? (p.options ?? []) : null,
     canPass: k === 'priority',
     canAdvance: k === 'main',
     canUseAbility: k === 'optionalRoll',
@@ -78,6 +85,21 @@ export function getLegalActions(s: GameState, seat: Seat): LegalActions | null {
 }
 
 const sameFighter = (s: GameState, a: string, b: string) => a === b || card(s, a).stackPartner === b;
+
+/** Stealth Skyfire: cannot be blocked by a lone unit with printed Physical 1. */
+function blockInfo(s: GameState, seat: Seat): NonNullable<LegalActions['block']> {
+  const attackers = attacksAgainst(s, seat).map((a) => a.id);
+  const blockers = eligibleBlockers(s, seat);
+  const forbidden: { attacker: string; blocker: string }[] = [];
+  for (const a of attackers) {
+    const atk = s.battle!.attacks.find((x) => x.id === a)!;
+    if (!atk.units.some((u) => defOf2(s, u).effects.some((e) => e.effect === 'StealthBlock'))) continue;
+    for (const b of blockers) {
+      if (fighterUnits(s, b).length === 1 && defOf2(s, b).stats?.physical === 1) forbidden.push({ attacker: a, blocker: b });
+    }
+  }
+  return { attackers, blockers, forbidden };
+}
 
 /** Validate a command for a seat against the current prompt. Returns an error string or null. */
 export function validateCommand(s: GameState, seat: Seat, cmd: Command): string | null {
@@ -90,7 +112,15 @@ export function validateCommand(s: GameState, seat: Seat, cmd: Command): string 
       return validatePlay(s, seat, p, cmd);
     case 'MoveEquipment': {
       const m = la.moveEquipment.find((x) => x.equip === cmd.equip);
-      return m && m.to.includes(cmd.to) ? null : 'illegal equipment move';
+      if (!m || !m.to.includes(cmd.to)) return 'illegal equipment move';
+      if (cmd.payment && m.cost && !isValidPayment(s, seat, m.cost, cmd.payment)) return 'illegal payment';
+      return null;
+    }
+    case 'Activate': {
+      const a = la.activations.find((x) => x.uid === cmd.uid && x.ability === cmd.ability);
+      if (!a) return 'ability not available';
+      if (cmd.payment && a.cost && !isValidPayment(s, seat, a.cost, cmd.payment)) return 'illegal payment';
+      return null;
     }
     case 'DiscardEquipment':
       return la.discardEquipment.includes(cmd.equip) ? null : 'cannot discard that equipment now';
@@ -124,6 +154,7 @@ export function validateCommand(s: GameState, seat: Seat, cmd: Command): string 
         if (usedB.has(rep)) return 'a blocker was assigned twice';
         if (!la.block.attackers.includes(b.attacker)) return 'not an attacker you can block';
         if (usedA.has(b.attacker)) return 'only one defender per attacker (RULING A8-b)';
+        if (la.block.forbidden?.some((f) => f.attacker === b.attacker && sameFighter(s, f.blocker, rep))) return 'that unit cannot block this attacker';
         usedB.add(rep);
         usedA.add(b.attacker);
       }

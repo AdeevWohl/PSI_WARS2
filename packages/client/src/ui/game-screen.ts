@@ -633,6 +633,11 @@ export class GameScreen {
         }, b.label, b.key ? h('kbd', null, b.key) : null),
       );
       kids.push(h('div', { class: 'prompt-actions' }, ...btns));
+      const acts = (legal as { activations?: { uid: string; ability: string; label: string }[] }).activations ?? [];
+      if (acts.length) {
+        kids.push(h('div', { class: 'prompt-actions abilities', 'aria-label': 'Activated abilities' },
+          ...acts.map((a) => h('button', { class: 'btn small', title: a.label, onclick: () => this.controller.activate(a.uid, a.ability) }, `${view.defs[view.cards[a.uid]?.cardId ?? '']?.name ?? 'Ability'}: ${a.label}`))));
+      }
     } else if (view.prompt) {
       const s = view.prompt.seat;
       kids.push(h('div', { class: 'waiting', style: { '--seat-color': SEAT_COLORS[s] } as any }, h('span', { class: 'dot' }), `Waiting for ${this.nameOf(s)}…`));

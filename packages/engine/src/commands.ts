@@ -5,6 +5,7 @@ import { card, emit } from './state';
 import { push, run } from './tasks';
 import { concede } from './victory';
 import type { Ctx, GameState } from './types';
+import { onStackFormed, performActivate } from './v04';
 
 /**
  * Deep-clone the mutable part of a state. Card definitions and rules are immutable and
@@ -52,7 +53,7 @@ export function applyCommand(state: GameState, seat: Seat, cmd: Command): ApplyR
       performPlay(ctx, seat, p, cmd);
       break;
     case 'MoveEquipment':
-      performMoveEquipment(ctx, seat, cmd.equip, cmd.to);
+      performMoveEquipment(ctx, seat, cmd.equip, cmd.to, cmd.payment);
       push(ctx, p.resume);
       break;
     case 'DiscardEquipment':
@@ -66,8 +67,14 @@ export function applyCommand(state: GameState, seat: Seat, cmd: Command): ApplyR
       b.stackPartner = a.uid;
       emit(ctx, { type: 'Stacked', seat, uids: [a.uid, b.uid] });
       push(ctx, p.resume);
+      onStackFormed(ctx, a.uid, b.uid);
       break;
     }
+    case 'Activate':
+      if (p.kind === 'priority') push(ctx, { ...p.resume, answer: cmd });
+      else push(ctx, p.resume);
+      performActivate(ctx, seat, cmd);
+      break;
     case 'Unstack': {
       const a = card(s, cmd.uid);
       const b = card(s, a.stackPartner!);

@@ -3,6 +3,8 @@ import type { Ability, Ctx, DieFace, DieRoll, GameState } from './types';
 
 /** Result of a die face under the game's dice variant (spec §A4). */
 export function face(s: GameState, die: Ability, side: number): DieFace {
+  // v0.4 Calibrate: side 0 is a fixed +2 with no icons.
+  if (side === 0) return { bonus: 2 };
   const table = s.rules.dice[s.config.diceVariant];
   const f = table[die][String(side)];
   if (!f) throw new Error(`no face ${die}/${side}`);

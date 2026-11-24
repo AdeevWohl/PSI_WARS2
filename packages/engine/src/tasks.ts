@@ -55,6 +55,8 @@ export function defaultCommandFor(p: Prompt): Command {
       return { type: 'ChooseReroll', reroll: false };
     case 'oracle':
       return { type: 'ChooseFromList', choice: 'keep' };
+    case 'decide':
+      return { type: 'ChooseFromList', choice: (p.options ?? []).includes(null) ? null : (p.options?.[0] ?? null) };
     case 'chooseCard':
     case 'battleOrder': {
       const opts = p.options ?? [];

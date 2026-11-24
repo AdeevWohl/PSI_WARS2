@@ -101,6 +101,23 @@ export function promptModal(host: HTMLElement, view: GameView, legal: LegalView,
       m = openModal(host, 'Choose the next battle', 'Battles resolve one at a time in the order you choose; Commander auras only count while the Commander is still in play.', h('div', { class: 'choice-grid' }, ...choices), []);
       return m;
     }
+    case 'decide': {
+      let m: ModalHandle;
+      const labels = (info.labels ?? {}) as Record<string, string>;
+      const def = info.uid ? defOfUid(info.uid) : null;
+      const opts = (p.options ?? []).filter((o): o is string => o !== null);
+      const faces = !!info.lockOn;
+      const body = h('div', { class: 'decide-box' },
+        def ? h('div', { class: 'choice-grid' }, cardChoice(def, info.uid, null, () => {}, view)) : null,
+        faces ? h('p', { class: 'dim' }, `Cost: ${Object.entries((info.cost ?? {}) as Record<string, unknown>).filter(([, v]) => typeof v === 'number' && v > 0).map(([k, v]) => `${k}${v}`).join(' ') || '—'}. Raw face 6 counts as numeric 4.`) : null,
+      );
+      const actions = [
+        ...((p.options ?? []).includes(null) ? [{ label: String(info.noneLabel ?? 'No'), onClick: () => { m.close(); answer(null); } }] : []),
+        ...opts.map((o, i) => ({ label: labels[o] ?? o, primary: i === 0 && !faces, onClick: () => { m.close(); answer(o); } })),
+      ];
+      m = openModal(host, p.label, String(info.text ?? ''), body, actions, { className: 'modal-low' });
+      return m;
+    }
     case 'optionalRoll': {
       const def = defOfUid(info.uid);
       let m: ModalHandle;

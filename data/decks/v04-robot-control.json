@@ -1,0 +1,29 @@
+{
+ "id": "v04-robot-control",
+ "name": "Robot Control",
+ "starter": true,
+ "source": "Card Set v0.4 example deck",
+ "battle": {
+  "BU_SD": 3,
+  "BU_SM": 2,
+  "BU_TN": 2,
+  "BU_TB": 3,
+  "BU_VS": 3,
+  "BU_LQ": 2,
+  "BU_NA": 2,
+  "BU_GM": 2,
+  "BU_DC": 1,
+  "BU_TG": 1,
+  "PW_EF": 2,
+  "PW_SJ": 2,
+  "PW_IN": 2,
+  "TR_GSF": 1,
+  "EQ_PA": 2
+ },
+ "resource": {
+  "CU_DS": 8,
+  "CU_MA": 8,
+  "RS_CO": 3,
+  "RS_RF": 2
+ }
+}

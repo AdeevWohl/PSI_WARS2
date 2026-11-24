@@ -4,7 +4,9 @@ import { autoPayment, canAfford, enumeratePayments, isValidPayment, pay, shortfa
 import { canHoldEquipment } from './stats';
 import { card, defOf, emit, moveCard, player, turnOrderFrom } from './state';
 import { push } from './tasks';
-import type { CardDef, Ctx, GameState, Prompt, Seat, Task } from './types';
+import type { CardDef, Cost, Ctx, GameState, Prompt, Seat, Task } from './types';
+import { consumeEquipmentDiscount, equipmentDiscount, EXTRA, onCreate } from './v04';
+import { lessOneP } from './payment';
 import { openWindow } from './windows';
 
 export interface PlayOption {
@@ -29,10 +31,14 @@ export function unplayableReasons(s: GameState, seat: Seat, p: Prompt): Record<s
     if (playable.has(uid)) continue;
     const d = defOf(s, uid);
     if (!types.has(d.cardType)) {
-      out[uid] = types.size === 0 ? 'Finish the current decision first' : types.has('Power') ? 'Only Power cards can be played now' : types.has('Trap') ? 'Only Traps can be played now' : 'Not playable now';
+      out[uid] = types.size === 0 ? 'Finish the current decision first' : types.has('Power') ? 'Only Pulse Power cards can be played now' : 'Not playable now';
       continue;
     }
-    const short = shortfall(s, seat, d.cost ?? ZERO_COST);
+    if (!timingOk(s, p, d)) {
+      out[uid] = 'Operation: only in your own Creation phase, with nothing waiting to resolve';
+      continue;
+    }
+    const short = shortfall(s, seat, costFor(s, seat, d));
     if (short.length) {
       const units = (n: number) => `${n} more Creation Unit${n > 1 ? 's' : ''}`;
       out[uid] = 'Needs ' + short.map((x) =>
@@ -49,10 +55,33 @@ export function unplayableReasons(s: GameState, seat: Seat, p: Prompt): Record<s
   return out;
 }
 
-/** Which card types a prompt allows from hand. Only Traps are instant (house rule L). */
+/**
+ * v0.4 Power timing. Pulse = fast (any priority window, declarations, responses). Operation = only
+ * from your own Creation prompt (the stack is always empty there). Cards without a timing keep the
+ * old rule: Traps are fast; other Powers follow INSTANT_SCOPE.
+ */
+export function timingOf(s: GameState, d: CardDef): 'Pulse' | 'Operation' {
+  if (d.timing) return d.timing;
+  if (d.cardType === 'Trap') return 'Pulse';
+  return s.rules.houseRules.INSTANT_SCOPE === 'all' ? 'Pulse' : 'Operation';
+}
+
+function timingOk(s: GameState, p: Prompt, d: CardDef): boolean {
+  if (d.cardType !== 'Power' && d.cardType !== 'Trap') return true;
+  if (timingOf(s, d) === 'Pulse') return true;
+  return p.kind === 'main' && s.stack.length === 0;
+}
+
+/** The cost actually charged: Fabricator Drone's discount applies to the next Equipment. */
+export function costFor(s: GameState, seat: Seat, d: CardDef): Cost {
+  const c = d.cost ?? ZERO_COST;
+  return d.cardType === 'Equipment' && equipmentDiscount(s, seat) ? lessOneP(c) : c;
+}
+
+/** Which card types a prompt allows from hand (timing is checked per card). */
 function allowedTypes(s: GameState, p: Prompt): Set<string> {
-  // House rule L (INSTANT_SCOPE): "all" = Power cards are instants too, playable whenever a Trap is.
-  const instants = s.rules.houseRules.INSTANT_SCOPE === 'all' ? ['Power', 'Trap'] : ['Trap'];
+  const instants = ['Power', 'Trap'];
+  void s;
   switch (p.kind) {
     case 'main':
       return new Set(['BattleUnit', 'Equipment', 'Power', 'Trap', 'Resource']);
@@ -90,6 +119,7 @@ export function playOptions(s: GameState, seat: Seat, p: Prompt): PlayOption[] {
   for (const uid of player(s, seat).hand) {
     const d = defOf(s, uid);
     if (!types.has(d.cardType)) continue;
+    if (!timingOk(s, p, d)) continue;
     if (d.cardType === 'Resource') {
       if (d.effects.some((e) => e.effect === 'FortifyResource')) {
         const targets = player(s, seat).cus.filter((u) => !card(s, u).equipment);
@@ -100,7 +130,7 @@ export function playOptions(s: GameState, seat: Seat, p: Prompt): PlayOption[] {
       out.push({ uid, cardId: d.id, targets: null, payments: [{ destroy: {} }], suggested: { destroy: {} } });
       continue;
     }
-    const cost = d.cost ?? ZERO_COST;
+    const cost = costFor(s, seat, d);
     if (!canAfford(s, seat, cost)) continue;
     let targets: string[] | null = null;
     if (d.cardType === 'Equipment') {
@@ -123,7 +153,7 @@ export function validatePlay(s: GameState, seat: Seat, p: Prompt, cmd: Extract<C
     if (!cmd.target || !opt.targets.includes(cmd.target)) return 'illegal or missing target';
   }
   const d = defOf(s, cmd.uid);
-  if (cmd.payment && d.cost && !isValidPayment(s, seat, d.cost, cmd.payment)) return 'illegal payment';
+  if (cmd.payment && d.cost && !isValidPayment(s, seat, costFor(s, seat, d), cmd.payment)) return 'illegal payment';
   return null;
 }
 
@@ -154,9 +184,10 @@ export function performPlay(ctx: Ctx, seat: Seat, p: Prompt, cmd: Extract<Comman
     return;
   }
 
-  const cost = d.cost ?? ZERO_COST;
+  const cost = costFor(s, seat, d);
   const payment = cmd.payment ?? autoPayment(s, seat, cost)!;
-  pay(ctx, seat, cost, payment, cmd.uid);
+  const paid = pay(ctx, seat, cost, payment, cmd.uid);
+  if (d.cardType === 'Equipment' && cost !== (d.cost ?? ZERO_COST)) consumeEquipmentDiscount(s, seat);
 
   if (d.cardType === 'BattleUnit') {
     moveCard(ctx, cmd.uid, 'lab');
@@ -165,6 +196,7 @@ export function performPlay(ctx: Ctx, seat: Seat, p: Prompt, cmd: Extract<Comman
     emit(ctx, { type: 'CardPlayed', seat, uid: cmd.uid, cardId: d.id, cardType: d.cardType });
     push(ctx, resume);
     openWindow(ctx, 'afterCardPlayed', 'traps', othersFrom(s, seat));
+    onCreate(ctx, seat, cmd.uid); // v0.4: Protocol choice and "when created" abilities resolve first
     return;
   }
 
@@ -182,8 +214,8 @@ export function performPlay(ctx: Ctx, seat: Seat, p: Prompt, cmd: Extract<Comman
 
   // Power / Trap: onto the stack; resolves when everyone passes (house rule K).
   moveCard(ctx, cmd.uid, 'stack');
-  s.stack.push({ uid: cmd.uid, controller: seat, target: cmd.target ?? null });
-  emit(ctx, { type: 'CardPlayed', seat, uid: cmd.uid, cardId: d.id, cardType: d.cardType, target: cmd.target ?? null, onStack: true });
+  s.stack.push({ uid: cmd.uid, controller: seat, target: cmd.target ?? null, targets: cmd.target ? [cmd.target] : [], snap: { paid } });
+  emit(ctx, { type: 'CardPlayed', seat, uid: cmd.uid, cardId: d.id, cardType: d.cardType, target: cmd.target ?? null, onStack: true, timing: timingOf(s, d) });
   if (p.kind === 'priority') {
     push(ctx, { ...resume, answer: cmd });
   } else {
@@ -191,6 +223,8 @@ export function performPlay(ctx: Ctx, seat: Seat, p: Prompt, cmd: Extract<Comman
     const order = [...othersFrom(s, seat), seat];
     push(ctx, { k: 'window', point: 'response', allowed: 'traps', order, idx: 0, passes: 0, stackBase: s.stack.length - 1 });
   }
+  // v0.4: extra targets / Cannibalize costs are chosen before anyone can respond.
+  if (d.effects.some((e) => e.trigger === 'OnPlay' && EXTRA[e.effect])) push(ctx, { k: 'castExtras', uid: cmd.uid });
 }
 
 /** Other live players in turn order starting after `seat`. */
@@ -200,13 +234,15 @@ export function othersFrom(s: GameState, seat: Seat): Seat[] {
 
 // --- Equipment management (Q&A change 4) ---
 
-export function movableEquipment(s: GameState, seat: Seat): { equip: string; to: string[] }[] {
-  const out: { equip: string; to: string[] }[] = [];
+export function movableEquipment(s: GameState, seat: Seat): { equip: string; to: string[]; cost?: Cost }[] {
+  const out: { equip: string; to: string[]; cost?: Cost }[] = [];
   for (const u of player(s, seat).lab) {
     const eq = card(s, u).equipment;
     if (!eq) continue;
+    const mc = defOf(s, eq).equip?.moveCost;
+    if (mc && !canAfford(s, seat, mc)) continue;
     const to = equipTargets(s, seat, card(s, eq).cardId).filter((x) => x !== u);
-    if (to.length) out.push({ equip: eq, to });
+    if (to.length) out.push({ equip: eq, to, ...(mc ? { cost: mc } : {}) });
   }
   return out;
 }
@@ -215,9 +251,11 @@ export function discardableEquipment(s: GameState, seat: Seat): string[] {
   return player(s, seat).lab.map((u) => card(s, u).equipment).filter((e): e is string => !!e);
 }
 
-export function performMoveEquipment(ctx: Ctx, seat: Seat, equip: string, to: string): void {
+export function performMoveEquipment(ctx: Ctx, seat: Seat, equip: string, to: string, payment?: Payment): void {
   const s = ctx.s;
   const e = card(s, equip);
+  const mc = defOf(s, equip).equip?.moveCost;
+  if (mc) pay(ctx, seat, mc, payment ?? autoPayment(s, seat, mc)!, equip);
   const from = e.attachedTo!;
   card(s, from).equipment = null;
   e.attachedTo = to;

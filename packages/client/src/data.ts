@@ -3,6 +3,12 @@ import rulesJson from '@data/rules.json';
 import rulingsJson from '@data/rulings.json';
 import creatureDeck from '@data/decks/creature-commander.json';
 import robotDeck from '@data/decks/robot-commander.json';
+import v04RobotControl from '@data/decks/v04-robot-control.json';
+import v04RobotIndustrial from '@data/decks/v04-robot-industrial.json';
+import v04CreatureSwarm from '@data/decks/v04-creature-swarm.json';
+import v04CreatureEvolution from '@data/decks/v04-creature-evolution.json';
+import v04MixedIntegration from '@data/decks/v04-mixed-integration.json';
+
 import { buildDefs, type CardDef, type DeckList, type RulesData } from '@psi-wars/engine';
 import { activeBalance } from './balance';
 
@@ -24,7 +30,11 @@ export interface StoredDeck extends DeckList {
   name: string;
   starter?: boolean;
 }
-export const starterDecks: StoredDeck[] = [creatureDeck as StoredDeck, robotDeck as StoredDeck];
+export const starterDecks: StoredDeck[] = [
+  v04RobotControl as StoredDeck, v04RobotIndustrial as StoredDeck, v04CreatureSwarm as StoredDeck, v04CreatureEvolution as StoredDeck, v04MixedIntegration as StoredDeck,
+  // v0.3 starter lists, kept for comparison (they use the current card data).
+  creatureDeck as StoredDeck, robotDeck as StoredDeck,
+];
 
 let defsCache: { key: unknown; defs: Record<string, CardDef> } | null = null;
 

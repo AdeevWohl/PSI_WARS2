@@ -17,7 +17,9 @@ import {
 const ROOT = resolve(__dirname, '..', '..', '..');
 const read = (p: string) => JSON.parse(readFileSync(join(ROOT, p), 'utf8'));
 
-export const cardsJson = read('data/cards.json');
+/** Legacy engine tests run against the frozen v0.3 card data; v0.4 tests use `defsV04`. */
+export const cardsJson = read('data/legacy/cards-v0.3.json');
+export const defsV04 = buildDefs(read('data/cards.json'));
 export const rules: RulesData = read('data/rules.json');
 export const defs = buildDefs(cardsJson);
 export const creatureDeck: DeckList = read('data/decks/creature-commander.json');
@@ -73,9 +75,11 @@ export function scenario(opts: {
   dice?: number[];
   autoPassNoPlay?: boolean;
   turnNumber?: number;
+  defs?: typeof defs;
 }): Scenario {
+  const D = opts.defs ?? defs;
   const base = createGame({
-    defs,
+    defs: D,
     rules,
     seed: 'scenario',
     players: opts.seats.map((_, i) => ({ name: `P${i}`, deck: { battle: { BU_LS: 1 }, resource: { CU_NG: 1 } } })),
@@ -87,7 +91,7 @@ export function scenario(opts: {
     battleDeck: [], resourceDeck: [], hand: [], lab: [], cus: [], trapped: [], discard: [],
   }));
   const mk = (cardId: string, owner: Seat, zone: CardInstance['zone']): CardInstance => {
-    if (!defs[cardId]) throw new Error(`unknown card ${cardId}`);
+    if (!D[cardId]) throw new Error(`unknown card ${cardId}`);
     const uid = `c${s.nextUid++}`;
     const c: CardInstance = {
       uid, cardId, owner, zone, depleted: false, enteredThisTurn: false, equipment: null, attachedTo: null,

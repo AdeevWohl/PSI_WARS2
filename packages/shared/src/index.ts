@@ -4,7 +4,7 @@
  */
 
 /** Bump whenever a command, event or view shape changes incompatibly. */
-export const PROTOCOL_VERSION = 3;
+export const PROTOCOL_VERSION = 4;
 
 export type Seat = number;
 export type Ability = 'cyber' | 'psionic' | 'physical';
@@ -19,6 +19,8 @@ export interface Payment {
   choice?: CUType[];
   /** Types depleted for the "pay any" cost (B5). */
   any?: Partial<Record<CUType, number>>;
+  /** v0.4: type destroyed for each extra burn component. */
+  burns?: CUType[];
 }
 
 export interface AttackDeclaration {
@@ -42,7 +44,8 @@ export interface BlockAssignment {
  */
 export type Command =
   | { type: 'PlayCard'; uid: string; target?: string; payment?: Payment }
-  | { type: 'MoveEquipment'; equip: string; to: string }
+  | { type: 'MoveEquipment'; equip: string; to: string; payment?: Payment }
+  | { type: 'Activate'; uid: string; ability: string; payment?: Payment }
   | { type: 'DiscardEquipment'; equip: string }
   | { type: 'Stack'; a: string; b: string }
   | { type: 'Unstack'; uid: string }

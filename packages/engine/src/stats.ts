@@ -1,4 +1,5 @@
 import { card, defOf, matchesFilter, player } from './state';
+import { isFortification, staticBonus } from './mods';
 import type { Ability, GameState, Seat, StatMods } from './types';
 
 /** Printed/data base value; X resolves to the rolled value, or null if not rolled yet. */
@@ -17,6 +18,8 @@ export function equipmentBonus(s: GameState, uid: string, ab: Ability): number {
   const eq = card(s, uid).equipment;
   if (!eq) return 0;
   const e = defOf(s, eq).equip;
+  // Psi Bolster swapped to Physical for the turn.
+  if (s.turnEffects.some((t) => t.kind === 'used' && t.key === `swap:${eq}`)) return ab === 'physical' ? 1 : 0;
   return e && e.ability === ab ? e.bonus : 0;
 }
 
@@ -41,7 +44,8 @@ export function unitStrength(s: GameState, uid: string, ab: Ability, attacking: 
   const base = baseValue(s, uid, ab) ?? 0;
   const mods: StatMods = c.tempMods;
   // Change Request 1 (B2): strengths never go below 0.
-  return Math.max(0, base + equipmentBonus(s, uid, ab) + mods[ab] + (c.permMods?.[ab] ?? 0) + (attacking ? auraBonus(s, uid, ab) : 0));
+  const stack = c.stackPartner ? (c.stackMods?.[ab] ?? 0) : 0;
+  return Math.max(0, base + equipmentBonus(s, uid, ab) + mods[ab] + (c.permMods?.[ab] ?? 0) + stack + staticBonus(s, uid, ab) + (attacking ? auraBonus(s, uid, ab) : 0));
 }
 
 /** A stack's strength is the sum of its cards (§A8 Stacking). */
@@ -58,7 +62,7 @@ export function unitHasAbility(s: GameState, uid: string, ab: Ability): boolean 
 /** Equipment eligibility (§A7): allowed type, base ability > 0 (X counts), no Equipment already. */
 export function canHoldEquipment(s: GameState, unitUid: string, equipCardId: string): boolean {
   const u = card(s, unitUid);
-  if (u.zone !== 'lab' || u.equipment) return false;
+  if (u.zone !== 'lab' || (u.equipment && !isFortification(s, u.equipment))) return false;
   const ud = defOf(s, unitUid);
   const ed = s.defs[equipCardId]?.equip;
   if (!ed || ud.cardType !== 'BattleUnit' || !ud.unitType) return false;
@@ -71,8 +75,9 @@ export function canHoldEquipment(s: GameState, unitUid: string, equipCardId: str
 export function isDisabled(s: GameState, uid: string): boolean {
   const d = defOf(s, uid);
   for (const te of s.turnEffects) {
+    if (te.kind === 'disableUnits' && te.uids?.includes(uid)) return true;
     if (te.kind !== 'disable') continue;
-    const f = te.filter;
+    const f = te.filter ?? {};
     if (f.hasAbility && !unitHasAbility(s, uid, f.hasAbility)) continue;
     if (!matchesFilter(d, f)) continue;
     return true;

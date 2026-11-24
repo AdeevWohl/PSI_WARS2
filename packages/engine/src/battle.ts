@@ -1,6 +1,6 @@
 import type { Command } from '@psi-wars/shared';
 import { ABILITIES } from '@psi-wars/shared';
-import { applyObliteration, dieBonus, diePhysicalPlus, dieReroll, newRoll, numericValue, rollSide } from './dice';
+import { applyObliteration, dieBonus, face, diePhysicalPlus, dieReroll, newRoll, numericValue, rollSide } from './dice';
 import { fighterStrength, fighterUnits, isDisabled } from './stats';
 import { card, defOf, emit, moveCard, player, turnOrderFrom } from './state';
 import { ask, push, pushSeq, register } from './tasks';
@@ -8,7 +8,9 @@ import { checkVictory, damageLab } from './victory';
 import { damageUnit } from './damage';
 import { openWindow } from './windows';
 import { othersFrom } from './plays';
-import type { Ability, Attack, Ctx, GameState, Resolution, Seat, SideDice, Task } from './types';
+import type { Ability, Attack, Ctx, DieRoll, GameState, Resolution, Seat, SideDice, Task } from './types';
+import { afterAttackDeclared, afterEngagement, beforeDiceStep, endOfBattle, snapshotFighters } from './v04';
+import { hasEffect, hooks, markUsed, usedThisTurn } from './mods';
 
 // ---------- eligibility ----------
 
@@ -57,6 +59,7 @@ register('battle', (ctx) => {
     { k: 'declareAttackers' },
     { k: 'afterAttackers' },
     { k: 'declareBlockersAll' },
+    { k: 'afterBlockers' },
     { k: 'powerWindow' },
     { k: 'cyborgStep' },
     { k: 'determination' },
@@ -101,6 +104,7 @@ register('declareAttackers', (ctx, t) => {
     }
   }
   if (onAttack.length) pushSeq(ctx, onAttack);
+  afterAttackDeclared(ctx);
 });
 
 register('afterAttackers', (ctx) => {
@@ -251,30 +255,15 @@ function askOptionalRolls(ctx: Ctx, units: string[], optional: Record<string, bo
   return false;
 }
 
-/** Stage a: roll X abilities (lasting the turn) and the chosen modify-rolls. */
-function stageA(ctx: Ctx, units: string[], optional: Record<string, boolean>): void {
-  const s = ctx.s;
+/** v0.4: the ability rolls this fighter needs now: unrolled X values, then chosen printed ability rolls. */
+function abilityRollTasks(s: GameState, units: string[], optional: Record<string, boolean>, attackId: string | null): Task[] {
+  const out: Task[] = [];
   for (const u of units) {
     const c = card(s, u);
-    for (const e of defOf(s, u).effects) {
-      if (e.trigger === 'RollX' && c.xValue === null) {
-        const side = rollSide(ctx);
-        c.xValue = numericValue(s, side);
-        emit(ctx, { type: 'XRolled', uid: u, cardId: c.cardId, stat: e.params.stat, side, value: c.xValue });
-      }
-    }
+    for (const e of defOf(s, u).effects) if (e.trigger === 'RollX' && c.xValue === null) out.push({ k: 'abilityRoll', uid: u, purpose: 'x', attackId });
   }
-  for (const u of units) {
-    if (!optional[u]) continue;
-    const c = card(s, u);
-    const e = defOf(s, u).effects.find((x) => x.trigger === 'ModifyRoll');
-    if (!e) continue;
-    const side = rollSide(ctx);
-    const delta = Number(e.params.bySide?.[String(side)] ?? 0);
-    const stat = (e.params.stat ?? 'physical') as Ability;
-    c.tempMods[stat] += delta;
-    emit(ctx, { type: 'RollModified', uid: u, cardId: c.cardId, stat, side, value: numericValue(s, side), delta });
-  }
+  for (const u of units) if (optional[u] && defOf(s, u).effects.some((x) => x.trigger === 'ModifyRoll')) out.push({ k: 'abilityRoll', uid: u, purpose: 'modify', attackId });
+  return out;
 }
 
 function strengths(s: GameState, units: string[], attacking: boolean): Record<Ability, number> {
@@ -284,7 +273,7 @@ function strengths(s: GameState, units: string[], attacking: boolean): Record<Ab
 }
 
 function physTotal(s: GameState, str: Record<Ability, number>, d: SideDice, includeObliteration = true): number {
-  const physDie = includeObliteration ? dieBonus(s, 'physical', d.physical) : d.physical ? s.rules.dice[s.config.diceVariant].physical[String(d.physical.side)]!.bonus : 0;
+  const physDie = includeObliteration ? dieBonus(s, 'physical', d.physical) : d.physical ? face(s, 'physical', d.physical.side).bonus : 0;
   return str.physical + physDie + diePhysicalPlus(s, 'cyber', d.cyber) + diePhysicalPlus(s, 'psionic', d.psionic);
 }
 
@@ -312,11 +301,22 @@ register('fight', (ctx, t) => {
     case 'optional': {
       if (answer && answer.type === 'UseAbility' && t.unit) r.optional[t.unit] = answer.use;
       if (askOptionalRolls(ctx, [...atk.units, ...atk.blockers], r.optional, self)) return;
+      push(ctx, { ...self, stage: 'rolls' });
+      return;
+    }
+    case 'rolls': {
+      // v0.4: X rolls and chosen printed ability rolls are ability rolls (Lock-On can choose the face).
+      snapshotFighters(s, atk, r);
+      push(ctx, { ...self, stage: 'before' });
+      pushSeq(ctx, abilityRollTasks(s, [...atk.units, ...atk.blockers], r.optional, atk.id));
+      return;
+    }
+    case 'before': {
+      if (beforeDiceStep(ctx, atk, r, { ...self, key: t.key, answer: t.answer })) return;
       push(ctx, { ...self, stage: 'dice' });
       return;
     }
     case 'dice': {
-      stageA(ctx, [...atk.units, ...atk.blockers], r.optional);
       const sa = strengths(s, atk.units, true);
       const sd = strengths(s, atk.blockers, false);
       // A Cyber/Psionic battle happens only if both sides have >= 1 (X counts as >= 1, and is rolled by now).
@@ -331,9 +331,12 @@ register('fight', (ctx, t) => {
         if (sa[ab] === 0 && sd[ab] >= 1 && isType(atk.units)) autoLoser[ab] = 'att';
         else if (sd[ab] === 0 && sa[ab] >= 1 && isType(atk.blockers)) autoLoser[ab] = 'def';
       }
-      const roll = (ab: 'cyber' | 'psionic') => (r.occurs![ab] ? newRoll(rollSide(ctx)) : null);
-      const att: SideDice = { cyber: roll('cyber'), psionic: roll('psionic'), physical: newRoll(rollSide(ctx)) };
-      const def: SideDice = { cyber: roll('cyber'), psionic: roll('psionic'), physical: newRoll(rollSide(ctx)) };
+      // v0.4 Calibrate: a decided die is a fixed +2 with no icons (side 0); no random number is consumed.
+      const cal = new Set(r.calibrated ?? []);
+      const die = (side: 'att' | 'def', ab: Ability): DieRoll => (cal.has(`${side}:${ab}`) ? { side: 0, obliterated: false, history: [0] } : newRoll(rollSide(ctx)));
+      const roll = (side: 'att' | 'def', ab: 'cyber' | 'psionic') => (r.occurs![ab] ? die(side, ab) : null);
+      const att: SideDice = { cyber: roll('att', 'cyber'), psionic: roll('att', 'psionic'), physical: die('att', 'physical') };
+      const def: SideDice = { cyber: roll('def', 'cyber'), psionic: roll('def', 'psionic'), physical: die('def', 'physical') };
       r.att = att;
       r.def = def;
       emit(ctx, {
@@ -344,6 +347,16 @@ register('fight', (ctx, t) => {
       for (const ab of ['cyber', 'psionic'] as const) {
         const o = applyObliteration(s, ab, att[ab], def[ab]);
         if (o !== 'none') emit(ctx, { type: 'Obliterated', attackId: atk.id, die: ab, by: o });
+      }
+      // Vegian Cyber Shield: once per turn, ignore an opponent's Obliterate on this unit's Cyber die.
+      for (const [side, dice, units] of [['att', att, atk.units], ['def', def, atk.blockers]] as const) {
+        if (!dice.cyber?.obliterated) continue;
+        const holder = units.find((u) => { const eq = card(s, u).equipment; return !!eq && hasEffect(s, eq, 'IgnoreObliterate') && !usedThisTurn(s, `vcs:${eq}`); });
+        if (!holder) continue;
+        const eq = card(s, holder).equipment!;
+        markUsed(s, `vcs:${eq}`, eq);
+        dice.cyber.obliterated = false;
+        emit(ctx, { type: 'ObliterateIgnored', attackId: atk.id, side, uid: holder, equipment: eq, cardId: card(s, eq).cardId });
       }
       const psionicDisorients = combat.psionicLossDisorients ?? true;
       for (const ab of ['cyber', 'psionic'] as const) {
@@ -371,9 +384,10 @@ register('fight', (ctx, t) => {
           emit(ctx, { type: 'Disoriented', attackId: atk.id, side: loser, uids: units, totals: { att: ta, def: td }, ability: ab, auto });
         }
       }
+      // A calibrated Physical die has no numeric face and is never re-rolled.
       r.rerollsLeft = {
-        att: (dieReroll(s, 'cyber', att.cyber) ? 1 : 0) + (dieReroll(s, 'psionic', att.psionic) ? 1 : 0),
-        def: (dieReroll(s, 'cyber', def.cyber) ? 1 : 0) + (dieReroll(s, 'psionic', def.psionic) ? 1 : 0),
+        att: att.physical.side === 0 ? 0 : (dieReroll(s, 'cyber', att.cyber) ? 1 : 0) + (dieReroll(s, 'psionic', att.psionic) ? 1 : 0),
+        def: def.physical.side === 0 ? 0 : (dieReroll(s, 'cyber', def.cyber) ? 1 : 0) + (dieReroll(s, 'psionic', def.psionic) ? 1 : 0),
       };
       push(ctx, { ...self, stage: 'rerollAtt' });
       return;
@@ -484,7 +498,7 @@ register('fight', (ctx, t) => {
         }
       }
       atk.status = 'resolved';
-      push(ctx, { k: 'fightTriggers', attackId: atk.id, attUnits, defUnits, attackerSeat, defenderSeat, winners: r.winners, destroyed: r.destroyed });
+      push(ctx, { k: 'fightTriggers', attackId: atk.id, attUnits, defUnits, attackerSeat, defenderSeat, winners: r.winners, destroyed: r.destroyed, snap: r.snap ?? {} });
       b.current = null;
       return;
     }
@@ -496,6 +510,7 @@ function destroyFighter(ctx: Ctx, units: string[], attackId: string): void {
   for (const u of units) {
     const c = s.cards[u];
     if (!c || (c.zone !== 'lab' && c.zone !== 'trapped')) continue;
+    hooks.destroyed?.(ctx, u, 'combat');
     moveCard(ctx, u, 'discard');
     emit(ctx, { type: 'UnitDestroyed', uid: u, cardId: c.cardId, seat: c.owner, attackId });
   }
@@ -527,6 +542,7 @@ register('fightTriggers', (ctx, t) => {
       }
     }
   }
+  tasks.push(...afterEngagement(ctx, t));
   tasks.push({ k: 'victoryCheck' });
   pushSeq(ctx, tasks);
 });
@@ -554,9 +570,14 @@ register('unblocked', (ctx, t) => {
   }
   const answer = t.answer as Command | undefined;
   const optional: Record<string, boolean> = t.optional ?? {};
-  if (answer && answer.type === 'UseAbility' && t.unit) optional[t.unit] = answer.use;
-  if (askOptionalRolls(ctx, atk.units, optional, { k: 'unblocked', attackId: atk.id, optional })) return;
-  stageA(ctx, atk.units, optional);
+  if (t.stage !== 'hit') {
+    if (answer && answer.type === 'UseAbility' && t.unit) optional[t.unit] = answer.use;
+    if (askOptionalRolls(ctx, atk.units, optional, { k: 'unblocked', attackId: atk.id, optional })) return;
+    // X is rolled once per turn when first needed, including for unblocked Lab damage (no Lock-On here).
+    push(ctx, { k: 'unblocked', attackId: atk.id, optional, stage: 'hit' });
+    pushSeq(ctx, abilityRollTasks(s, atk.units, optional, null));
+    return;
+  }
   // §A8 e: damage = current Physical strength (base + Equipment + Stack + Commander + modifiers). No dice.
   const dmg = Math.max(0, fighterStrength(s, atk.units, 'physical', true));
   atk.status = 'resolved';
@@ -567,6 +588,7 @@ register('unblocked', (ctx, t) => {
 
 register('endBattle', (ctx) => {
   const s = ctx.s;
+  endOfBattle(ctx);
   const b = s.battle;
   if (b) {
     // §A9.1: surviving attackers return to the Lab and are replenished.

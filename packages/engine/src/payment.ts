@@ -25,6 +25,8 @@ export function isFortified(s: GameState, uid: string): boolean {
 
 /** CU types that may be destroyed for the white cost (§A7 step 3, RULING A7-a): the card's colours, else any. */
 export function eligibleDestroyTypes(cost: Cost, _chosen: CUType[] = []): CUType[] {
+  // v0.4: an explicit burn pool overrides the legacy colour rule.
+  if (cost.burnPool && cost.burnPool.length) return CU_TYPES.filter((t) => cost.burnPool!.includes(t));
   // A card's colours include every type on its "pay one of these" lights.
   const coloured = CU_TYPES.filter((t) => cost[t] > 0 || (cost.choice ?? []).some((opts) => opts.includes(t)));
   return coloured.length > 0 ? coloured : [...CU_TYPES];
@@ -75,10 +77,26 @@ export function enumeratePayments(s: GameState, seat: Seat, cost: Cost): Payment
         for (const t of CU_TYPES) after[t] -= any[t] ?? 0;
         const elig = eligibleDestroyTypes(cost, chosen);
         spread(cost.W, elig, after, (destroy) => {
-          const p: Payment = { destroy };
-          if (chosen.length) p.choice = [...chosen];
-          if (A) p.any = any;
-          out.push(p);
+          const rest = { ...after };
+          for (const t of CU_TYPES) rest[t] -= destroy[t] ?? 0;
+          const burns = cost.burns ?? [];
+          const pickBurns = (j: number, got: CUType[]) => {
+            if (j === burns.length) {
+              const p: Payment = { destroy };
+              if (chosen.length) p.choice = [...chosen];
+              if (A) p.any = any;
+              if (got.length) p.burns = [...got];
+              out.push(p);
+              return;
+            }
+            for (const t of new Set(burns[j]!)) {
+              if (rest[t] <= 0) continue;
+              rest[t]--;
+              pickBurns(j + 1, [...got, t]);
+              rest[t]++;
+            }
+          };
+          pickBurns(0, []);
         });
       });
       return;
@@ -132,7 +150,7 @@ export function autoPayment(s: GameState, seat: Seat, cost: Cost): Payment | nul
   // Score: the smallest pool left afterwards should be as large as possible, then the spread.
   const score = (p: Payment) => {
     const left = zero();
-    for (const t of CU_TYPES) left[t] = ready[t].length - cost[t] - (p.any?.[t] ?? 0) - (p.destroy[t] ?? 0) - (p.choice ?? []).filter((x) => x === t).length;
+    for (const t of CU_TYPES) left[t] = ready[t].length - cost[t] - (p.any?.[t] ?? 0) - (p.destroy[t] ?? 0) - (p.choice ?? []).filter((x) => x === t).length - (p.burns ?? []).filter((x) => x === t).length;
     const vals = CU_TYPES.map((t) => left[t]).sort((a, b) => a - b);
     return vals[0]! * 1000 + vals[1]! * 100 + vals[2]! * 10 + vals[3]!;
   };
@@ -148,7 +166,7 @@ export function autoPayment(s: GameState, seat: Seat, cost: Cost): Payment | nul
   return best;
 }
 
-const payKey = (x: Payment) => [CU_TYPES.map((t) => x.destroy[t] ?? 0).join(','), (x.choice ?? []).join(''), CU_TYPES.map((t) => x.any?.[t] ?? 0).join(',')].join('|');
+const payKey = (x: Payment) => [CU_TYPES.map((t) => x.destroy[t] ?? 0).join(','), (x.choice ?? []).join(''), CU_TYPES.map((t) => x.any?.[t] ?? 0).join(','), (x.burns ?? []).join('')].join('|');
 
 export function isValidPayment(s: GameState, seat: Seat, cost: Cost, p: Payment): boolean {
   const k = payKey(p);
@@ -156,7 +174,7 @@ export function isValidPayment(s: GameState, seat: Seat, cost: Cost, p: Payment)
 }
 
 /** Deplete and destroy CUs. Assumes the payment was validated. Fortified CUs absorb destroys first. */
-export function pay(ctx: Ctx, seat: Seat, cost: Cost, p: Payment, forUid: string): void {
+export function pay(ctx: Ctx, seat: Seat, cost: Cost, p: Payment, forUid: string): string[] {
   const s = ctx.s;
   const ready = readyCUs(s, seat);
   // Depletions use unfortified units first; destroys use fortified units first (they are depleted instead).
@@ -174,13 +192,23 @@ export function pay(ctx: Ctx, seat: Seat, cost: Cost, p: Payment, forUid: string
   for (const t of CU_TYPES) takeDeplete(t, cost[t]);
   for (const t of p.choice ?? []) takeDeplete(t, 1);
   for (const t of CU_TYPES) takeDeplete(t, p.any?.[t] ?? 0);
+  const burnCount: Partial<Record<CUType, number>> = { ...p.destroy };
+  for (const t of p.burns ?? []) burnCount[t] = (burnCount[t] ?? 0) + 1;
   for (const t of CU_TYPES) {
-    for (let i = 0; i < (p.destroy[t] ?? 0); i++) {
+    for (let i = 0; i < (burnCount[t] ?? 0); i++) {
       const fort = ready[t].findIndex((u) => isFortified(s, u));
       const uid = fort >= 0 ? ready[t].splice(fort, 1)[0]! : ready[t].pop()!;
       if (fort >= 0) {
         card(s, uid).depleted = true;
         fortified.push(uid);
+        // v0.4: Resource Fortification is one-use — discarded once it saves the CU.
+        const eq = card(s, uid).equipment;
+        if (eq) {
+          card(s, uid).equipment = null;
+          card(s, eq).attachedTo = null;
+          moveCard(ctx, eq, 'discard');
+          emit(ctx, { type: 'FortificationUsed', seat, uid: eq, cu: uid, cardId: card(s, eq).cardId });
+        }
       } else destroyed.push(uid);
     }
   }
@@ -189,4 +217,41 @@ export function pay(ctx: Ctx, seat: Seat, cost: Cost, p: Payment, forUid: string
   if (depleted.length) emit(ctx, { type: 'CUDepleted', seat, uids: depleted, forUid });
   if (fortified.length) emit(ctx, { type: 'CUFortified', seat, uids: fortified, forUid });
   if (destroyed.length) emit(ctx, { type: 'CUDestroyed', seat, uids: destroyed, cardIds: destroyedIds, forUid });
+  return [...depleted, ...fortified];
+}
+
+/** v0.4 printed total cost: every required CU counts once (burns and mixed lights included). */
+export function totalCost(cost: Cost | undefined): number {
+  if (!cost) return 0;
+  return cost.G + cost.B + cost.R + cost.P + cost.W + (cost.A ?? 0) + (cost.choice?.length ?? 0) + (cost.burns?.length ?? 0);
+}
+
+/** Only the burn part of a cost (Carrion Foundress waives depletion but keeps every burn). */
+export function burnOnly(cost: Cost): Cost {
+  const pool = eligibleDestroyTypes(cost);
+  return { G: 0, B: 0, R: 0, P: 0, W: cost.W, burnPool: pool };
+}
+
+/** Cost with one fewer P (Fabricator Drone): a fixed P first, else a mixed light that allows P. */
+export function lessOneP(cost: Cost): Cost {
+  const c: Cost = { ...cost, choice: cost.choice ? cost.choice.map((x) => [...x]) : undefined };
+  if (totalCost(c) <= 1) return c;
+  if (c.P > 0) c.P--;
+  else if (c.choice) {
+    const i = c.choice.findIndex((x) => x.includes('P'));
+    if (i >= 0) c.choice.splice(i, 1);
+  }
+  return c;
+}
+
+export function addCosts(a: Cost, b: Cost): Cost {
+  const out: Cost = { G: a.G + b.G, B: a.B + b.B, R: a.R + b.R, P: a.P + b.P, W: a.W, A: (a.A ?? 0) + (b.A ?? 0) };
+  if (a.W) out.burnPool = eligibleDestroyTypes(a);
+  const ch = [...(a.choice ?? []), ...(b.choice ?? [])];
+  if (ch.length) out.choice = ch;
+  // Each extra burn keeps its own permitted pool; one CU never pays for two components.
+  const burns = [...(a.burns ?? []), ...(b.burns ?? [])];
+  for (let i = 0; i < b.W; i++) burns.push(eligibleDestroyTypes(b));
+  if (burns.length) out.burns = burns;
+  return out;
 }

@@ -11,29 +11,28 @@ const byId = new Map(cards.map((c) => [c.id, c]));
 describe('cards.json', () => {
   it('has unique ids and all 29 Part B cards enabled', () => {
     expect(new Set(cards.map((c) => c.id)).size).toBe(cards.length);
-    const partB = cards.filter((c) => String(c.origin).startsWith('partB'));
-    expect(partB).toHaveLength(29);
-    expect(partB.every((c) => c.enabled)).toBe(true);
+    expect(cards).toHaveLength(97);
+    expect(cards.every((c) => c.enabled)).toBe(true);
   });
 
-  it('matches the Q&A-confirmed readings', () => {
+  it('matches the v0.4 workbook for sample cards (IDs preserved through renames)', () => {
     const c = (id: string) => byId.get(id);
-    expect(c('BU_LS').cost).toEqual({ G: 0, B: 1, R: 1, P: 0, W: 1 });
+    expect(c('BU_DSH').name).toBe('Vesper Ripper');
+    expect(c('BU_LS').cost).toEqual({ G: 0, B: 1, R: 2, P: 0, W: 0 });
     expect(c('BU_LS').stats).toEqual({ cyber: 0, psionic: 3, physical: 2 });
-    expect(c('BU_TS').cost).toEqual({ G: 0, B: 1, R: 2, P: 0, W: 0 });
-    expect(c('BU_TS').stats).toEqual({ cyber: 0, psionic: 1, physical: 3 });
-    expect(c('BU_HB').cost).toEqual({ G: 1, B: 0, R: 0, P: 1, W: 1 });
-    expect(c('BU_HB').stats).toEqual({ cyber: 3, psionic: 0, physical: 2 });
-    expect(c('BU_LQ').cost).toEqual({ G: 1, B: 0, R: 0, P: 2, W: 0 });
-    expect(c('BU_LQ').stats).toEqual({ cyber: 1, psionic: 0, physical: 3 });
-    expect(c('EQ_PB').equip).toMatchObject({ ability: 'psionic', bonus: 1 });
-    expect(c('EQ_VCS').equip).toMatchObject({ ability: 'cyber', bonus: 2 });
+    expect(c('EQ_KA').cost).toEqual({ G: 0, B: 0, R: 0, P: 0, W: 1, choice: [['R', 'P'], ['R', 'P']], burnPool: ['R', 'P'] });
+    expect(c('EQ_KA').equip.moveCost).toEqual({ G: 0, B: 0, R: 0, P: 0, W: 0, choice: [['R', 'P']] });
+    expect(c('PW_EM').cost.burnPool).toEqual(['G', 'B', 'R', 'P']);
+    expect(c('TR_GSF').cardType).toBe('Power');
+    expect(c('TR_GSF').timing).toBe('Pulse');
+    expect(c('PW_RR').timing).toBe('Operation');
+    expect(c('BU_DC').protocols).toHaveProperty('Precision');
   });
 
   it('every battle-deck card has a full cost and every unit has stats', () => {
     for (const c of cards.filter((c) => c.deck === 'battle')) {
       // The five lights, plus optional "pay any" (A) and "pay one of these" (choice) from Change Request 1.
-      expect(Object.keys(c.cost).filter((k) => k !== 'A' && k !== 'choice').sort()).toEqual(['B', 'G', 'P', 'R', 'W']);
+      expect(Object.keys(c.cost).filter((k) => !['A', 'choice', 'burnPool', 'burns'].includes(k)).sort()).toEqual(['B', 'G', 'P', 'R', 'W']);
       if (c.cardType === 'BattleUnit') {
         expect(['Creature', 'Robot', 'Cyborg']).toContain(c.unitType);
         for (const k of ['cyber', 'psionic', 'physical']) {
@@ -48,7 +47,7 @@ describe('cards.json', () => {
     for (const c of cards) {
       // New cards without art yet: the client draws a generated face until art is added.
       if (!c.art) {
-        expect(String(c.origin), c.id).toMatch(/no art yet/);
+        expect(String(c.origin), c.id).toMatch(/no art yet|v0\.4/);
         continue;
       }
       const a = manifest.assets[c.art];

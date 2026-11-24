@@ -1,6 +1,7 @@
 import type { Command } from '@psi-wars/shared';
 import { numericValue, rollSide } from './dice';
-import { equipmentBonus } from './stats';
+import { equipmentBonus, unitStrength } from './stats';
+import { addMod, clearTempLog } from './mods';
 import { card, defOf, emit, moveCard, nextLiveSeat, player } from './state';
 import { ask, push, pushSeq, register } from './tasks';
 import { checkVictory, endGameByTurnLimit } from './victory';
@@ -112,7 +113,7 @@ export function drawBattleCard(ctx: Ctx, seat: Seat): void {
 
 register('creation', (ctx) => {
   if (phase(ctx, 'creation')) return;
-  pushSeq(ctx, [{ k: 'creationMain' }, { k: 'openWindow', point: 'endOfCreation' }]);
+  pushSeq(ctx, [{ k: 'protocolUpkeep' }, { k: 'creationMain' }, { k: 'openWindow', point: 'endOfCreation' }]);
 });
 
 register('creationMain', (ctx) => {
@@ -125,7 +126,12 @@ register('cleanup', (ctx) => {
   pushSeq(ctx, [{ k: 'openWindow', point: 'beforeCleanupEscapes' }, { k: 'escapes' }]);
 });
 
-/** RULING A9-a: one escape attempt per Trap, in the trapped unit owner's Cleanup. */
+/**
+ * Containment release in the contained unit owner's Cleanup (v0.4):
+ *  - escape cards (Grankor): roll red; freed if current Physical + numeric >= threshold, or after
+ *    the second failed escape;
+ *  - "free at its owner's next Cleanup" cards (Interference Net, Parasitic Snare).
+ */
 register('escapes', (ctx) => {
   const s = ctx.s;
   const seat = s.turn.active;
@@ -134,22 +140,35 @@ register('escapes', (ctx) => {
     const trapUid = u.trappedBy;
     if (!trapUid) continue;
     const trapDef = defOf(s, trapUid);
-    const check = trapDef.effects.find((e) => e.trigger === 'TrapEscapeCheck');
-    if (!check) continue;
-    const base = defOf(s, uid).stats?.physical;
-    const phys = (typeof base === 'number' ? base : 0) + equipmentBonus(s, uid, 'physical');
-    const side = rollSide(ctx);
-    const value = numericValue(s, side);
-    const threshold = Number(check.params.threshold ?? 5);
-    const freed = phys + value > threshold;
-    emit(ctx, { type: 'EscapeAttempt', seat, uid, cardId: u.cardId, trap: trapUid, physical: phys, side, value, threshold, freed });
-    if (freed) {
+    const trapEff = trapDef.effects.find((e) => e.effect === 'TrapUnit');
+    const release = trapEff?.params.release ?? 'escape';
+    const free = (reason: string) => {
       u.trappedBy = null;
       moveCard(ctx, trapUid, 'discard');
       moveCard(ctx, uid, 'lab');
       u.depleted = true;
-      emit(ctx, { type: 'UnitFreed', uid, cardId: u.cardId, seat, reason: 'escaped' });
+      emit(ctx, { type: 'UnitFreed', uid, cardId: u.cardId, seat, reason });
+    };
+    if (release === 'nextCleanup') {
+      const trapper = card(s, trapUid).owner;
+      free('released');
+      if (trapEff?.params.snarePenalty && player(s, trapper).lab.some((x) => defOf(s, x).unitType === 'Creature') && unitStrength(s, uid, 'physical', false) > 1) {
+        addMod(ctx, uid, 'physical', -1, 'temp', trapUid, trapDef.name);
+      }
+      continue;
     }
+    const check = trapDef.effects.find((e) => e.trigger === 'TrapEscapeCheck');
+    if (!check) continue;
+    const phys = unitStrength(s, uid, 'physical', false) + equipmentBonus(s, uid, 'physical') * 0;
+    const side = rollSide(ctx);
+    const value = numericValue(s, side);
+    const threshold = Number(check.params.threshold ?? 5);
+    const freed = check.params.atLeast ? phys + value >= threshold : phys + value > threshold;
+    u.escapeFails = (u.escapeFails ?? 0) + (freed ? 0 : 1);
+    const maxFails = Number(check.params.maxFails ?? 0);
+    emit(ctx, { type: 'EscapeAttempt', seat, uid, cardId: u.cardId, trap: trapUid, physical: phys, side, value, threshold, freed, fails: u.escapeFails });
+    if (freed) free('escaped');
+    else if (maxFails && u.escapeFails >= maxFails) free('secondFailure');
   }
 });
 
@@ -158,6 +177,7 @@ register('endTurn', (ctx) => {
   s.turnEffects = [];
   for (const c of Object.values(s.cards)) {
     c.tempMods = { cyber: 0, psionic: 0, physical: 0 };
+    clearTempLog(c);
     c.xValue = null;
     c.disoriented = false;
   }

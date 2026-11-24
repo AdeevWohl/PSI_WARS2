@@ -147,6 +147,37 @@ export function eventLine(e: GameEvent, names: (s: unknown) => string, n: Namer,
       return { text: `A fortified Creation Unit was depleted instead of destroyed.` };
     case 'DeckEmpty':
       return full ? { text: `${who(e.seat)} could not draw: deck empty.` } : null;
+    // ---- v0.4 ----
+    case 'StatModified':
+      return { text: `${n.name(e.uid as string)}: ${Number(e.amount) > 0 ? '+' : ''}${e.amount} ${e.stat}${e.kind === 'mutation' ? ' (Mutation, permanent)' : e.kind === 'reanimated' ? ' (Reanimated, permanent)' : e.kind === 'permanent' ? ' (permanent)' : e.kind === 'stack' ? ' (until the Stack separates)' : ' (this turn)'} — ${e.label}.` };
+    case 'LockOn':
+      return { text: `${n.name(e.uid as string)} uses Lock-On: ${n.name(e.target as string)}'s ability roll is set to face ${e.side}.` };
+    case 'Calibrated':
+      return { text: `${n.name(e.uid as string)}: ${e.side === 'att' ? 'attacker' : 'defender'} Calibrates the ${e.die} die (fixed +2).` };
+    case 'ProtocolSet':
+      return { text: `${n.name(e.uid as string)} Protocol: ${e.mode} — ${e.text}` };
+    case 'Cannibalized':
+      return { text: `${n.name(e.uid as string)} is Cannibalized (permanent Physical ${e.permanentPhysical}).` };
+    case 'FeedingTriggered':
+      return { text: `Carrion Foundress feeds: may create a Creature with total cost ≤ ${e.limit}.` };
+    case 'Countered':
+      return { text: `${n.name(e.uid as string)} is cancelled by ${n.name(e.by as string)}.` };
+    case 'DamagePrevented':
+      return { text: `${e.amount} damage to ${n.name(e.uid as string)} is prevented.` };
+    case 'AbilityActivated':
+      return { text: `${n.name(e.uid as string)} activates its ability.` };
+    case 'FortificationUsed':
+      return { text: 'Resource Fortification saves a Creation Unit and is discarded.' };
+    case 'ObliterateIgnored':
+      return { text: `Vegian Cyber Shield ignores the Obliterate on ${n.name(e.uid as string)}'s Cyber die.` };
+    case 'UnitLinked':
+      return { text: `${n.name(e.uid as string)} links to ${n.name(e.linkTo as string)}.` };
+    case 'HandLooked':
+      return { text: Array.isArray(e.cards) ? `You see their hand: ${(e.cards as { cardId: string }[]).map((c) => names(c.cardId)).join(', ') || 'empty'}.` : 'Their hand was looked at.' };
+    case 'UnitJammed':
+      return { text: `${n.name(e.uid as string)} is Signal-Jammed this turn.` };
+    case 'EquipmentMoved':
+      return { text: `${n.name(e.uid as string)} is relocated to ${n.name(e.toUnit as string)}${e.paid ? ' (Relocate cost paid)' : ''}.` };
     default:
       return null;
   }

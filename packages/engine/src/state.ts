@@ -96,6 +96,12 @@ export function moveCard(
     c.disoriented = false;
     c.tempMods = { cyber: 0, psionic: 0, physical: 0 };
     delete c.permMods;
+    delete c.stackMods;
+    delete c.modLog;
+    delete c.protocol;
+    delete c.flags;
+    delete c.link;
+    delete c.escapeFails;
     if (c.stackPartner) {
       const p = s.cards[c.stackPartner];
       if (p) p.stackPartner = null;

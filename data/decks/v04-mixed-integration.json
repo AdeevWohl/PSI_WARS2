@@ -1,0 +1,32 @@
+{
+ "id": "v04-mixed-integration",
+ "name": "Mixed Integration",
+ "starter": true,
+ "source": "Card Set v0.4 example deck",
+ "battle": {
+  "BU_PI2": 3,
+  "BU_RC": 3,
+  "BU_SD": 2,
+  "BU_PH": 2,
+  "BU_BB": 1,
+  "BU_SH": 1,
+  "BU_SA2": 2,
+  "BU_NI": 2,
+  "BU_AS": 2,
+  "BU_AD": 2,
+  "BU_CE": 2,
+  "PW_C": 2,
+  "EQ_IP": 2,
+  "PW_ES": 1,
+  "EQ_SH": 1,
+  "PW_FE": 1,
+  "TR_GSF": 1
+ },
+ "resource": {
+  "CU_DS": 5,
+  "CU_NG": 5,
+  "CU_BA": 4,
+  "CU_MA": 6,
+  "RS_CO": 3
+ }
+}

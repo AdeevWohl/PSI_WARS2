@@ -1,0 +1,29 @@
+{
+ "id": "v04-robot-industrial",
+ "name": "Robot Industrial",
+ "starter": true,
+ "source": "Card Set v0.4 example deck",
+ "battle": {
+  "BU_SH": 3,
+  "BU_SD": 2,
+  "BU_AW": 2,
+  "BU_HB": 3,
+  "BU_FD": 3,
+  "BU_SH2": 2,
+  "BU_RO": 2,
+  "BU_XP": 2,
+  "BU_FT": 2,
+  "EQ_SH": 3,
+  "PW_EM": 2,
+  "PW_RR": 1,
+  "PW_EH": 1,
+  "EQ_CO": 1,
+  "PW_MA": 1
+ },
+ "resource": {
+  "CU_DS": 8,
+  "CU_MA": 8,
+  "RS_CO": 3,
+  "RS_RF": 2
+ }
+}

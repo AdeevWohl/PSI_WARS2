@@ -129,6 +129,11 @@ export class Controller {
     return this.queue;
   }
 
+  /** v0.4 activated abilities (Fabricator Drone, Scrap Harvester, Suture Architect, Loquidor Stalker). */
+  activate(uid: string, ability: string): void {
+    void this.send({ type: 'Activate', uid, ability });
+  }
+
   private answerModal(choice: unknown): void {
     const p = this.legal?.prompt;
     if (!p) return;

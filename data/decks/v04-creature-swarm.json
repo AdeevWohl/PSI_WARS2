@@ -1,0 +1,28 @@
+{
+ "id": "v04-creature-swarm",
+ "name": "Creature Swarm",
+ "starter": true,
+ "source": "Card Set v0.4 example deck",
+ "battle": {
+  "BU_BB": 3,
+  "BU_SL": 3,
+  "BU_BC2": 2,
+  "BU_PH": 2,
+  "BU_ML": 2,
+  "BU_SC2": 3,
+  "BU_TS": 3,
+  "BU_CS": 2,
+  "BU_HR": 2,
+  "PW_CI": 2,
+  "PW_BR": 2,
+  "PW_PS": 1,
+  "EQ_PA": 2,
+  "PW_M": 1
+ },
+ "resource": {
+  "CU_NG": 8,
+  "CU_BA": 8,
+  "RS_CO": 3,
+  "RS_RF": 2
+ }
+}

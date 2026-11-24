@@ -4,6 +4,7 @@ import { playOptions } from './plays';
 import { card, defOf, emit, moveCard, player, turnOrderFrom } from './state';
 import { ask, push, register } from './tasks';
 import type { Ctx, Seat, Task } from './types';
+import { activations } from './v04';
 
 /**
  * Priority windows. A window polls players in order; each may play an allowed card
@@ -32,9 +33,9 @@ export function openWindow(ctx: Ctx, point: string, allowed: 'traps' | 'powers',
   push(ctx, { k: 'window', point, allowed, order, idx: 0, passes: 0, stackBase: ctx.s.stack.length } satisfies WindowTask);
 }
 
-function hasPlay(ctx: Ctx, seat: Seat, allowed: 'traps' | 'powers'): boolean {
+function hasPlay(ctx: Ctx, seat: Seat, allowed: 'traps' | 'powers', point = ''): boolean {
   const fake = { seat, kind: 'priority' as const, label: '', allowed, resume: { k: 'noop' } };
-  return playOptions(ctx.s, seat, fake).length > 0;
+  return playOptions(ctx.s, seat, fake).length > 0 || activations(ctx.s, seat, { ...fake, info: { point } }).length > 0;
 }
 
 register('window', (ctx, raw) => {
@@ -57,7 +58,7 @@ register('window', (ctx, raw) => {
       emit(ctx, { type: 'PriorityPassed', seat: order[t.idx % Math.max(order.length, 1)] ?? null, point: t.point });
       t.passes++;
       t.idx++;
-    } else if (answer.type === 'PlayCard') {
+    } else if (answer.type === 'PlayCard' || answer.type === 'Activate') {
       t.passes = 0; // caster keeps priority
     }
   }
@@ -75,7 +76,7 @@ register('window', (ctx, raw) => {
       return;
     }
     const seat = order[t.idx % order.length]!;
-    if (s.config.autoPassNoPlay && !hasPlay(ctx, seat, t.allowed)) {
+    if (s.config.autoPassNoPlay && !hasPlay(ctx, seat, t.allowed, t.point)) {
       t.passes++;
       t.idx++;
       continue;
@@ -99,8 +100,9 @@ register('resolveTop', (ctx) => {
   const item = s.stack[s.stack.length - 1];
   if (!item) return;
   const d = defOf(s, item.uid);
-  emit(ctx, { type: 'StackResolving', uid: item.uid, cardId: d.id, controller: item.controller, target: item.target });
+  emit(ctx, { type: 'StackResolving', uid: item.uid, cardId: d.id, controller: item.controller, target: item.target, targets: item.targets ?? null, countered: !!item.countered });
   push(ctx, { k: 'finishPower', uid: item.uid });
+  if (item.countered) return; // Emergency Firewall: no effect, costs stay paid
   for (const e of [...d.effects].reverse()) {
     if (e.trigger !== 'OnPlay' || !EFFECTS[e.effect]) continue;
     push(ctx, { k: 'effect', effect: e.effect, controller: item.controller, source: item.uid, params: e.params, target: item.target });

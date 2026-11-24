@@ -1,0 +1,30 @@
+{
+ "id": "v04-creature-evolution",
+ "name": "Creature Evolution",
+ "starter": true,
+ "source": "Card Set v0.4 example deck",
+ "battle": {
+  "BU_PH": 3,
+  "BU_BB": 2,
+  "BU_ML": 2,
+  "BU_SL": 2,
+  "BU_SA": 3,
+  "BU_DSH": 2,
+  "BU_MA": 2,
+  "BU_LS": 2,
+  "BU_CW": 2,
+  "BU_SC": 1,
+  "BU_CF": 1,
+  "PW_FE": 2,
+  "PW_CR": 2,
+  "EQ_AM": 2,
+  "PW_M": 1,
+  "EQ_PB": 1
+ },
+ "resource": {
+  "CU_NG": 8,
+  "CU_BA": 8,
+  "RS_CO": 3,
+  "RS_RF": 2
+ }
+}

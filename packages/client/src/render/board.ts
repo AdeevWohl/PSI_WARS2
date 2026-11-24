@@ -379,6 +379,13 @@ export class Board {
     if (c.disoriented) markers.push({ kind: 'disoriented', label: 'Disoriented: cannot destroy this battle', icon: '◎' });
     if (zone !== 'hand' && v.turnEffects.length && stats && this.isDisabled(uid)) markers.push({ kind: 'disabled', label: 'Cannot attack or defend this turn', icon: '⊘' });
     if (c.disoriented) el.classList.add('disoriented');
+    // v0.4: active Protocol and the reasons a unit's strengths changed.
+    const cx = c as typeof c & { protocol?: string | null; modLog?: { stat: string; amount: number; kind: string; label: string }[] };
+    if (cx.protocol) markers.push({ kind: 'protocol', label: `Protocol: ${cx.protocol} — ${(def as { protocols?: Record<string, string> }).protocols?.[cx.protocol] ?? ''}`, icon: cx.protocol[0]! });
+    if (cx.modLog?.length) {
+      const perm = cx.modLog.some((m) => ['mutation', 'reanimated', 'permanent'].includes(m.kind));
+      markers.push({ kind: 'mods', label: 'Strength changes: ' + cx.modLog.map((m) => `${m.amount > 0 ? '+' : ''}${m.amount} ${m.stat} (${m.kind === 'temp' || m.kind === 'battle' ? 'this turn' : m.kind}, ${m.label})`).join('; '), icon: perm ? '✦' : '±' });
+    }
     setMarkers(el, markers);
     this.hooks.decorate(el, ctx);
     const interactive = el.classList.contains('interactive');
@@ -422,7 +429,9 @@ export class Board {
     const def = v.defs[v.cards[uid]!.cardId]!;
     const st = v.unitStats[uid]!;
     return v.turnEffects.some((te) => {
-      const f = te.filter;
+      if (te.kind === 'disableUnits') return !!te.uids?.includes(uid);
+      if (te.kind !== 'disable') return false;
+      const f = te.filter ?? {};
       if (f.hasAbility && !(st[f.hasAbility as 'cyber'] === 'X' || (st[f.hasAbility as 'cyber'] as number) >= 1)) return false;
       if (f.unitType && !(Array.isArray(f.unitType) ? f.unitType : [f.unitType]).includes(def.unitType)) return false;
       return true;

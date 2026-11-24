@@ -6,6 +6,7 @@
 import { unitStrength } from './stats';
 import { card, emit, moveCard } from './state';
 import type { Ctx } from './types';
+import { hooks, preventAbilityDamage } from './mods';
 
 export type DamageCause = 'combat' | 'effect';
 
@@ -14,6 +15,10 @@ export function damageUnit(ctx: Ctx, uid: string, amount: number, source: string
   const s = ctx.s;
   const c = s.cards[uid];
   if (!c || (c.zone !== 'lab' && c.zone !== 'trapped') || amount <= 0) return false;
+  if (cause === 'effect') {
+    amount = preventAbilityDamage(ctx, uid, amount, source);
+    if (amount <= 0) return false;
+  }
   const physical = unitStrength(s, uid, 'physical', false);
   if (amount >= physical) {
     // A stack only dies together when it is destroyed as a fighter in battle; a single card
@@ -22,6 +27,7 @@ export function damageUnit(ctx: Ctx, uid: string, amount: number, source: string
     if (partner && s.cards[partner]) s.cards[partner]!.stackPartner = null;
     c.stackPartner = null;
     emit(ctx, { type: 'UnitDamaged', uid, cardId: c.cardId, seat: c.owner, amount, physicalBefore: physical, physicalAfter: 0, source, cause, lethal: true, attackId: attackId ?? null });
+    hooks.destroyed?.(ctx, uid, cause === 'combat' ? 'combat' : 'damage');
     moveCard(ctx, uid, 'discard');
     emit(ctx, { type: 'UnitDestroyed', uid, cardId: c.cardId, seat: c.owner, attackId: attackId ?? null, cause: 'damage' });
     return true;

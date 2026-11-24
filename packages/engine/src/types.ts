@@ -18,6 +18,10 @@ export interface Cost {
   A?: number;
   /** "Pay one of these" lights: each entry lists the types that may be depleted for it. */
   choice?: CUType[][];
+  /** v0.4 independent burn pool: which CU types may be destroyed for W. Absent = legacy rule. */
+  burnPool?: CUType[];
+  /** Extra burn components, each destroying one CU from its own pool (combined costs). */
+  burns?: CUType[][];
 }
 
 export interface Stats {
@@ -42,7 +46,13 @@ export interface CardDef {
   cuType?: CUType;
   cost?: Cost;
   stats?: Stats;
-  equip?: { ability: Ability; bonus: number; allowed: UnitType[] };
+  equip?: { ability: Ability; bonus: number; allowed: UnitType[]; /** v0.4 Relocate cost; absent = free. */ moveCost?: Cost };
+  /** v0.4 Power timing: Pulse (fast) or Operation (own Creation phase, empty stack). */
+  timing?: 'Pulse' | 'Operation';
+  /** v0.4 Protocol modes (id → description). */
+  protocols?: Record<string, string>;
+  /** v0.4 keyword tags shown in tooltips (Lock-On, Mutation, Protocol, Calibrate, Cannibalize, ...). */
+  keywords?: string[];
   effects: EffectSpec[];
   text: string;
   implementation?: string;
@@ -136,6 +146,26 @@ export interface CardInstance {
   disoriented: boolean;
   /** Trap card uid holding this unit. */
   trappedBy: string | null;
+  /** v0.4: modifiers that last while the unit stays stacked. */
+  stackMods?: StatMods;
+  /** v0.4: why the unit's strengths changed (shown to players). */
+  modLog?: ModEntry[];
+  /** v0.4: active Protocol mode. */
+  protocol?: string | null;
+  /** v0.4: per-unit once-per-turn / per-engagement flags. */
+  flags?: Record<string, number | string | boolean>;
+  /** v0.4: a linked unit (Railgun Overseer's chosen Robot). */
+  link?: string | null;
+  /** v0.4: failed escape attempts from containment. */
+  escapeFails?: number;
+}
+
+export interface ModEntry {
+  stat: Ability;
+  amount: number;
+  kind: 'temp' | 'battle' | 'stack' | 'permanent' | 'mutation' | 'reanimated';
+  source: string | null;
+  label: string;
 }
 
 export interface PlayerState {
@@ -179,6 +209,16 @@ export interface Attack {
 export interface Resolution {
   attackId: string;
   optional: Record<string, boolean>;
+  /** v0.4: before-dice decisions already made (key → choice token or null). */
+  decided?: Record<string, string | null>;
+  /** v0.4: Lock-On units already used in this engagement. */
+  lockUsed?: string[];
+  /** v0.4: calibrated dice: "att:physical" etc. */
+  calibrated?: string[];
+  /** v0.4: ability rolls done this engagement (uid:purpose). */
+  rolled?: string[];
+  /** v0.4: permanent strengths of every fighter just before the battle (Marrow Parasite). */
+  snap?: Record<string, { cyber: number; psionic: number; physical: number }>;
   att: SideDice | null;
   def: SideDice | null;
   occurs: { cyber: boolean; psionic: boolean } | null;
@@ -192,18 +232,32 @@ export interface BattleState {
   attacker: Seat;
   attacks: Attack[];
   current: Resolution | null;
+  /** v0.4: units that survived a blocked engagement this phase → lost the Psionic battle? */
+  survivors?: Record<string, boolean>;
+  /** v0.4: seats that lost a Creature this Battle phase (Siana Commander). */
+  creatureDied?: Seat[];
 }
 
 export interface StackItem {
   uid: string;
   controller: Seat;
   target: string | null;
+  /** v0.4: every unit/stack item this card targets (first = `target`). */
+  targets?: string[];
+  /** v0.4: values fixed when the cost was paid (Cannibalize snapshot, chosen Equipment...). */
+  snap?: Record<string, any>;
+  /** v0.4: countered by Emergency Firewall. */
+  countered?: boolean;
 }
 
 export interface TurnEffect {
-  kind: 'disable';
+  kind: 'disable' | 'disableUnits' | 'jam' | 'prevent' | 'equipDiscount' | 'used';
   source: string;
-  filter: Record<string, any>;
+  filter?: Record<string, any>;
+  uids?: string[];
+  amount?: number;
+  seat?: Seat;
+  key?: string;
 }
 
 /** Continuation tasks: the engine is an interpreter over this serialisable stack. */
@@ -218,7 +272,8 @@ export type PromptKind =
   | 'chooseCard'
   | 'battleOrder'
   | 'optionalRoll'
-  | 'reroll';
+  | 'reroll'
+  | 'decide';
 
 export interface Prompt {
   seat: Seat;

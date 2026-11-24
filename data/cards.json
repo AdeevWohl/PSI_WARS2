@@ -1,2330 +1,4300 @@
 {
-  "schemaVersion": 1,
-  "source": "Rules & Game Spec v2.0 Part B (transcribed verbatim), Pre-Build Q&A 22 Nov 2026 confirmations. Extra cards (source: art) transcribed from the printed PSD card faces and disabled by default.",
-  "cards": [
+ "schemaVersion": 2,
+ "source": "Psi Wars - Card Set v0.4.xlsx (imported by tools/data/import_v04.py)",
+ "cards": [
+  {
+   "id": "BU_BB",
+   "name": "Rupture Brute",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Creature",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 1,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 0,
+    "physical": 3
+   },
+   "effects": [],
+   "text": "",
+   "implementation": "v0.4: no ability",
+   "enabled": true,
+   "origin": "Change Request 1 (new card; no art yet - the client draws a generated face)",
+   "role": "Swarm / flexible",
+   "designNote": "Vanilla red baseline; 3 Physical is intentionally strong but vulnerable to Psionic disorientation."
+  },
+  {
+   "id": "BU_DSH",
+   "name": "Vesper Ripper",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Creature",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 1,
+    "R": 1,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 2,
+    "physical": 2
+   },
+   "effects": [
     {
-      "id": "BU_DSH",
-      "name": "Dark Shredder",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Creature",
-      "isCommander": false,
-      "cost": {
-        "G": 0,
-        "B": 1,
-        "R": 1,
-        "P": 0,
-        "W": 0
-      },
-      "stats": {
-        "cyber": 0,
-        "psionic": 2,
-        "physical": 2
-      },
-      "effects": [
-        {
-          "trigger": "ModifyRoll",
-          "effect": "ModifyRollTable",
-          "params": {
-            "die": "red",
-            "stat": "physical",
-            "optional": true,
-            "bySide": {
-              "1": -1,
-              "2": 1,
-              "3": -1,
-              "4": 1,
-              "5": -1,
-              "6": 1
-            }
-          }
-        }
-      ],
-      "text": "You may roll red die. Even: +1 Physical. Odd: -1 Physical.",
-      "implementation": "Optional, chosen before rolling in Battle stage a. Even/odd uses the die's numeric value (Obliterate = 4, so even).",
-      "art": "cards/BU_DSH",
-      "artSource": "01_Dark Shredder.psd",
-      "printed": {
-        "cost": {
-          "G": 0,
-          "B": 1,
-          "R": 1,
-          "P": 0,
-          "W": 0
-        },
-        "stats": {
-          "cyber": 0,
-          "psionic": 1,
-          "physical": 2
-        },
-        "hasRulesText": false
-      },
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "BU_JPA",
-      "name": "Jingwa Psi Avenger",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Creature",
-      "isCommander": false,
-      "cost": {
-        "G": 0,
-        "B": 2,
-        "R": 1,
-        "P": 0,
-        "W": 0
-      },
-      "stats": {
-        "cyber": 0,
-        "psionic": 3,
-        "physical": 1
-      },
-      "effects": [
-        {
-          "trigger": "OnPsionicWin",
-          "effect": "DiscardPowerFromHand",
-          "params": {}
-        }
-      ],
-      "text": "With Psionic win, Opponent discards one Power card of their choice from hand.",
-      "implementation": "DiscardPowerFromHand: the opponent picks a Power card in hand and discards it (shown to everyone); with none, their hand is revealed.",
-      "art": "cards/BU_JPA",
-      "artSource": "05_Jingwa Psi Avenger.psd",
-      "printed": {
-        "cost": {
-          "G": 0,
-          "B": 2,
-          "R": 1,
-          "P": 0,
-          "W": 0
-        },
-        "stats": {
-          "cyber": 0,
-          "psionic": 3,
-          "physical": 1
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "partB; Change Request 1"
-    },
-    {
-      "id": "BU_LS",
-      "name": "Life Snatcher",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Creature",
-      "isCommander": false,
-      "cost": {
-        "G": 0,
-        "B": 1,
-        "R": 1,
-        "P": 0,
-        "W": 1
-      },
-      "stats": {
-        "cyber": 0,
-        "psionic": 3,
-        "physical": 2
-      },
-      "effects": [],
-      "text": "",
-      "art": "cards/BU_LS",
-      "artSource": "06_Life Snatcher.psd",
-      "printed": {
-        "cost": {
-          "G": 0,
-          "B": 1,
-          "R": 1,
-          "P": 0,
-          "W": 1
-        },
-        "stats": {
-          "cyber": 0,
-          "psionic": 3,
-          "physical": 2
-        },
-        "hasRulesText": false
-      },
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "BU_SA",
-      "name": "Shadow Assassin",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Creature",
-      "isCommander": false,
-      "cost": {
-        "G": 0,
-        "B": 1,
-        "R": 1,
-        "P": 0,
-        "W": 0
-      },
-      "stats": {
-        "cyber": 0,
-        "psionic": "X",
-        "physical": 2
-      },
-      "effects": [
-        {
-          "trigger": "RollX",
-          "effect": "RollX",
-          "params": {
-            "die": "red",
-            "stat": "psionic"
-          }
-        }
-      ],
-      "text": "After Attackers & Defenders are set, roll red die. Result is X for Turn.",
-      "implementation": "X is rolled in Battle stage a (or when first needed this turn) and lasts until end of turn.",
-      "art": "cards/BU_SA",
-      "artSource": "02_Shadow Assassin.psd",
-      "printed": {
-        "cost": {
-          "G": 0,
-          "B": 1,
-          "R": 1,
-          "P": 0,
-          "W": 0
-        },
-        "stats": {
-          "cyber": 0,
-          "psionic": 1,
-          "physical": "X"
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "BU_TS",
-      "name": "Trangarey Scythe",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Creature",
-      "isCommander": false,
-      "cost": {
-        "G": 0,
-        "B": 1,
-        "R": 2,
-        "P": 0,
-        "W": 0
-      },
-      "stats": {
-        "cyber": 0,
-        "psionic": 1,
-        "physical": 3
-      },
-      "effects": [],
-      "text": "",
-      "art": "cards/BU_TS",
-      "artSource": "04_Trangarey Scythe.psd",
-      "printed": {
-        "cost": {
-          "G": 0,
-          "B": 1,
-          "R": 2,
-          "P": 0,
-          "W": 0
-        },
-        "stats": {
-          "cyber": 0,
-          "psionic": 1,
-          "physical": 3
-        },
-        "hasRulesText": false
-      },
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "BU_SC",
-      "name": "Siana Commander",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Creature",
-      "isCommander": true,
-      "cost": {
-        "G": 0,
-        "B": 2,
-        "R": 2,
-        "P": 0,
-        "W": 2
-      },
-      "stats": {
-        "cyber": 0,
-        "psionic": 4,
-        "physical": 4
-      },
-      "effects": [
-        {
-          "trigger": "StaticAura",
-          "effect": "CommanderAura",
-          "params": {
-            "scope": "attacking",
-            "unitType": "Creature",
-            "bonus": {
-              "psionic": 1,
-              "physical": 1
-            }
-          }
-        }
-      ],
-      "text": "All Attacking Creatures get +1 Psionic and +1 Physical.",
-      "implementation": "While in play and not trapped, every attacking Creature its owner controls (including itself) gets the bonus. Once per qualifying unit in a Stack; multiple Commanders add up.",
-      "art": "cards/BU_SC",
-      "artSource": "09_Siana Creature Commander Card.psd",
-      "printed": {
-        "cost": {
-          "G": 0,
-          "B": 2,
-          "R": 2,
-          "P": 0,
-          "W": 2
-        },
-        "stats": {
-          "cyber": 0,
-          "psionic": 4,
-          "physical": 4
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "BU_HB",
-      "name": "Hydra Bot",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Robot",
-      "isCommander": false,
-      "cost": {
-        "G": 1,
-        "B": 0,
-        "R": 0,
-        "P": 1,
-        "W": 1
-      },
-      "stats": {
-        "cyber": 3,
-        "psionic": 0,
-        "physical": 2
-      },
-      "effects": [],
-      "text": "",
-      "art": "cards/BU_HB",
-      "artSource": "25_Hydra Bot.psd",
-      "printed": {
-        "cost": {
-          "G": 1,
-          "B": 0,
-          "R": 0,
-          "P": 1,
-          "W": 1
-        },
-        "stats": {
-          "cyber": 3,
-          "psionic": 0,
-          "physical": 2
-        },
-        "hasRulesText": false
-      },
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "BU_LQ",
-      "name": "Loquidor Stalker",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Robot",
-      "isCommander": false,
-      "cost": {
-        "G": 1,
-        "B": 0,
-        "R": 0,
-        "P": 2,
-        "W": 0
-      },
-      "stats": {
-        "cyber": 1,
-        "psionic": 0,
-        "physical": 3
-      },
-      "effects": [],
-      "text": "",
-      "art": "cards/BU_LQ",
-      "artSource": "24_Laquidor Stalker.psd",
-      "printed": {
-        "cost": {
-          "G": 1,
-          "B": 0,
-          "R": 0,
-          "P": 2,
-          "W": 0
-        },
-        "stats": {
-          "cyber": 1,
-          "psionic": 0,
-          "physical": 3
-        },
-        "hasRulesText": false
-      },
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "BU_TB",
-      "name": "Therabot Seeker",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Robot",
-      "isCommander": false,
-      "cost": {
-        "G": 1,
-        "B": 0,
-        "R": 0,
-        "P": 1,
-        "W": 0
-      },
-      "stats": {
-        "cyber": "X",
-        "psionic": 0,
-        "physical": 1
-      },
-      "effects": [
-        {
-          "trigger": "RollX",
-          "effect": "RollX",
-          "params": {
-            "die": "red",
-            "stat": "cyber"
-          }
-        }
-      ],
-      "text": "Roll red die. Result is X for Turn.",
-      "art": "cards/BU_TB",
-      "artSource": "22_Therabot.psd",
-      "printed": {
-        "cost": {
-          "G": 1,
-          "B": 0,
-          "R": 0,
-          "P": 1,
-          "W": 0
-        },
-        "stats": {
-          "cyber": "X",
-          "psionic": 0,
-          "physical": 1
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "BU_DC",
-      "name": "Davileam Commander",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Robot",
-      "isCommander": true,
-      "cost": {
-        "G": 2,
-        "B": 0,
-        "R": 0,
-        "P": 2,
-        "W": 2
-      },
-      "stats": {
-        "cyber": 4,
-        "psionic": 0,
-        "physical": 4
-      },
-      "effects": [
-        {
-          "trigger": "StaticAura",
-          "effect": "CommanderAura",
-          "params": {
-            "scope": "attacking",
-            "unitType": "Robot",
-            "bonus": {
-              "cyber": 1,
-              "physical": 1
-            }
-          }
-        }
-      ],
-      "text": "All Attacking Robots get +1 Cyber and +1 Physical.",
-      "implementation": "As Siana Commander, for Robots.",
-      "art": "cards/BU_DC",
-      "artSource": "28_Daviliam Robot Commander.psd",
-      "printed": {
-        "cost": {
-          "G": 2,
-          "B": 0,
-          "R": 0,
-          "P": 2,
-          "W": 2
-        },
-        "stats": {
-          "cyber": 4,
-          "psionic": 0,
-          "physical": 4
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "BU_BM",
-      "name": "Blade Master",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Cyborg",
-      "isCommander": false,
-      "cost": {
-        "G": 2,
-        "B": 1,
-        "R": 1,
-        "P": 1,
-        "W": 0
-      },
-      "stats": {
-        "cyber": 2,
-        "psionic": 2,
-        "physical": 2
-      },
-      "effects": [
-        {
-          "trigger": "OnAttack",
-          "effect": "DamageLab",
-          "params": {
-            "amount": 1
-          }
-        },
-        {
-          "trigger": "OnDestroyEnemyUnit",
-          "effect": "DamageLab",
-          "params": {
-            "amount": 1
-          }
-        }
-      ],
-      "text": "When Blade Master attacks, the attacked player's Lab takes 1 damage. If Blade Master destroys a Battle Unit, that unit's owner's Lab takes 1 damage.",
-      "implementation": "OnAttack -> DamageLab 1 to the attacked player; OnDestroyEnemyUnit -> DamageLab 1 to the destroyed unit's owner. Both can happen in one battle.",
-      "art": "cards/BU_BM",
-      "artSource": "13_Blade Master.psd",
-      "printed": {
-        "cost": {
-          "G": 2,
-          "B": 1,
-          "R": 1,
-          "P": 1,
-          "W": 0
-        },
-        "stats": {
-          "cyber": 2,
-          "psionic": 2,
-          "physical": 2
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "partB; Change Request 1"
-    },
-    {
-      "id": "BU_LP",
-      "name": "Lodner Predator",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Cyborg",
-      "isCommander": false,
-      "cost": {
-        "G": 1,
-        "B": 1,
-        "R": 1,
-        "P": 1,
-        "W": 3
-      },
-      "stats": {
-        "cyber": 2,
-        "psionic": 3,
-        "physical": 2
-      },
-      "effects": [
-        {
-          "trigger": "OnAttack",
-          "effect": "OpponentDestroysCU",
-          "params": {}
-        }
-      ],
-      "text": "When Lodner Predator attacks, the attacked player destroys one of their Creation Units of their choice.",
-      "implementation": "OnAttack -> OpponentDestroysCU: the attacked player chooses one of their Creation Units (ready or depleted) and destroys it.",
-      "art": "cards/BU_LP",
-      "artSource": "14_Lodner Predator.psd",
-      "printed": {
-        "cost": {
-          "G": 1,
-          "B": 1,
-          "R": 1,
-          "P": 1,
-          "W": 1
-        },
-        "stats": {
-          "cyber": 2,
-          "psionic": 3,
-          "physical": 2
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "partB; Change Request 1"
-    },
-    {
-      "id": "BU_ZM",
-      "name": "Zomber Mercenary",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Cyborg",
-      "isCommander": false,
-      "cost": {
-        "G": 1,
-        "B": 1,
-        "R": 1,
-        "P": 1,
-        "W": 0
-      },
-      "stats": {
-        "cyber": 1,
-        "psionic": "X",
-        "physical": 2
-      },
-      "effects": [
-        {
-          "trigger": "RollX",
-          "effect": "RollX",
-          "params": {
-            "die": "red",
-            "stat": "psionic"
-          }
-        }
-      ],
-      "text": "Roll red die. Result is X for Turn.",
-      "art": "cards/BU_ZM",
-      "artSource": "11_Zomber Mercenary.psd",
-      "printed": {
-        "cost": {
-          "G": 1,
-          "B": 1,
-          "R": 1,
-          "P": 1,
-          "W": 0
-        },
-        "stats": {
-          "cyber": 1,
-          "psionic": "X",
-          "physical": 2
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "EQ_CO",
-      "name": "Cyber Onslaught",
-      "deck": "battle",
-      "cardType": "Equipment",
-      "cost": {
-        "G": 1,
-        "B": 0,
-        "R": 0,
-        "P": 1,
-        "W": 0
-      },
-      "stats": {
-        "cyber": 1,
-        "psionic": 0,
-        "physical": 0
-      },
-      "equip": {
-        "ability": "cyber",
-        "bonus": 1,
-        "allowed": [
-          "Robot",
-          "Cyborg"
-        ]
-      },
-      "effects": [],
-      "text": "+1 Cyber for Robots or Cyborgs",
-      "art": "cards/EQ_CO",
-      "artSource": "35_Cyber Onslaught.psd",
-      "printed": {
-        "cost": {
-          "G": 1,
-          "B": 0,
-          "R": 0,
-          "P": 1,
-          "W": 0
-        },
-        "stats": {
-          "cyber": 1,
-          "psionic": 0,
-          "physical": 0
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "EQ_VCS",
-      "name": "Vegian Cyber Shield",
-      "deck": "battle",
-      "cardType": "Equipment",
-      "cost": {
-        "G": 1,
-        "B": 0,
-        "R": 0,
-        "P": 1,
-        "W": 1
-      },
-      "stats": {
-        "cyber": 2,
-        "psionic": 0,
-        "physical": 0
-      },
-      "equip": {
-        "ability": "cyber",
-        "bonus": 2,
-        "allowed": [
-          "Robot",
-          "Cyborg"
-        ]
-      },
-      "effects": [],
-      "text": "+2 for Robots or Cyborgs",
-      "art": "cards/EQ_VCS",
-      "artSource": "37_Veqian Cyber Defense.psd",
-      "printed": {
-        "cost": {
-          "G": 1,
-          "B": 0,
-          "R": 0,
-          "P": 1,
-          "W": 1
-        },
-        "stats": {
-          "cyber": 2,
-          "psionic": 0,
-          "physical": 0
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "EQ_PB",
-      "name": "Psi Bolster",
-      "deck": "battle",
-      "cardType": "Equipment",
-      "cost": {
-        "G": 0,
-        "B": 1,
-        "R": 1,
-        "P": 0,
-        "W": 0
-      },
-      "stats": {
-        "cyber": 0,
-        "psionic": 1,
-        "physical": 0
-      },
-      "equip": {
-        "ability": "psionic",
-        "bonus": 1,
-        "allowed": [
-          "Creature",
-          "Cyborg"
-        ]
-      },
-      "effects": [],
-      "text": "+1 Psionic for Creatures or Cyborgs",
-      "art": "cards/EQ_PB",
-      "artSource": "33_Psionic Bolster.psd",
-      "printed": {
-        "cost": {
-          "G": 0,
-          "B": 1,
-          "R": 1,
-          "P": 0,
-          "W": 0
-        },
-        "stats": {
-          "cyber": 0,
-          "psionic": 1,
-          "physical": 0
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "EQ_MS",
-      "name": "Mental Shield",
-      "deck": "battle",
-      "cardType": "Equipment",
-      "cost": {
-        "G": 0,
-        "B": 1,
-        "R": 0,
-        "P": 1,
-        "W": 1
-      },
-      "stats": {
-        "cyber": 0,
-        "psionic": 2,
-        "physical": 0
-      },
-      "equip": {
-        "ability": "psionic",
-        "bonus": 2,
-        "allowed": [
-          "Creature",
-          "Cyborg"
-        ]
-      },
-      "effects": [],
-      "text": "+2 for Creatures or Cyborgs",
-      "art": "cards/EQ_MS",
-      "artSource": "36_Mental Shield.psd",
-      "printed": {
-        "cost": {
-          "G": 0,
-          "B": 1,
-          "R": 0,
-          "P": 1,
-          "W": 1
-        },
-        "stats": {
-          "cyber": 0,
-          "psionic": 2,
-          "physical": 0
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "EQ_PA",
-      "name": "Physical Augmentation",
-      "deck": "battle",
-      "cardType": "Equipment",
-      "cost": {
-        "G": 0,
-        "B": 1,
-        "R": 1,
-        "P": 0,
-        "W": 0
-      },
-      "stats": {
-        "cyber": 0,
-        "psionic": 0,
-        "physical": 1
-      },
-      "equip": {
-        "ability": "physical",
-        "bonus": 1,
-        "allowed": [
-          "Creature",
-          "Robot",
-          "Cyborg"
-        ]
-      },
-      "effects": [],
-      "text": "Add +1 to Physical",
-      "art": "cards/EQ_PA",
-      "artSource": "34_Physical Augmentation.psd",
-      "printed": {
-        "cost": {
-          "G": 0,
-          "B": 1,
-          "R": 1,
-          "P": 0,
-          "W": 0
-        },
-        "stats": {
-          "cyber": 0,
-          "psionic": 0,
-          "physical": 1
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "EQ_KA",
-      "name": "Kranthard Armour",
-      "deck": "battle",
-      "cardType": "Equipment",
-      "cost": {
-        "G": 0,
-        "B": 0,
-        "R": 1,
-        "P": 1,
-        "W": 1
-      },
-      "stats": {
-        "cyber": 0,
-        "psionic": 0,
-        "physical": 2
-      },
-      "equip": {
-        "ability": "physical",
-        "bonus": 2,
-        "allowed": [
-          "Creature",
-          "Robot",
-          "Cyborg"
-        ]
-      },
-      "effects": [],
-      "text": "+2 for any Battle Unit",
-      "art": "cards/EQ_KA",
-      "artSource": "38_Kranthard Armour.psd",
-      "printed": {
-        "cost": {
-          "G": 0,
-          "B": 0,
-          "R": 1,
-          "P": 1,
-          "W": 1
-        },
-        "stats": {
-          "cyber": 0,
-          "psionic": 0,
-          "physical": 2
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "PW_CR",
-      "name": "Creature Regenerate",
-      "deck": "battle",
-      "cardType": "Power",
-      "cost": {
-        "G": 0,
-        "B": 1,
-        "R": 1,
-        "P": 0,
-        "W": 2
-      },
-      "effects": [
-        {
-          "trigger": "OnPlay",
-          "effect": "ReviveToLab",
-          "params": {
-            "filter": {
-              "cardType": "BattleUnit",
-              "unitType": [
-                "Creature",
-                "Cyborg"
-              ]
-            },
-            "mods": {
-              "Creature": {
-                "physical": 1,
-                "psionic": -1
-              },
-              "Cyborg": {
-                "physical": 2,
-                "cyber": -1,
-                "psionic": -1
-              }
-            }
-          }
-        }
-      ],
-      "text": "Return a destroyed Creature or Cyborg from your discard pile to play. A Creature returns with +1 Physical and -1 Psionic; a Cyborg with +2 Physical, -1 Cyber and -1 Psionic.",
-      "implementation": "ReviveToLab: choose a matching unit in your discard pile; it enters your Lab ready, with lasting modifiers by unit type (cleared if it leaves play).",
-      "art": "cards/PW_CR",
-      "artSource": "43_Being Regenerate.psd",
-      "printed": {
-        "cost": {
-          "G": 0,
-          "B": 1,
-          "R": 1,
-          "P": 0,
-          "W": 1
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "partB; Change Request 1"
-    },
-    {
-      "id": "PW_EH",
-      "name": "Equipment Hunter",
-      "deck": "battle",
-      "cardType": "Power",
-      "cost": {
-        "G": 0,
-        "B": 0,
-        "R": 0,
-        "P": 0,
-        "W": 1
-      },
-      "effects": [
-        {
-          "trigger": "OnPlay",
-          "effect": "SearchDeck",
-          "params": {
-            "deck": "battle",
-            "filter": {
-              "cardType": "Equipment"
-            }
-          }
-        }
-      ],
-      "text": "Search Deck for Equipment card. Place in Hand. Shuffle Deck. Discard Equipment Hunter.",
-      "implementation": "Search your Battle Deck for an Equipment card of your choice; put it in hand; shuffle (shuffle even if none found).",
-      "art": "cards/PW_EH",
-      "artSource": "39_Equipment Hunter.psd",
-      "printed": {
-        "cost": {
-          "G": 0,
-          "B": 0,
-          "R": 0,
-          "P": 0,
-          "W": 1
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "PW_EM",
-      "name": "Equipment Mechanic",
-      "deck": "battle",
-      "cardType": "Power",
-      "cost": {
-        "G": 0,
-        "B": 0,
-        "R": 0,
-        "P": 0,
-        "W": 0,
-        "A": 1
-      },
-      "effects": [
-        {
-          "trigger": "OnPlay",
-          "effect": "ReturnFromDiscard",
-          "params": {
-            "filter": {
-              "cardType": "Equipment"
-            }
-          }
-        }
-      ],
-      "text": "Pay any 1. Place one destroyed Equipment card back into your hand. Discard Equipment Mechanic.",
-      "implementation": "Choose an Equipment card from your discard pile; put it into your hand. Not playable if none.",
-      "art": "cards/PW_EM",
-      "artSource": "42_Equipment Mechanic.psd",
-      "printed": {
-        "cost": {
-          "G": 0,
-          "B": 0,
-          "R": 0,
-          "P": 0,
-          "W": 1
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "partB; Change Request 1"
-    },
-    {
-      "id": "PW_HEP",
-      "name": "High-Energy Pulse",
-      "deck": "battle",
-      "cardType": "Power",
-      "cost": {
-        "G": 1,
-        "B": 0,
-        "R": 0,
-        "P": 1,
-        "W": 1
-      },
-      "effects": [
-        {
-          "trigger": "OnPlay",
-          "effect": "DisableUnits",
-          "params": {
-            "filter": {
-              "hasAbility": "cyber"
-            }
-          }
-        }
-      ],
-      "text": "ALL Units with Digital Abilities cannot Attack or Defend for Turn. Discard.",
-      "implementation": "Until end of turn, every Battle Unit (all players) with Cyber >= 1 or X Cyber cannot attack or defend. In Battle step 3 such units are removed from the battle. A stack is affected if either unit qualifies.",
-      "art": "cards/PW_HEP",
-      "artSource": "46_High Energy Pulse.psd",
-      "printed": {
-        "cost": {
-          "G": 1,
-          "B": 0,
-          "R": 0,
-          "P": 1,
-          "W": 1
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "TR_GSF",
-      "name": "Grankor Stasis Field",
-      "deck": "battle",
-      "cardType": "Trap",
-      "cost": {
-        "G": 0,
-        "B": 0,
-        "R": 0,
-        "P": 0,
-        "W": 1
-      },
-      "effects": [
-        {
-          "trigger": "OnPlay",
-          "effect": "TrapUnit",
-          "params": {
-            "target": "opposingUnit"
-          }
-        },
-        {
-          "trigger": "TrapEscapeCheck",
-          "effect": "PhysicalPlusRoll",
-          "params": {
-            "die": "red",
-            "threshold": 5
-          }
-        }
-      ],
-      "text": "TRAP BATTLE UNIT. Cannot Engage in Battle. At end of Player's every Turn, Roll Red Die. Battle Unit Freed if Physical Strength + Red Roll > 5.",
-      "implementation": "Q&A #7: an instant — playable on any opposing unit at any time. Escape test once per turn in the trapped unit owner's Cleanup: Physical (base + equipment; X/modifiers not applied, X counts as 0) + red die numeric value > 5 frees it; freed unit returns depleted.",
-      "art": "cards/TR_GSF",
-      "artSource": "41_Grankor Statsis Field.psd",
-      "printed": {
-        "cost": {
-          "G": 0,
-          "B": 0,
-          "R": 0,
-          "P": 0,
-          "W": 1
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "CU_DS",
-      "name": "Digital Splicing",
-      "deck": "resource",
-      "cardType": "CreationUnit",
-      "cuType": "G",
-      "effects": [],
-      "text": "",
-      "art": "cards/CU_DS",
-      "artSource": "31_Digital Splicing Creation Unit.psd",
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "CU_NG",
-      "name": "Neurogenesis",
-      "deck": "resource",
-      "cardType": "CreationUnit",
-      "cuType": "B",
-      "effects": [],
-      "text": "",
-      "art": "cards/CU_NG",
-      "artSource": "29_Neurogenesis Creation Unit.psd",
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "CU_BA",
-      "name": "Bio-Acceleration",
-      "deck": "resource",
-      "cardType": "CreationUnit",
-      "cuType": "R",
-      "effects": [],
-      "text": "",
-      "art": "cards/CU_BA",
-      "artSource": "30_Bioacceleration Creation Unit.psd",
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "CU_MA",
-      "name": "Material Animation",
-      "deck": "resource",
-      "cardType": "CreationUnit",
-      "cuType": "P",
-      "effects": [],
-      "text": "",
-      "art": "cards/CU_MA",
-      "artSource": "32_Material Animation Creation Unit.psd",
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "RS_CO",
-      "name": "Creation Oracle",
-      "deck": "resource",
-      "cardType": "Resource",
-      "effects": [
-        {
-          "trigger": "OnPlay",
-          "effect": "CreationOracle",
-          "params": {}
-        }
-      ],
-      "text": "Search Resource Deck for Creation Unit of Your Choice. Place in Lab. Shuffle Deck.",
-      "implementation": "When drawn: keep in hand for a later Creation phase, or discard it now to search. Using it from hand later does the same at no cost.",
-      "art": "cards/RS_CO",
-      "artSource": "40_Creation Oracle as Creation Unit.psd",
-      "enabled": true,
-      "origin": "partB"
-    },
-    {
-      "id": "BU_WR",
-      "name": "Warend Reaper",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Creature",
-      "isCommander": false,
-      "cost": {
-        "G": 0,
-        "B": 1,
-        "R": 1,
-        "P": 0,
-        "W": 1
-      },
-      "stats": {
-        "cyber": 0,
-        "psionic": 1,
-        "physical": 4
-      },
-      "effects": [
-        {
-          "trigger": "ModifyRoll",
-          "effect": "ModifyRollTable",
-          "params": {
-            "die": "red",
-            "stat": "physical",
-            "optional": true,
-            "bySide": {
-              "1": -1,
-              "2": -1,
-              "3": 1,
-              "4": 1,
-              "5": 0,
-              "6": 1
-            }
-          }
-        }
-      ],
-      "text": "May Roll Red Die: 3, 4 or [Obliterate] = +1, 1 or 2 = -1 Physical",
-      "implementation": "Side 5 is not mentioned on the card: no change.",
-      "art": "cards/BU_WR",
-      "artSource": "07_Warend Reaper.psd",
-      "printed": {
-        "cost": {
-          "G": 0,
-          "B": 1,
-          "R": 1,
-          "P": 0,
-          "W": 1
-        },
-        "stats": {
-          "cyber": 0,
-          "psionic": 1,
-          "physical": 4
-        },
-        "hasRulesText": true
-      },
-      "enabled": false,
-      "origin": "ruleBook+art"
-    },
-    {
-      "id": "BU_PI",
-      "name": "Pencar Inferno",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Robot",
-      "isCommander": false,
-      "cost": {
-        "G": 1,
-        "B": 0,
-        "R": 0,
-        "P": 1,
-        "W": 0
-      },
-      "stats": {
-        "cyber": 1,
-        "psionic": 0,
-        "physical": "X"
-      },
-      "effects": [
-        {
-          "trigger": "RollX",
-          "effect": "RollX",
-          "params": {
-            "die": "red",
-            "stat": "physical"
-          }
-        }
-      ],
-      "text": "Roll Red die. Result is X for Turn",
-      "art": "cards/BU_PI",
-      "artSource": "21_Pencar Inferno.psd",
-      "printed": {
-        "cost": {
-          "G": 1,
-          "B": 0,
-          "R": 0,
-          "P": 1,
-          "W": 0
-        },
-        "stats": {
-          "cyber": 1,
-          "psionic": 0,
-          "physical": "X"
-        },
-        "hasRulesText": true
-      },
-      "enabled": false,
-      "origin": "ruleBook+art"
-    },
-    {
-      "id": "BU_AD",
-      "name": "Acorbeac Destroyer",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Cyborg",
-      "isCommander": false,
-      "cost": {
-        "G": 1,
-        "B": 1,
-        "R": 1,
-        "P": 1,
-        "W": 0
-      },
-      "stats": {
-        "cyber": 1,
-        "psionic": 2,
-        "physical": 3
-      },
-      "effects": [
-        {
-          "trigger": "OnPsionicWin",
-          "effect": "TutorToHand",
-          "params": {
-            "deck": "battle",
-            "optional": true,
-            "filter": {
-              "cardType": "BattleUnit",
-              "unitType": [
-                "Cyborg"
-              ]
-            }
-          }
-        }
-      ],
-      "text": "If Psionic win, you may search your Battle Deck for a Cyborg, reveal it and put it into your hand. Shuffle.",
-      "implementation": "TutorToHand: optional search; the chosen card is revealed and put into hand, then the deck is shuffled.",
-      "art": "cards/BU_AD",
-      "artSource": "12_Acorbeac Destroyer.psd",
-      "printed": {
-        "cost": {
-          "G": 1,
-          "B": 1,
-          "R": 1,
-          "P": 1,
-          "W": 0
-        },
-        "stats": {
-          "cyber": 1,
-          "psionic": 2,
-          "physical": 3
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "ruleBook+art; Change Request 1"
-    },
-    {
-      "id": "BU_XP",
-      "name": "Xardy Piercer",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Robot",
-      "isCommander": false,
-      "cost": {
-        "G": 1,
-        "B": 0,
-        "R": 0,
-        "P": 1,
-        "W": 1
-      },
-      "stats": {
-        "cyber": 1,
-        "psionic": 0,
-        "physical": 4
-      },
-      "effects": [
-        {
-          "trigger": "ModifyRoll",
-          "effect": "ModifyRollTable",
-          "params": {
-            "die": "red",
-            "stat": "physical",
-            "optional": true,
-            "bySide": {
-              "1": -1,
-              "2": -1,
-              "3": 1,
-              "4": 1,
-              "5": 0,
-              "6": 1
-            }
-          }
-        }
-      ],
-      "text": "May Roll Red Die: 3, 4 or [Obliterate] = +1, 1 or 2 = -1 Physical",
-      "implementation": "The spec's 'Xaboy Piercer' (demo code: cost G1 P1). Printed card is 'Xardy Piercer' (file '26_Xardy Beast.psd') with cost G1 P1 W1 — printed card used.",
-      "art": "cards/BU_XP",
-      "artSource": "26_Xardy Beast.psd",
-      "printed": {
-        "cost": {
-          "G": 1,
-          "B": 0,
-          "R": 0,
-          "P": 1,
-          "W": 1
-        },
-        "stats": {
-          "cyber": 1,
-          "psionic": 0,
-          "physical": 4
-        },
-        "hasRulesText": true
-      },
-      "enabled": false,
-      "origin": "ruleBook+art"
-    },
-    {
-      "id": "BU_GS",
-      "name": "Garilian Seer",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Creature",
-      "isCommander": false,
-      "cost": {
-        "G": 0,
-        "B": 1,
-        "R": 1,
-        "P": 0,
-        "W": 0
-      },
-      "stats": {
-        "cyber": 0,
-        "psionic": "X",
-        "physical": 1
-      },
-      "effects": [
-        {
-          "trigger": "RollX",
-          "effect": "RollX",
-          "params": {
-            "die": "red",
-            "stat": "psionic"
-          }
-        }
-      ],
-      "text": "Roll Red die. Result is X for Turn",
-      "art": "cards/BU_GS",
-      "artSource": "03_Garilian Seer.psd",
-      "printed": {
-        "cost": {
-          "G": 0,
-          "B": 1,
-          "R": 1,
-          "P": 0,
-          "W": 0
-        },
-        "stats": {
-          "cyber": 0,
-          "psionic": "X",
-          "physical": 1
-        },
-        "hasRulesText": true
-      },
-      "enabled": false,
-      "origin": "art"
-    },
-    {
-      "id": "BU_FB",
-      "name": "Fengar Berserker",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Creature",
-      "isCommander": false,
-      "cost": {
-        "G": 0,
-        "B": 1,
-        "R": 2,
-        "P": 0,
-        "W": 1
-      },
-      "stats": {
-        "cyber": 0,
-        "psionic": "X",
-        "physical": 4
-      },
-      "effects": [
-        {
-          "trigger": "RollX",
-          "effect": "RollX",
-          "params": {
-            "die": "red",
-            "stat": "psionic"
-          }
-        }
-      ],
-      "text": "Roll Red Die to determine X",
-      "art": "cards/BU_FB",
-      "artSource": "08_Fengar Beserker.psd",
-      "printed": {
-        "cost": {
-          "G": 0,
-          "B": 1,
-          "R": 2,
-          "P": 0,
-          "W": 1
-        },
-        "stats": {
-          "cyber": 0,
-          "psionic": "X",
-          "physical": 4
-        },
-        "hasRulesText": true
-      },
-      "enabled": false,
-      "origin": "art"
-    },
-    {
-      "id": "BU_TI",
-      "name": "Third I",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Cyborg",
-      "isCommander": false,
-      "cost": {
-        "G": 1,
-        "B": 2,
-        "R": 1,
-        "P": 1,
-        "W": 1
-      },
-      "stats": {
-        "cyber": 2,
-        "psionic": 4,
-        "physical": 2
-      },
-      "effects": [
-        {
-          "trigger": "OnPsionicWin",
-          "effect": "TutorToHand",
-          "params": {
-            "deck": "battle",
-            "optional": true,
-            "filter": {
-              "cardType": "BattleUnit",
-              "unitType": [
-                "Creature"
-              ]
-            }
-          }
-        }
-      ],
-      "text": "If Psionic win, you may search your Battle Deck for a Creature, reveal it and put it into your hand. Shuffle.",
-      "art": "cards/BU_TI",
-      "artSource": "18_Third I.psd",
-      "printed": {
-        "cost": {
-          "G": 1,
-          "B": 2,
-          "R": 1,
-          "P": 1,
-          "W": 1
-        },
-        "stats": {
-          "cyber": 2,
-          "psionic": 4,
-          "physical": 2
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "art; Change Request 1",
-      "implementation": "TutorToHand: optional search; the chosen card is revealed and put into hand, then the deck is shuffled."
-    },
-    {
-      "id": "BU_UO",
-      "name": "Urilian Overlord",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Cyborg",
-      "isCommander": false,
-      "cost": {
-        "G": 1,
-        "B": 1,
-        "R": 1,
-        "P": 1,
-        "W": 0
-      },
-      "stats": {
-        "cyber": "X",
-        "psionic": 2,
-        "physical": 1
-      },
-      "effects": [
-        {
-          "trigger": "RollX",
-          "effect": "RollX",
-          "params": {
-            "die": "red",
-            "stat": "cyber"
-          }
-        }
-      ],
-      "text": "Roll Red die. Result is X for Turn",
-      "art": "cards/BU_UO",
-      "artSource": "10_Urilian Overlord.psd",
-      "printed": {
-        "cost": {
-          "G": 1,
-          "B": 1,
-          "R": 1,
-          "P": 1,
-          "W": 0
-        },
-        "stats": {
-          "cyber": "X",
-          "psionic": 2,
-          "physical": 1
-        },
-        "hasRulesText": true
-      },
-      "enabled": false,
-      "origin": "art"
-    },
-    {
-      "id": "BU_BC",
-      "name": "Bellarn Cyborg",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Cyborg",
-      "isCommander": false,
-      "cost": {
-        "G": 1,
-        "B": 1,
-        "R": 1,
-        "P": 1,
-        "W": 1
-      },
-      "stats": {
-        "cyber": 2,
-        "psionic": 2,
-        "physical": 3
-      },
-      "effects": [
-        {
-          "trigger": "ModifyRoll",
-          "effect": "ModifyRollTable",
-          "params": {
-            "die": "red",
-            "stat": "physical",
-            "optional": true,
-            "bySide": {
-              "1": -1,
-              "2": -1,
-              "3": 1,
-              "4": 1,
-              "5": 0,
-              "6": 1
-            }
-          }
-        }
-      ],
-      "text": "May Roll Red Die. 3, 4 or [Obliterate] = +1, 1 or 2 = -1 Physical",
-      "art": "cards/BU_BC",
-      "artSource": "15_Bellarn Cyborg.psd",
-      "printed": {
-        "cost": {
-          "G": 1,
-          "B": 1,
-          "R": 1,
-          "P": 1,
-          "W": 1
-        },
-        "stats": {
-          "cyber": 2,
-          "psionic": 2,
-          "physical": 3
-        },
-        "hasRulesText": true
-      },
-      "enabled": false,
-      "origin": "art"
-    },
-    {
-      "id": "BU_KC",
-      "name": "Kyler Cyborg",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Cyborg",
-      "isCommander": false,
-      "cost": {
-        "G": 1,
-        "B": 1,
-        "R": 2,
-        "P": 1,
-        "W": 1
-      },
-      "stats": {
-        "cyber": 2,
-        "psionic": 3,
-        "physical": 3
-      },
-      "effects": [
-        {
-          "trigger": "OnPhysicalWin",
-          "effect": "TutorToHand",
-          "params": {
-            "deck": "battle",
-            "optional": true,
-            "filter": {
-              "cardType": "BattleUnit",
-              "unitType": [
-                "Cyborg"
-              ]
-            }
-          }
-        }
-      ],
-      "text": "If Physical win, you may search your Battle Deck for a Cyborg, reveal it and put it into your hand. Shuffle.",
-      "art": "cards/BU_KC",
-      "artSource": "16_Kyler Cyborg.psd",
-      "printed": {
-        "cost": {
-          "G": 1,
-          "B": 1,
-          "R": 2,
-          "P": 1,
-          "W": 1
-        },
-        "stats": {
-          "cyber": 2,
-          "psionic": 3,
-          "physical": 3
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "art; Change Request 1",
-      "implementation": "TutorToHand: optional search; the chosen card is revealed and put into hand, then the deck is shuffled."
-    },
-    {
-      "id": "BU_JP",
-      "name": "Javarow Protector",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Cyborg",
-      "isCommander": false,
-      "cost": {
-        "G": 2,
-        "B": 1,
-        "R": 1,
-        "P": 1,
-        "W": 1
-      },
-      "stats": {
-        "cyber": 3,
-        "psionic": 2,
-        "physical": 3
-      },
-      "effects": [
-        {
-          "trigger": "OnCyberWin",
-          "effect": "TutorToHand",
-          "params": {
-            "deck": "battle",
-            "optional": true,
-            "filter": {
-              "cardType": "BattleUnit",
-              "unitType": [
-                "Robot"
-              ]
-            }
-          }
-        }
-      ],
-      "text": "If Cyber win, you may search your Battle Deck for a Robot, reveal it and put it into your hand. Shuffle.",
-      "art": "cards/BU_JP",
-      "artSource": "17_Javarow Protector.psd",
-      "printed": {
-        "cost": {
-          "G": 2,
-          "B": 1,
-          "R": 1,
-          "P": 1,
-          "W": 1
-        },
-        "stats": {
-          "cyber": 3,
-          "psionic": 2,
-          "physical": 3
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "art; Change Request 1",
-      "implementation": "TutorToHand: optional search; the chosen card is revealed and put into hand, then the deck is shuffled."
-    },
-    {
-      "id": "BU_VC",
-      "name": "Veeda Commander",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Cyborg",
-      "isCommander": true,
-      "cost": {
-        "G": 2,
-        "B": 2,
-        "R": 1,
-        "P": 1,
-        "W": 2
-      },
-      "stats": {
-        "cyber": 3,
-        "psionic": 3,
-        "physical": 4
-      },
-      "effects": [
-        {
-          "trigger": "StaticAura",
-          "effect": "CommanderAura",
-          "params": {
-            "scope": "attacking",
-            "unitType": "Cyborg",
-            "bonus": {
-              "cyber": 1,
-              "psionic": 1
-            }
-          }
-        }
-      ],
-      "text": "All Attacking Cyborgs get +1 Cyber and +1 Psionic",
-      "art": "cards/BU_VC",
-      "artSource": "19_Veeda Cyborg Commander.psd",
-      "printed": {
-        "cost": {
-          "G": 2,
-          "B": 2,
-          "R": 1,
-          "P": 1,
-          "W": 2
-        },
-        "stats": {
-          "cyber": 3,
-          "psionic": 3,
-          "physical": 4
-        },
-        "hasRulesText": true
-      },
-      "enabled": false,
-      "origin": "art"
-    },
-    {
-      "id": "BU_SS",
-      "name": "Stealth Skyfire",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Robot",
-      "isCommander": false,
-      "cost": {
-        "G": 1,
-        "B": 0,
-        "R": 0,
-        "P": 1,
-        "W": 0
-      },
-      "stats": {
-        "cyber": 2,
-        "psionic": 0,
-        "physical": 1
-      },
-      "effects": [],
-      "text": "",
-      "art": "cards/BU_SS",
-      "artSource": "20_Stealth Skyfire.psd",
-      "printed": {
-        "cost": {
-          "G": 1,
-          "B": 0,
-          "R": 0,
-          "P": 1,
-          "W": 0
-        },
-        "stats": {
-          "cyber": 2,
-          "psionic": 0,
-          "physical": 1
-        },
-        "hasRulesText": false
-      },
-      "enabled": false,
-      "origin": "art"
-    },
-    {
-      "id": "BU_NA",
-      "name": "Nomis Analyzer",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Robot",
-      "isCommander": false,
-      "cost": {
-        "G": 2,
-        "B": 0,
-        "R": 0,
-        "P": 1,
-        "W": 0
-      },
-      "stats": {
-        "cyber": 3,
-        "psionic": 0,
-        "physical": 1
-      },
-      "effects": [
-        {
-          "trigger": "OnCyberWin",
-          "effect": "DiscardPowerFromHand",
-          "params": {}
-        }
-      ],
-      "text": "With Cyber win, Opponent discards one Power card of their choice from hand.",
-      "art": "cards/BU_NA",
-      "artSource": "23_Nomis Analyzer.psd",
-      "printed": {
-        "cost": {
-          "G": 2,
-          "B": 0,
-          "R": 0,
-          "P": 1,
-          "W": 0
-        },
-        "stats": {
-          "cyber": 3,
-          "psionic": 0,
-          "physical": 1
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "art; Change Request 1",
-      "implementation": "DiscardPowerFromHand (see Jingwa Psi Avenger)."
-    },
-    {
-      "id": "BU_TG",
-      "name": "Tricapia Guardian",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Robot",
-      "isCommander": false,
-      "cost": {
-        "G": 1,
-        "B": 0,
-        "R": 0,
-        "P": 2,
-        "W": 1
-      },
-      "stats": {
-        "cyber": "X",
-        "psionic": 0,
-        "physical": 4
-      },
-      "effects": [
-        {
-          "trigger": "RollX",
-          "effect": "RollX",
-          "params": {
-            "die": "red",
-            "stat": "cyber"
-          }
-        }
-      ],
-      "text": "Roll Red Die to determine X",
-      "art": "cards/BU_TG",
-      "artSource": "27_Tricapia Guardian.psd",
-      "printed": {
-        "cost": {
-          "G": 1,
-          "B": 0,
-          "R": 0,
-          "P": 2,
-          "W": 1
-        },
-        "stats": {
-          "cyber": "X",
-          "psionic": 0,
-          "physical": 4
-        },
-        "hasRulesText": true
-      },
-      "enabled": false,
-      "origin": "art"
-    },
-    {
-      "id": "PW_RR",
-      "name": "Robo Refurb",
-      "deck": "battle",
-      "cardType": "Power",
-      "cost": {
-        "G": 1,
-        "B": 0,
-        "R": 0,
-        "P": 1,
-        "W": 2
-      },
-      "effects": [
-        {
-          "trigger": "OnPlay",
-          "effect": "ReviveToLab",
-          "params": {
-            "filter": {
-              "cardType": "BattleUnit",
-              "unitType": [
-                "Robot",
-                "Cyborg"
-              ]
-            },
-            "mods": {
-              "Robot": {
-                "physical": 1,
-                "cyber": -1
-              },
-              "Cyborg": {
-                "physical": 2,
-                "cyber": -1,
-                "psionic": -1
-              }
-            }
-          }
-        }
-      ],
-      "text": "Return a destroyed Robot or Cyborg from your discard pile to play. A Robot returns with +1 Physical and -1 Cyber; a Cyborg with +2 Physical, -1 Cyber and -1 Psionic.",
-      "implementation": "ReviveToLab (see Creature Regenerate).",
-      "art": "cards/PW_RR",
-      "artSource": "44_Robot Mechanic.psd",
-      "printed": {
-        "cost": {
-          "G": 1,
-          "B": 0,
-          "R": 0,
-          "P": 1,
-          "W": 1
-        },
-        "hasRulesText": true
-      },
-      "enabled": true,
-      "origin": "art; Change Request 1"
-    },
-    {
-      "id": "PW_MD",
-      "name": "Mental Disrupter",
-      "deck": "battle",
-      "cardType": "Power",
-      "cost": {
-        "G": 0,
-        "B": 1,
-        "R": 0,
-        "P": 1,
-        "W": 1
-      },
-      "effects": [
-        {
-          "trigger": "OnPlay",
-          "effect": "DisableUnits",
-          "params": {
-            "filter": {
-              "unitType": [
-                "Creature",
-                "Cyborg"
-              ]
-            }
-          }
-        }
-      ],
-      "text": "ALL Creatures and Cyborgs cannot Attack or Defend for Turn. Discard.",
-      "art": "cards/PW_MD",
-      "artSource": "45_Mental Disrupter.psd",
-      "printed": {
-        "cost": {
-          "G": 0,
-          "B": 1,
-          "R": 0,
-          "P": 1,
-          "W": 1
-        },
-        "hasRulesText": true
-      },
-      "enabled": false,
-      "origin": "art"
-    },
-    {
-      "id": "BU_PH",
-      "name": "Psi Hatchling",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Creature",
-      "isCommander": false,
-      "cost": {
-        "G": 0,
-        "B": 1,
-        "R": 0,
-        "P": 0,
-        "W": 0
-      },
-      "stats": {
-        "cyber": 0,
-        "psionic": 2,
-        "physical": 1
-      },
-      "effects": [],
-      "text": "",
-      "enabled": true,
-      "origin": "Change Request 1 (new card; no art yet - the client draws a generated face)"
-    },
-    {
-      "id": "BU_BB",
-      "name": "Bio Brute",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Creature",
-      "isCommander": false,
-      "cost": {
-        "G": 0,
-        "B": 0,
-        "R": 1,
-        "P": 0,
-        "W": 0
-      },
-      "stats": {
-        "cyber": 0,
-        "psionic": 0,
-        "physical": 3
-      },
-      "effects": [],
-      "text": "",
-      "enabled": true,
-      "origin": "Change Request 1 (new card; no art yet - the client draws a generated face)"
-    },
-    {
-      "id": "BU_SD",
-      "name": "Scout Drone",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Robot",
-      "isCommander": false,
-      "cost": {
-        "G": 1,
-        "B": 0,
-        "R": 0,
-        "P": 0,
-        "W": 0
-      },
-      "stats": {
-        "cyber": 2,
-        "psionic": 0,
-        "physical": 1
-      },
-      "effects": [],
-      "text": "",
-      "enabled": true,
-      "origin": "Change Request 1 (new card; no art yet - the client draws a generated face)"
-    },
-    {
-      "id": "BU_SH",
-      "name": "Scrap Hulk",
-      "deck": "battle",
-      "cardType": "BattleUnit",
-      "unitType": "Robot",
-      "isCommander": false,
-      "cost": {
-        "G": 0,
-        "B": 0,
-        "R": 0,
-        "P": 1,
-        "W": 0
-      },
-      "stats": {
-        "cyber": 0,
-        "psionic": 0,
-        "physical": 3
-      },
-      "effects": [],
-      "text": "",
-      "enabled": true,
-      "origin": "Change Request 1 (new card; no art yet - the client draws a generated face)"
-    },
-    {
-      "id": "RS_RF",
-      "name": "Resource Fortification",
-      "deck": "resource",
-      "cardType": "Resource",
-      "effects": [
-        {
-          "trigger": "Static",
-          "effect": "FortifyResource",
-          "params": {}
-        }
-      ],
-      "text": "Attach to one of your Creation Units in play. If this Creation Unit would be destroyed to pay for a Battle card, deplete it instead.",
-      "implementation": "Goes to hand when drawn; played free in your Creation phase onto one of your Creation Units (one per unit). When paying a destroy cost, fortified units are used first and depleted instead; it is discarded if its unit leaves play.",
-      "enabled": true,
-      "origin": "Change Request 1 (new card; no art yet - the client draws a generated face)"
-    },
-    {
-      "id": "PW_OS",
-      "name": "Overload Strike",
-      "deck": "battle",
-      "cardType": "Power",
-      "cost": {
-        "G": 0,
-        "B": 0,
-        "R": 0,
-        "P": 0,
-        "W": 1,
-        "choice": [
-          [
-            "R",
-            "P"
-          ]
-        ]
-      },
-      "effects": [
-        {
-          "trigger": "OnPlay",
-          "effect": "DealDamage",
-          "params": {
-            "amount": 3
-          }
-        }
-      ],
-      "text": "Pay 1 Bio-Acceleration or Material Animation, and destroy 1. Deal 3 damage to any target (a Battle Unit or a Lab).",
-      "implementation": "DealDamage: target any Battle Unit in play or any player's Lab. A unit dies if the damage is at least its Physical strength, otherwise its Physical drops by that much until the end of the turn.",
-      "enabled": true,
-      "origin": "Change Request 1 (new card; no art yet - the client draws a generated face)"
-    },
-    {
-      "id": "PW_BP",
-      "name": "Bio Pulse",
-      "deck": "battle",
-      "cardType": "Power",
-      "cost": {
-        "G": 0,
-        "B": 0,
-        "R": 1,
-        "P": 0,
-        "W": 1
-      },
-      "effects": [
-        {
-          "trigger": "OnPlay",
-          "effect": "DamageAll",
-          "params": {
-            "amount": 1,
-            "filter": {
-              "cardType": "BattleUnit",
-              "unitType": [
-                "Creature",
-                "Cyborg"
-              ]
-            },
-            "enemiesOnly": true
-          }
-        }
-      ],
-      "text": "Deal 1 damage to every enemy Creature and Cyborg in play.",
-      "enabled": true,
-      "origin": "Change Request 1 (new card; no art yet - the client draws a generated face)"
-    },
-    {
-      "id": "PW_SB",
-      "name": "Static Burst",
-      "deck": "battle",
-      "cardType": "Power",
-      "cost": {
-        "G": 0,
-        "B": 0,
-        "R": 0,
-        "P": 1,
-        "W": 1
-      },
-      "effects": [
-        {
-          "trigger": "OnPlay",
-          "effect": "DamageAll",
-          "params": {
-            "amount": 1,
-            "filter": {
-              "cardType": "BattleUnit",
-              "unitType": [
-                "Robot",
-                "Cyborg"
-              ]
-            },
-            "enemiesOnly": true
-          }
-        }
-      ],
-      "text": "Deal 1 damage to every enemy Robot and Cyborg in play.",
-      "enabled": true,
-      "origin": "Change Request 1 (new card; no art yet - the client draws a generated face)"
+     "trigger": "ModifyRoll",
+     "effect": "ModifyRollTable",
+     "params": {
+      "die": "red",
+      "stat": "physical",
+      "optional": true,
+      "bySide": {
+       "1": -1,
+       "2": 2,
+       "3": -1,
+       "4": 2,
+       "5": -1,
+       "6": 2
+      }
+     }
     }
-  ]
+   ],
+   "text": "Before combat dice, you may roll the red die as an ability roll: numeric even, +2 Physical; odd, -1 Physical. Until end of turn.",
+   "implementation": "v0.4: ModifyRoll → ModifyRollTable",
+   "art": "cards/BU_DSH",
+   "artSource": "01_Dark Shredder.psd",
+   "printed": {
+    "cost": {
+     "G": 0,
+     "B": 1,
+     "R": 1,
+     "P": 0,
+     "W": 0
+    },
+    "stats": {
+     "cyber": 0,
+     "psionic": 1,
+     "physical": 2
+    },
+    "hasRulesText": false
+   },
+   "enabled": true,
+   "origin": "partB",
+   "role": "Evolution",
+   "designNote": "Optional risk after blocks; a choice, not automatic random noise."
+  },
+  {
+   "id": "BU_JPA",
+   "name": "Jingwa Psi Avenger",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Creature",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 2,
+    "R": 1,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 3,
+    "physical": 1
+   },
+   "effects": [
+    {
+     "trigger": "OnBlocked",
+     "effect": "BlockedTax",
+     "params": {}
+    }
+   ],
+   "text": "When blocked, the defending player chooses: discard a Power card, or its defender loses 1 Physical until end of turn (minimum 1). If no Power card is available, choose the strength loss.",
+   "implementation": "v0.4: OnBlocked → BlockedTax",
+   "art": "cards/BU_JPA",
+   "artSource": "05_Jingwa Psi Avenger.psd",
+   "printed": {
+    "cost": {
+     "G": 0,
+     "B": 2,
+     "R": 1,
+     "P": 0,
+     "W": 0
+    },
+    "stats": {
+     "cyber": 0,
+     "psionic": 3,
+     "physical": 1
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "partB; Change Request 1",
+   "role": "Swarm / control",
+   "designNote": "Pressure both factions; defender can choose the less painful option."
+  },
+  {
+   "id": "BU_LS",
+   "name": "Marrow Parasite",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Creature",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 1,
+    "R": 2,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 3,
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "AfterEngagement",
+     "effect": "MarrowMutation",
+     "params": {}
+    }
+   ],
+   "text": "Mutation — After this unit or its Stack survives a blocked battle and destroys a Battle Unit under enemy control, compare that destroyed unit’s permanent strengths with this unit’s permanent strengths immediately before the battle. If its Physical was at least as high, gain +1 permanent Physical; otherwise, if its Psionic was higher, gain +1 permanent Psionic. For a destroyed Stack, choose one destroyed member.",
+   "keywords": [
+    "Mutation"
+   ],
+   "implementation": "v0.4: AfterEngagement → MarrowMutation",
+   "art": "cards/BU_LS",
+   "artSource": "06_Life Snatcher.psd",
+   "printed": {
+    "cost": {
+     "G": 0,
+     "B": 1,
+     "R": 1,
+     "P": 0,
+     "W": 1
+    },
+    "stats": {
+     "cyber": 0,
+     "psionic": 3,
+     "physical": 2
+    },
+    "hasRulesText": false
+   },
+   "enabled": true,
+   "origin": "partB",
+   "role": "Evolution",
+   "designNote": "Predation-driven adaptation: larger prey drives growth; small prey cannot endlessly farm Physical. One Mutation per engagement."
+  },
+  {
+   "id": "BU_PH",
+   "name": "Psi Hatchling",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Creature",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 1,
+    "R": 0,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 2,
+    "physical": 1
+   },
+   "effects": [],
+   "text": "",
+   "implementation": "v0.4: no ability",
+   "enabled": true,
+   "origin": "Change Request 1 (new card; no art yet - the client draws a generated face)",
+   "role": "Evolution / flexible",
+   "designNote": "Vanilla blue baseline, no additional ability."
+  },
+  {
+   "id": "BU_SA",
+   "name": "Shadow Assassin",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Creature",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 1,
+    "R": 1,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": "X",
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "RollX",
+     "effect": "RollX",
+     "params": {
+      "die": "red",
+      "stat": "psionic",
+      "rider": "lowPhysical"
+     }
+    }
+   ],
+   "text": "Psionic X. When its X ability roll resolves, if the numeric result is 1 or 2, gain +1 Physical until end of turn.",
+   "implementation": "v0.4: RollX → RollX",
+   "art": "cards/BU_SA",
+   "artSource": "02_Shadow Assassin.psd",
+   "printed": {
+    "cost": {
+     "G": 0,
+     "B": 1,
+     "R": 1,
+     "P": 0,
+     "W": 0
+    },
+    "stats": {
+     "cyber": 0,
+     "psionic": 1,
+     "physical": "X"
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "partB",
+   "role": "Evolution / mixed",
+   "designNote": "Low roll offers an alternate payoff; Lock-On has a real tradeoff."
+  },
+  {
+   "id": "BU_SC",
+   "name": "Siana Commander",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Creature",
+   "isCommander": true,
+   "cost": {
+    "G": 0,
+    "B": 2,
+    "R": 2,
+    "P": 0,
+    "W": 1
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 4,
+    "physical": 3
+   },
+   "effects": [
+    {
+     "trigger": "EndOfBattle",
+     "effect": "SianaMutation",
+     "params": {}
+    }
+   ],
+   "text": "Mutation — At the end of a Battle phase in which another Creature under your control was destroyed, choose one Creature under your control that survived a blocked engagement this phase. If it lost a Psionic battle, it gains +1 permanent Psionic; otherwise it gains +1 permanent Physical. Once per phase across your Siana Commanders.",
+   "keywords": [
+    "Mutation"
+   ],
+   "implementation": "v0.4: EndOfBattle → SianaMutation",
+   "art": "cards/BU_SC",
+   "artSource": "09_Siana Creature Commander Card.psd",
+   "printed": {
+    "cost": {
+     "G": 0,
+     "B": 2,
+     "R": 2,
+     "P": 0,
+     "W": 2
+    },
+    "stats": {
+     "cyber": 0,
+     "psionic": 4,
+     "physical": 4
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "partB",
+   "role": "Evolution / swarm",
+   "designNote": "Collective adaptation requires combat exposure; cannot evolve a creature that stays out of blocked battles."
+  },
+  {
+   "id": "BU_TS",
+   "name": "Trangarey Scythe",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Creature",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 1,
+    "R": 1,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 1,
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "AttackDeclared",
+     "effect": "WidthBonus",
+     "params": {
+      "others": 2
+     }
+    }
+   ],
+   "text": "When attacking, if you declared at least two other attacking units, this gains +1 Physical for that battle phase.",
+   "implementation": "v0.4: AttackDeclared → WidthBonus",
+   "art": "cards/BU_TS",
+   "artSource": "04_Trangarey Scythe.psd",
+   "printed": {
+    "cost": {
+     "G": 0,
+     "B": 1,
+     "R": 2,
+     "P": 0,
+     "W": 0
+    },
+    "stats": {
+     "cyber": 0,
+     "psionic": 1,
+     "physical": 3
+    },
+    "hasRulesText": false
+   },
+   "enabled": true,
+   "origin": "partB",
+   "role": "Swarm",
+   "designNote": "Attack wide or preserve bodies; requires real board investment."
+  },
+  {
+   "id": "BU_AD",
+   "name": "Acorbeac Destroyer",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Cyborg",
+   "isCommander": false,
+   "cost": {
+    "G": 1,
+    "B": 1,
+    "R": 0,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 1,
+    "psionic": 2,
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "Static",
+     "effect": "StatBonus",
+     "params": {
+      "stat": "cyber",
+      "bonus": 1,
+      "when": {
+       "stackedWith": "Robot"
+      }
+     }
+    },
+    {
+     "trigger": "Static",
+     "effect": "StatBonus",
+     "params": {
+      "stat": "psionic",
+      "bonus": 1,
+      "when": {
+       "stackedWith": "Creature"
+      }
+     }
+    }
+   ],
+   "text": "When Stacked with a Robot, gain +1 Cyber; when Stacked with a Creature, gain +1 Psionic. While Stacked only.",
+   "implementation": "v0.4: Static → StatBonus; Static → StatBonus",
+   "art": "cards/BU_AD",
+   "artSource": "12_Acorbeac Destroyer.psd",
+   "printed": {
+    "cost": {
+     "G": 1,
+     "B": 1,
+     "R": 1,
+     "P": 1,
+     "W": 0
+    },
+    "stats": {
+     "cyber": 1,
+     "psionic": 2,
+     "physical": 3
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "ruleBook+art; Change Request 1",
+   "role": "Mixed / integration",
+   "designNote": "Two colors rather than all four, modest stack payoff."
+  },
+  {
+   "id": "BU_BM",
+   "name": "Veydran Executioner",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Cyborg",
+   "isCommander": false,
+   "cost": {
+    "G": 1,
+    "B": 0,
+    "R": 1,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 2,
+    "psionic": 1,
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "OnDestroyEnemyUnit",
+     "effect": "DamageLab",
+     "params": {
+      "amount": 1
+     }
+    }
+   ],
+   "text": "When this or its Stack destroys an Battle Unit under enemy control in Physical combat, deal 1 damage to that opponent’s Lab. Once per battle.",
+   "implementation": "v0.4: OnDestroyEnemyUnit → DamageLab",
+   "art": "cards/BU_BM",
+   "artSource": "13_Blade Master.psd",
+   "printed": {
+    "cost": {
+     "G": 2,
+     "B": 1,
+     "R": 1,
+     "P": 1,
+     "W": 0
+    },
+    "stats": {
+     "cyber": 2,
+     "psionic": 2,
+     "physical": 2
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "partB; Change Request 1",
+   "role": "Mixed / aggression",
+   "designNote": "Chip damage only on destruction, no attack loop."
+  },
+  {
+   "id": "BU_JP",
+   "name": "Javarow Protector",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Cyborg",
+   "isCommander": false,
+   "cost": {
+    "G": 2,
+    "B": 1,
+    "R": 0,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 3,
+    "psionic": 1,
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "Static",
+     "effect": "StackShield",
+     "params": {}
+    }
+   ],
+   "text": "While Stacked with a Robot, prevent the first 1 point of ability damage to either member of this Stack each Battle phase.",
+   "implementation": "v0.4: Static → StackShield",
+   "art": "cards/BU_JP",
+   "artSource": "17_Javarow Protector.psd",
+   "printed": {
+    "cost": {
+     "G": 2,
+     "B": 1,
+     "R": 1,
+     "P": 1,
+     "W": 1
+    },
+    "stats": {
+     "cyber": 3,
+     "psionic": 2,
+     "physical": 3
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "art; Change Request 1",
+   "role": "Mixed / industrial",
+   "designNote": "Supports the mechanical partner instead of searching repeatedly."
+  },
+  {
+   "id": "BU_KC",
+   "name": "Kyler Revenant",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Cyborg",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 1,
+    "R": 1,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 1,
+    "psionic": 2,
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "AfterEngagement",
+     "effect": "DrawOnKill",
+     "params": {}
+    }
+   ],
+   "text": "Once per turn, when this Stack destroys an unit under enemy control in Physical combat, draw a Battle card.",
+   "implementation": "v0.4: AfterEngagement → DrawOnKill",
+   "art": "cards/BU_KC",
+   "artSource": "16_Kyler Cyborg.psd",
+   "printed": {
+    "cost": {
+     "G": 1,
+     "B": 1,
+     "R": 2,
+     "P": 1,
+     "W": 1
+    },
+    "stats": {
+     "cyber": 2,
+     "psionic": 3,
+     "physical": 3
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "art; Change Request 1",
+   "role": "Mixed / flexible",
+   "designNote": "Card advantage requires risking a Stack; no generic repeated tutoring."
+  },
+  {
+   "id": "BU_LP",
+   "name": "Lodner Predator",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Cyborg",
+   "isCommander": false,
+   "cost": {
+    "G": 1,
+    "B": 1,
+    "R": 1,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 2,
+    "psionic": 2,
+    "physical": 3
+   },
+   "effects": [
+    {
+     "trigger": "AfterEngagement",
+     "effect": "DepleteOpponentCU",
+     "params": {}
+    }
+   ],
+   "text": "Once per turn, when this or its Stack destroys an unit under enemy control in Physical combat, deplete one ready CU of that opponent, if any.",
+   "implementation": "v0.4: AfterEngagement → DepleteOpponentCU",
+   "art": "cards/BU_LP",
+   "artSource": "14_Lodner Predator.psd",
+   "printed": {
+    "cost": {
+     "G": 1,
+     "B": 1,
+     "R": 1,
+     "P": 1,
+     "W": 1
+    },
+    "stats": {
+     "cyber": 2,
+     "psionic": 3,
+     "physical": 2
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "partB; Change Request 1",
+   "role": "Mixed / control",
+   "designNote": "No repeatable permanent CU lock. Disruption is temporary."
+  },
+  {
+   "id": "BU_TI",
+   "name": "Third I",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Cyborg",
+   "isCommander": false,
+   "cost": {
+    "G": 1,
+    "B": 2,
+    "R": 1,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 1,
+    "psionic": 3,
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "OnStack",
+     "effect": "StackChoice",
+     "params": {
+      "partnerType": "Creature",
+      "opts": [
+       "psionic",
+       "physical"
+      ]
+     }
+    }
+   ],
+   "text": "When Stacked with a Creature, choose +1 Psionic or +1 Physical for the Stack until it separates.",
+   "implementation": "v0.4: OnStack → StackChoice",
+   "art": "cards/BU_TI",
+   "artSource": "18_Third I.psd",
+   "printed": {
+    "cost": {
+     "G": 1,
+     "B": 2,
+     "R": 1,
+     "P": 1,
+     "W": 1
+    },
+    "stats": {
+     "cyber": 2,
+     "psionic": 4,
+     "physical": 2
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "art; Change Request 1",
+   "role": "Mixed / evolution",
+   "designNote": "Choose adaptive stance at declaration."
+  },
+  {
+   "id": "BU_ZM",
+   "name": "Zomber Mercenary",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Cyborg",
+   "isCommander": false,
+   "cost": {
+    "G": 1,
+    "B": 1,
+    "R": 1,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 1,
+    "psionic": "X",
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "RollX",
+     "effect": "RollX",
+     "params": {
+      "die": "red",
+      "stat": "psionic",
+      "robotSetX3": true
+     }
+    }
+   ],
+   "text": "Psionic X. If Stacked with a Robot, you may set X to 3 instead of making its ability roll.",
+   "implementation": "v0.4: RollX → RollX",
+   "art": "cards/BU_ZM",
+   "artSource": "11_Zomber Mercenary.psd",
+   "printed": {
+    "cost": {
+     "G": 1,
+     "B": 1,
+     "R": 1,
+     "P": 1,
+     "W": 0
+    },
+    "stats": {
+     "cyber": 1,
+     "psionic": "X",
+     "physical": 2
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "partB",
+   "role": "Mixed / evolution",
+   "designNote": "Partner controls risk versus consistency."
+  },
+  {
+   "id": "BU_DC",
+   "name": "Davileam Commander",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Robot",
+   "isCommander": true,
+   "cost": {
+    "G": 2,
+    "B": 0,
+    "R": 0,
+    "P": 2,
+    "W": 1
+   },
+   "stats": {
+    "cyber": 4,
+    "psionic": 0,
+    "physical": 3
+   },
+   "protocols": {
+    "Assault": "choose up to two attacking Robots under your control at declaration; each gains +1 Physical for this Battle phase.",
+    "Guard": "choose up to two defending Robots under your control at declaration; each gains +1 Physical for this Battle phase.",
+    "Precision": "one Robot under your control may Calibrate its Physical die each Battle phase."
+   },
+   "effects": [
+    {
+     "trigger": "Protocol",
+     "effect": "ProtocolBoost",
+     "params": {
+      "mode": "Assault",
+      "when": "attack"
+     }
+    },
+    {
+     "trigger": "Protocol",
+     "effect": "ProtocolBoost",
+     "params": {
+      "mode": "Guard",
+      "when": "defend"
+     }
+    },
+    {
+     "trigger": "Protocol",
+     "effect": "ProtocolPrecision",
+     "params": {
+      "mode": "Precision"
+     }
+    }
+   ],
+   "text": "Protocol — Assault: choose up to two attacking Robots under your control at declaration; each gains +1 Physical for this Battle phase. Guard: choose up to two defending Robots under your control at declaration; each gains +1 Physical for this Battle phase. Precision: one Robot under your control may Calibrate its Physical die each Battle phase.",
+   "keywords": [
+    "Calibrate",
+    "Protocol"
+   ],
+   "implementation": "v0.4: Protocol → ProtocolBoost; Protocol → ProtocolBoost; Protocol → ProtocolPrecision",
+   "art": "cards/BU_DC",
+   "artSource": "28_Daviliam Robot Commander.psd",
+   "printed": {
+    "cost": {
+     "G": 2,
+     "B": 0,
+     "R": 0,
+     "P": 2,
+     "W": 2
+    },
+    "stats": {
+     "cyber": 4,
+     "psionic": 0,
+     "physical": 4
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "partB",
+   "role": "Control / industrial",
+   "designNote": "Select one public mode, not all three. Only one Davileam protocol grants benefits per player."
+  },
+  {
+   "id": "BU_HB",
+   "name": "Hydra Bot",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Robot",
+   "isCommander": false,
+   "cost": {
+    "G": 1,
+    "B": 0,
+    "R": 0,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 2,
+    "psionic": 0,
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "Static",
+     "effect": "StatBonus",
+     "params": {
+      "stat": "cyber",
+      "bonus": 1,
+      "when": {
+       "equipped": true
+      }
+     }
+    }
+   ],
+   "text": "While equipped, gain +1 Cyber.",
+   "implementation": "v0.4: Static → StatBonus",
+   "art": "cards/BU_HB",
+   "artSource": "25_Hydra Bot.psd",
+   "printed": {
+    "cost": {
+     "G": 1,
+     "B": 0,
+     "R": 0,
+     "P": 1,
+     "W": 1
+    },
+    "stats": {
+     "cyber": 3,
+     "psionic": 0,
+     "physical": 2
+    },
+    "hasRulesText": false
+   },
+   "enabled": true,
+   "origin": "partB",
+   "role": "Industrial",
+   "designNote": "Equipping costs a real card and CU investment."
+  },
+  {
+   "id": "BU_LQ",
+   "name": "Loquidor Stalker",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Robot",
+   "isCommander": false,
+   "cost": {
+    "G": 1,
+    "B": 0,
+    "R": 0,
+    "P": 2,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 1,
+    "psionic": 0,
+    "physical": 3
+   },
+   "effects": [
+    {
+     "trigger": "Activated",
+     "effect": "Intercept",
+     "params": {
+      "cost": {
+       "P": 1
+      }
+     }
+    }
+   ],
+   "text": "During the Power window on defense, pay P1: if unengaged, assign this as defender to an unblocked attacker against your Lab. Once per Battle phase.",
+   "implementation": "v0.4: Activated → Intercept",
+   "art": "cards/BU_LQ",
+   "artSource": "24_Laquidor Stalker.psd",
+   "printed": {
+    "cost": {
+     "G": 1,
+     "B": 0,
+     "R": 0,
+     "P": 2,
+     "W": 0
+    },
+    "stats": {
+     "cyber": 1,
+     "psionic": 0,
+     "physical": 3
+    },
+    "hasRulesText": false
+   },
+   "enabled": true,
+   "origin": "partB",
+   "role": "Control",
+   "designNote": "Reassignment is paid and only applies against unblocked attacker."
+  },
+  {
+   "id": "BU_NA",
+   "name": "Nomis Analyzer",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Robot",
+   "isCommander": false,
+   "cost": {
+    "G": 2,
+    "B": 0,
+    "R": 0,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 3,
+    "psionic": 0,
+    "physical": 1
+   },
+   "effects": [
+    {
+     "trigger": "OnCreate",
+     "effect": "LookAtHand",
+     "params": {}
+    },
+    {
+     "trigger": "Activated",
+     "effect": "NomisBoost",
+     "params": {
+      "cost": {
+       "G": 1
+      }
+     }
+    }
+   ],
+   "text": "When created, look at an opponent’s hand. Once per your Battle phase before dice, pay G1 to give one Robot under your control +1 Physical for its battle.",
+   "implementation": "v0.4: OnCreate → LookAtHand; Activated → NomisBoost",
+   "art": "cards/BU_NA",
+   "artSource": "23_Nomis Analyzer.psd",
+   "printed": {
+    "cost": {
+     "G": 2,
+     "B": 0,
+     "R": 0,
+     "P": 1,
+     "W": 0
+    },
+    "stats": {
+     "cyber": 3,
+     "psionic": 0,
+     "physical": 1
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "art; Change Request 1",
+   "role": "Control",
+   "designNote": "Information reveals a plan, not a free repeated discard."
+  },
+  {
+   "id": "BU_SD",
+   "name": "Scout Drone",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Robot",
+   "isCommander": false,
+   "cost": {
+    "G": 1,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 2,
+    "psionic": 0,
+    "physical": 1
+   },
+   "effects": [],
+   "text": "",
+   "implementation": "v0.4: no ability",
+   "enabled": true,
+   "origin": "Change Request 1 (new card; no art yet - the client draws a generated face)",
+   "role": "Control / industrial",
+   "designNote": "Vanilla green baseline; no extra free scry."
+  },
+  {
+   "id": "BU_SH",
+   "name": "Scrap Hulk",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Robot",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 0,
+    "physical": 3
+   },
+   "effects": [],
+   "text": "",
+   "implementation": "v0.4: no ability",
+   "enabled": true,
+   "origin": "Change Request 1 (new card; no art yet - the client draws a generated face)",
+   "role": "Industrial / flexible",
+   "designNote": "Vanilla purple baseline mirrors Rupture Brute, not an ability unit."
+  },
+  {
+   "id": "BU_TB",
+   "name": "Therabot Seeker",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Robot",
+   "isCommander": false,
+   "cost": {
+    "G": 1,
+    "B": 0,
+    "R": 0,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 2,
+    "psionic": 0,
+    "physical": 1
+   },
+   "effects": [
+    {
+     "trigger": "Static",
+     "effect": "LockOn",
+     "params": {
+      "cost": {
+       "G": 1
+      }
+     }
+    }
+   ],
+   "text": "Lock-On (deplete G1).",
+   "keywords": [
+    "Lock-On"
+   ],
+   "implementation": "v0.4: Static → LockOn",
+   "art": "cards/BU_TB",
+   "artSource": "22_Therabot.psd",
+   "printed": {
+    "cost": {
+     "G": 1,
+     "B": 0,
+     "R": 0,
+     "P": 1,
+     "W": 0
+    },
+    "stats": {
+     "cyber": "X",
+     "psionic": 0,
+     "physical": 1
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "partB",
+   "role": "Control",
+   "designNote": "Local control; cannot alter a roll outside this unit’s own opposing engagement."
+  },
+  {
+   "id": "EQ_CO",
+   "name": "Cyber Onslaught",
+   "deck": "battle",
+   "cardType": "Equipment",
+   "cost": {
+    "G": 1,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 1,
+    "psionic": 0,
+    "physical": 0
+   },
+   "equip": {
+    "ability": "cyber",
+    "bonus": 1,
+    "allowed": [
+     "Robot",
+     "Cyborg"
+    ]
+   },
+   "effects": [],
+   "text": "+1 Cyber for Robots or Cyborgs.",
+   "implementation": "v0.4: no ability",
+   "art": "cards/EQ_CO",
+   "artSource": "35_Cyber Onslaught.psd",
+   "printed": {
+    "cost": {
+     "G": 1,
+     "B": 0,
+     "R": 0,
+     "P": 1,
+     "W": 0
+    },
+    "stats": {
+     "cyber": 1,
+     "psionic": 0,
+     "physical": 0
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "partB",
+   "role": "Control / industrial",
+   "designNote": "Useful in mirror and against Cyborgs; inexpensive specialty upgrade."
+  },
+  {
+   "id": "EQ_KA",
+   "name": "Kranthard Armour",
+   "deck": "battle",
+   "cardType": "Equipment",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 1,
+    "choice": [
+     [
+      "R",
+      "P"
+     ],
+     [
+      "R",
+      "P"
+     ]
+    ],
+    "burnPool": [
+     "R",
+     "P"
+    ]
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 0,
+    "physical": 2
+   },
+   "equip": {
+    "ability": "physical",
+    "bonus": 2,
+    "allowed": [
+     "Creature",
+     "Robot",
+     "Cyborg"
+    ],
+    "moveCost": {
+     "G": 0,
+     "B": 0,
+     "R": 0,
+     "P": 0,
+     "W": 0,
+     "choice": [
+      [
+       "R",
+       "P"
+      ]
+     ]
+    }
+   },
+   "effects": [],
+   "text": "+2 Physical for any Battle Unit. Relocate — deplete R/P 1.",
+   "keywords": [
+    "Relocate"
+   ],
+   "implementation": "v0.4: no ability",
+   "art": "cards/EQ_KA",
+   "artSource": "38_Kranthard Armour.psd",
+   "printed": {
+    "cost": {
+     "G": 0,
+     "B": 0,
+     "R": 1,
+     "P": 1,
+     "W": 1
+    },
+    "stats": {
+     "cyber": 0,
+     "psionic": 0,
+     "physical": 2
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "partB",
+   "role": "Flexible / industrial",
+   "designNote": "Flexible heavy armor pays for flexibility through a burn and paid relocation."
+  },
+  {
+   "id": "EQ_MS",
+   "name": "Mental Shield",
+   "deck": "battle",
+   "cardType": "Equipment",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 0,
+    "choice": [
+     [
+      "B",
+      "P"
+     ],
+     [
+      "B",
+      "P"
+     ]
+    ]
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 2,
+    "physical": 0
+   },
+   "equip": {
+    "ability": "psionic",
+    "bonus": 2,
+    "allowed": [
+     "Creature",
+     "Cyborg"
+    ],
+    "moveCost": {
+     "G": 0,
+     "B": 0,
+     "R": 0,
+     "P": 0,
+     "W": 0,
+     "choice": [
+      [
+       "B",
+       "P"
+      ]
+     ]
+    }
+   },
+   "effects": [],
+   "text": "+2 Psionic for Creatures or Cyborgs. Relocate — deplete B/P 1.",
+   "keywords": [
+    "Relocate"
+   ],
+   "implementation": "v0.4: no ability",
+   "art": "cards/EQ_MS",
+   "artSource": "36_Mental Shield.psd",
+   "printed": {
+    "cost": {
+     "G": 0,
+     "B": 1,
+     "R": 0,
+     "P": 1,
+     "W": 1
+    },
+    "stats": {
+     "cyber": 0,
+     "psionic": 2,
+     "physical": 0
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "partB",
+   "role": "Evolution / mixed",
+   "designNote": "Flexible specialty protection, paid movement limits reuse."
+  },
+  {
+   "id": "EQ_PA",
+   "name": "Physical Augmentation",
+   "deck": "battle",
+   "cardType": "Equipment",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 0,
+    "choice": [
+     [
+      "R",
+      "P"
+     ],
+     [
+      "R",
+      "P"
+     ]
+    ]
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 0,
+    "physical": 1
+   },
+   "equip": {
+    "ability": "physical",
+    "bonus": 1,
+    "allowed": [
+     "Creature",
+     "Robot",
+     "Cyborg"
+    ]
+   },
+   "effects": [],
+   "text": "+1 Physical for any Battle Unit.",
+   "implementation": "v0.4: no ability",
+   "art": "cards/EQ_PA",
+   "artSource": "34_Physical Augmentation.psd",
+   "printed": {
+    "cost": {
+     "G": 0,
+     "B": 1,
+     "R": 1,
+     "P": 0,
+     "W": 0
+    },
+    "stats": {
+     "cyber": 0,
+     "psionic": 0,
+     "physical": 1
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "partB",
+   "role": "Flexible",
+   "designNote": "Mixed R/P 2: pay RR, RP or PP; cheaper in color requirements, only +1 Physical."
+  },
+  {
+   "id": "EQ_PB",
+   "name": "Psi Bolster",
+   "deck": "battle",
+   "cardType": "Equipment",
+   "cost": {
+    "G": 0,
+    "B": 1,
+    "R": 1,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 1,
+    "physical": 0
+   },
+   "equip": {
+    "ability": "psionic",
+    "bonus": 1,
+    "allowed": [
+     "Creature",
+     "Cyborg"
+    ]
+   },
+   "effects": [
+    {
+     "trigger": "BeforeDice",
+     "effect": "BolsterSwap",
+     "params": {}
+    }
+   ],
+   "text": "+1 Psionic for Creatures or Cyborgs. Before its combat dice, you may replace this bonus with +1 Physical until end of turn.",
+   "implementation": "v0.4: BeforeDice → BolsterSwap",
+   "art": "cards/EQ_PB",
+   "artSource": "33_Psionic Bolster.psd",
+   "printed": {
+    "cost": {
+     "G": 0,
+     "B": 1,
+     "R": 1,
+     "P": 0,
+     "W": 0
+    },
+    "stats": {
+     "cyber": 0,
+     "psionic": 1,
+     "physical": 0
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "partB",
+   "role": "Evolution",
+   "designNote": "Convert the boost instead of stacking two bonuses."
+  },
+  {
+   "id": "EQ_VCS",
+   "name": "Vegian Cyber Shield",
+   "deck": "battle",
+   "cardType": "Equipment",
+   "cost": {
+    "G": 1,
+    "B": 0,
+    "R": 0,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 1,
+    "psionic": 0,
+    "physical": 0
+   },
+   "equip": {
+    "ability": "cyber",
+    "bonus": 1,
+    "allowed": [
+     "Robot",
+     "Cyborg"
+    ],
+    "moveCost": {
+     "G": 0,
+     "B": 0,
+     "R": 0,
+     "P": 0,
+     "W": 0,
+     "choice": [
+      [
+       "G",
+       "P"
+      ]
+     ]
+    }
+   },
+   "effects": [
+    {
+     "trigger": "Static",
+     "effect": "IgnoreObliterate",
+     "params": {}
+    }
+   ],
+   "text": "+1 Cyber. Once per Battle phase, ignore an opponent’s Obliterate effect on this unit’s Cyber die. Relocate — deplete G/P 1.",
+   "keywords": [
+    "Relocate"
+   ],
+   "implementation": "v0.4: Static → IgnoreObliterate",
+   "art": "cards/EQ_VCS",
+   "artSource": "37_Veqian Cyber Defense.psd",
+   "printed": {
+    "cost": {
+     "G": 1,
+     "B": 0,
+     "R": 0,
+     "P": 1,
+     "W": 1
+    },
+    "stats": {
+     "cyber": 2,
+     "psionic": 0,
+     "physical": 0
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "partB",
+   "role": "Control",
+   "designNote": "Specialized shield, not free to move between combats."
+  },
+  {
+   "id": "PW_BP",
+   "name": "Bio Pulse",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 1,
+    "choice": [
+     [
+      "B",
+      "G"
+     ]
+    ],
+    "burnPool": [
+     "R",
+     "P"
+    ]
+   },
+   "timing": "Pulse",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "DamageTargets",
+     "params": {
+      "amount": 1,
+      "max": 2,
+      "filter": {
+       "unitType": [
+        "Creature",
+        "Cyborg"
+       ]
+      }
+     }
+    }
+   ],
+   "text": "Deal 1 damage to up to two Creatures or Cyborgs under enemy control.",
+   "keywords": [
+    "Pulse"
+   ],
+   "implementation": "v0.4: OnPlay → DamageTargets",
+   "enabled": true,
+   "origin": "Change Request 1 (new card; no art yet - the client draws a generated face)",
+   "role": "Flexible / anti-swarm",
+   "designNote": "Explicit separate burn and deplete pools. Flexible but requires two distinct resources."
+  },
+  {
+   "id": "PW_CR",
+   "name": "Creature Regenerate",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 0,
+    "B": 1,
+    "R": 1,
+    "P": 0,
+    "W": 1
+   },
+   "timing": "Pulse",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "ReviveToLab",
+     "params": {
+      "filter": {
+       "cardType": "BattleUnit",
+       "unitType": [
+        "Creature",
+        "Cyborg"
+       ],
+       "maxCost": 3,
+       "psionicPositive": true
+      },
+      "reanimate": {
+       "physical": 2,
+       "psionic": -2
+      }
+     }
+    }
+   ],
+   "text": "Return a Creature or Cyborg with printed total cost 3 or less and printed Psionic above 0 (X qualifies) from your discard to your Lab. It returns at printed strengths with a permanent Reanimated modifier: +2 Physical and −2 Psionic (minimum 0).",
+   "keywords": [
+    "Pulse",
+    "Reanimated"
+   ],
+   "implementation": "v0.4: OnPlay → ReviveToLab",
+   "art": "cards/PW_CR",
+   "artSource": "43_Being Regenerate.psd",
+   "printed": {
+    "cost": {
+     "G": 0,
+     "B": 1,
+     "R": 1,
+     "P": 0,
+     "W": 1
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "partB; Change Request 1",
+   "role": "Evolution",
+   "designNote": "Pulse-speed zombie reanimation; a permanent modification, not a Mutation. No old modifiers or Equipment; cannot enter an already assigned engagement."
+  },
+  {
+   "id": "PW_EH",
+   "name": "Equipment Hunter",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 0,
+    "A": 1
+   },
+   "timing": "Operation",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "TutorToHand",
+     "params": {
+      "filter": {
+       "cardType": "Equipment"
+      }
+     }
+    }
+   ],
+   "text": "Search your Battle Deck for an Equipment, reveal it, put it in your hand, then shuffle.",
+   "keywords": [
+    "Operation"
+   ],
+   "implementation": "v0.4: OnPlay → TutorToHand",
+   "art": "cards/PW_EH",
+   "artSource": "39_Equipment Hunter.psd",
+   "printed": {
+    "cost": {
+     "G": 0,
+     "B": 0,
+     "R": 0,
+     "P": 0,
+     "W": 1
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "partB",
+   "role": "Industrial / flexible",
+   "designNote": "Operation; one CU of any type, no burn."
+  },
+  {
+   "id": "PW_EM",
+   "name": "Equipment Mechanic",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 1,
+    "burnPool": [
+     "G",
+     "B",
+     "R",
+     "P"
+    ]
+   },
+   "timing": "Operation",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "EquipmentMechanic",
+     "params": {}
+    }
+   ],
+   "text": "Choose an Equipment in your discard and a legal host under your control. As an additional cost, pay that Equipment’s full printed creation cost. Return it directly to play attached to the chosen host.",
+   "keywords": [
+    "Operation"
+   ],
+   "implementation": "v0.4: OnPlay → EquipmentMechanic",
+   "art": "cards/PW_EM",
+   "artSource": "42_Equipment Mechanic.psd",
+   "printed": {
+    "cost": {
+     "G": 0,
+     "B": 0,
+     "R": 0,
+     "P": 0,
+     "W": 1
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "partB; Change Request 1",
+   "role": "Industrial / flexible",
+   "designNote": "Operation; burn any 1 plus the Equipment’s normal cost, all from distinct ready CUs. No extra movement fee or discounts."
+  },
+  {
+   "id": "PW_HEP",
+   "name": "High-Energy Pulse",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 1,
+    "B": 0,
+    "R": 0,
+    "P": 1,
+    "W": 1
+   },
+   "timing": "Pulse",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "DisableTargets",
+     "params": {
+      "max": 2,
+      "hasAbility": "cyber"
+     }
+    }
+   ],
+   "text": "Choose up to two units under enemy control with Cyber above 0. They cannot attack or defend this turn; remove them from current battles if engaged.",
+   "keywords": [
+    "Pulse"
+   ],
+   "implementation": "v0.4: OnPlay → DisableTargets",
+   "art": "cards/PW_HEP",
+   "artSource": "46_High Energy Pulse.psd",
+   "printed": {
+    "cost": {
+     "G": 1,
+     "B": 0,
+     "R": 0,
+     "P": 1,
+     "W": 1
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "partB",
+   "role": "Control / flexible",
+   "designNote": "Narrow shutdown with counterplay."
+  },
+  {
+   "id": "PW_OS",
+   "name": "Overload Strike",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 1,
+    "choice": [
+     [
+      "R",
+      "P"
+     ]
+    ],
+    "burnPool": [
+     "R",
+     "P"
+    ]
+   },
+   "timing": "Pulse",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "DealDamage",
+     "params": {
+      "amount": 3,
+      "labAmount": 2
+     }
+    }
+   ],
+   "text": "Deal 3 damage to a Battle Unit or 2 damage to a Lab.",
+   "keywords": [
+    "Pulse"
+   ],
+   "implementation": "v0.4: OnPlay → DealDamage",
+   "enabled": true,
+   "origin": "Change Request 1 (new card; no art yet - the client draws a generated face)",
+   "role": "Flexible / aggression",
+   "designNote": "Avoid 9 points of cheap Lab burn."
+  },
+  {
+   "id": "PW_RR",
+   "name": "Robo Refurb",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 1,
+    "B": 0,
+    "R": 0,
+    "P": 1,
+    "W": 1
+   },
+   "timing": "Operation",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "ReviveToLab",
+     "params": {
+      "filter": {
+       "cardType": "BattleUnit",
+       "unitType": "Robot",
+       "maxCost": 3
+      }
+     }
+    }
+   ],
+   "text": "Creation only. Return a Robot with printed total creation cost 3 or less from your discard to play at its printed strengths.",
+   "keywords": [
+    "Operation"
+   ],
+   "implementation": "v0.4: OnPlay → ReviveToLab",
+   "art": "cards/PW_RR",
+   "artSource": "44_Robot Mechanic.psd",
+   "printed": {
+    "cost": {
+     "G": 1,
+     "B": 0,
+     "R": 0,
+     "P": 1,
+     "W": 1
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "art; Change Request 1",
+   "role": "Industrial",
+   "designNote": "Repair restores printed stats, not old permanent modifiers; no expensive unit cheating."
+  },
+  {
+   "id": "PW_SB",
+   "name": "Static Burst",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 1,
+    "choice": [
+     [
+      "R",
+      "P"
+     ]
+    ],
+    "burnPool": [
+     "R",
+     "P"
+    ]
+   },
+   "timing": "Pulse",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "DamageTargets",
+     "params": {
+      "amount": 1,
+      "max": 2,
+      "filter": {
+       "unitType": [
+        "Robot",
+        "Cyborg"
+       ]
+      }
+     }
+    }
+   ],
+   "text": "Deal 1 damage to up to two Robots or Cyborgs under enemy control.",
+   "keywords": [
+    "Pulse"
+   ],
+   "implementation": "v0.4: OnPlay → DamageTargets",
+   "enabled": true,
+   "origin": "Change Request 1 (new card; no art yet - the client draws a generated face)",
+   "role": "Flexible / anti-industrial",
+   "designNote": "Targeted answer; no whole-board shutdown."
+  },
+  {
+   "id": "TR_GSF",
+   "name": "Grankor Stasis Field",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 1
+   },
+   "timing": "Pulse",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "TrapUnit",
+     "params": {
+      "target": "opposingUnit",
+      "release": "escape"
+     }
+    },
+    {
+     "trigger": "TrapEscapeCheck",
+     "effect": "PhysicalPlusRoll",
+     "params": {
+      "die": "red",
+      "threshold": 5,
+      "atLeast": true,
+      "maxFails": 2
+     }
+    }
+   ],
+   "text": "Contain one Battle Unit under enemy control. While contained, it cannot attack, defend, use or grant abilities, be chosen by a Power or unit ability, or be used to pay a cost. At each of its owner’s Cleanups, roll red: free it if current Physical + numeric roll is at least 5; free it after its second failed escape.",
+   "keywords": [
+    "Containment",
+    "Pulse"
+   ],
+   "implementation": "v0.4: OnPlay → TrapUnit; TrapEscapeCheck → PhysicalPlusRoll",
+   "art": "cards/TR_GSF",
+   "artSource": "41_Grankor Statsis Field.psd",
+   "printed": {
+    "cost": {
+     "G": 0,
+     "B": 0,
+     "R": 0,
+     "P": 0,
+     "W": 1
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "partB",
+   "role": "Flexible / control",
+   "designNote": "Protection and cost restriction are specific to Grankor; ordinary containment need not be immune to effects."
+  },
+  {
+   "id": "RS_CO",
+   "name": "Creation Oracle",
+   "deck": "resource",
+   "cardType": "Resource",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "CreationOracle",
+     "params": {}
+    }
+   ],
+   "text": "Search Resource Deck for Creation Unit of Your Choice. Place in Lab. Shuffle Deck.",
+   "implementation": "v0.4: OnPlay → CreationOracle",
+   "art": "cards/RS_CO",
+   "artSource": "40_Creation Oracle as Creation Unit.psd",
+   "enabled": true,
+   "origin": "partB",
+   "role": "Resource / flexible",
+   "designNote": "Keep original resource rules."
+  },
+  {
+   "id": "RS_RF",
+   "name": "Resource Fortification",
+   "deck": "resource",
+   "cardType": "Resource",
+   "effects": [
+    {
+     "trigger": "Static",
+     "effect": "FortifyResource",
+     "params": {}
+    }
+   ],
+   "text": "Attach to a CU during Creation. When that CU would be destroyed to pay W, deplete it instead and discard this Fortification.",
+   "implementation": "v0.4: Static → FortifyResource",
+   "enabled": true,
+   "origin": "Change Request 1 (new card; no art yet - the client draws a generated face)",
+   "role": "Industrial / flexible",
+   "designNote": "Single-use protection prevents recurrent white discount."
+  },
+  {
+   "id": "CU_BA",
+   "name": "Bio-Acceleration",
+   "deck": "resource",
+   "cardType": "CreationUnit",
+   "cuType": "R",
+   "effects": [],
+   "text": "",
+   "implementation": "v0.4: no ability",
+   "art": "cards/CU_BA",
+   "artSource": "30_Bioacceleration Creation Unit.psd",
+   "enabled": true,
+   "origin": "partB",
+   "role": "Resource / flexible",
+   "designNote": "Keep original resource rules."
+  },
+  {
+   "id": "CU_DS",
+   "name": "Digital Splicing",
+   "deck": "resource",
+   "cardType": "CreationUnit",
+   "cuType": "G",
+   "effects": [],
+   "text": "",
+   "implementation": "v0.4: no ability",
+   "art": "cards/CU_DS",
+   "artSource": "31_Digital Splicing Creation Unit.psd",
+   "enabled": true,
+   "origin": "partB",
+   "role": "Resource / flexible",
+   "designNote": "Keep original resource rules."
+  },
+  {
+   "id": "CU_MA",
+   "name": "Material Animation",
+   "deck": "resource",
+   "cardType": "CreationUnit",
+   "cuType": "P",
+   "effects": [],
+   "text": "",
+   "implementation": "v0.4: no ability",
+   "art": "cards/CU_MA",
+   "artSource": "32_Material Animation Creation Unit.psd",
+   "enabled": true,
+   "origin": "partB",
+   "role": "Resource / flexible",
+   "designNote": "Keep original resource rules."
+  },
+  {
+   "id": "CU_NG",
+   "name": "Neurogenesis",
+   "deck": "resource",
+   "cardType": "CreationUnit",
+   "cuType": "B",
+   "effects": [],
+   "text": "",
+   "implementation": "v0.4: no ability",
+   "art": "cards/CU_NG",
+   "artSource": "29_Neurogenesis Creation Unit.psd",
+   "enabled": true,
+   "origin": "partB",
+   "role": "Resource / flexible",
+   "designNote": "Keep original resource rules."
+  },
+  {
+   "id": "BU_FB",
+   "name": "Fengar Berserker",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Creature",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 1,
+    "R": 2,
+    "P": 0,
+    "W": 1
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": "X",
+    "physical": 4
+   },
+   "effects": [
+    {
+     "trigger": "RollX",
+     "effect": "RollX",
+     "params": {
+      "die": "red",
+      "stat": "psionic",
+      "rider": "face6Physical"
+     }
+    }
+   ],
+   "text": "Psionic X. On an ability roll of face 6, gain +1 Physical until end of turn.",
+   "implementation": "v0.4: RollX → RollX",
+   "art": "cards/BU_FB",
+   "artSource": "08_Fengar Beserker.psd",
+   "printed": {
+    "cost": {
+     "G": 0,
+     "B": 1,
+     "R": 2,
+     "P": 0,
+     "W": 1
+    },
+    "stats": {
+     "cyber": 0,
+     "psionic": "X",
+     "physical": 4
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "art",
+   "role": "Evolution",
+   "designNote": "High variance finisher. Potential 4 Physical on turn 4."
+  },
+  {
+   "id": "BU_GS",
+   "name": "Garilian Seer",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Creature",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 1,
+    "R": 1,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": "X",
+    "physical": 1
+   },
+   "effects": [
+    {
+     "trigger": "RollX",
+     "effect": "RollX",
+     "params": {
+      "die": "red",
+      "stat": "psionic",
+      "rider": "seer"
+     }
+    }
+   ],
+   "text": "Psionic X. After its X ability roll, you may discard a Battle card to give another untrapped unit under your control +1 Physical until end of turn.",
+   "implementation": "v0.4: RollX → RollX",
+   "art": "cards/BU_GS",
+   "artSource": "03_Garilian Seer.psd",
+   "printed": {
+    "cost": {
+     "G": 0,
+     "B": 1,
+     "R": 1,
+     "P": 0,
+     "W": 0
+    },
+    "stats": {
+     "cyber": 0,
+     "psionic": "X",
+     "physical": 1
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "art",
+   "role": "Evolution / mixed",
+   "designNote": "A choice between low roll insurance and raising Psychic strength."
+  },
+  {
+   "id": "BU_WR",
+   "name": "Warend Reaper",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Creature",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 1,
+    "R": 2,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 1,
+    "physical": 3
+   },
+   "effects": [
+    {
+     "trigger": "OnCreate",
+     "effect": "CannibalizeOnCreate",
+     "params": {}
+    }
+   ],
+   "text": "When created, you may Cannibalize another Creature or Cyborg under your control. If you do, this gains +1 permanent Physical.",
+   "keywords": [
+    "Cannibalize"
+   ],
+   "implementation": "v0.4: OnCreate → CannibalizeOnCreate",
+   "art": "cards/BU_WR",
+   "artSource": "07_Warend Reaper.psd",
+   "printed": {
+    "cost": {
+     "G": 0,
+     "B": 1,
+     "R": 1,
+     "P": 0,
+     "W": 1
+    },
+    "stats": {
+     "cyber": 0,
+     "psionic": 1,
+     "physical": 4
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "ruleBook+art",
+   "role": "Swarm / evolution",
+   "designNote": "A permanent feeding buff, not a Mutation; the destroyed body is the cost."
+  },
+  {
+   "id": "BU_BC",
+   "name": "Bellarn Cyborg",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Cyborg",
+   "isCommander": false,
+   "cost": {
+    "G": 1,
+    "B": 0,
+    "R": 1,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 2,
+    "psionic": 1,
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "BeforeDice",
+     "effect": "SelfShift",
+     "params": {
+      "from": "cyber",
+      "to": "physical"
+     }
+    }
+   ],
+   "text": "Before combat dice, you may give this -1 Cyber and +1 Physical until end of turn.",
+   "implementation": "v0.4: BeforeDice → SelfShift",
+   "art": "cards/BU_BC",
+   "artSource": "15_Bellarn Cyborg.psd",
+   "printed": {
+    "cost": {
+     "G": 1,
+     "B": 1,
+     "R": 1,
+     "P": 1,
+     "W": 1
+    },
+    "stats": {
+     "cyber": 2,
+     "psionic": 2,
+     "physical": 3
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "art",
+   "role": "Mixed / flexible",
+   "designNote": "Clear physical tradeoff."
+  },
+  {
+   "id": "BU_UO",
+   "name": "Urilian Overlord",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Cyborg",
+   "isCommander": false,
+   "cost": {
+    "G": 1,
+    "B": 1,
+    "R": 0,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": "X",
+    "psionic": 2,
+    "physical": 1
+   },
+   "effects": [
+    {
+     "trigger": "RollX",
+     "effect": "RollX",
+     "params": {
+      "die": "red",
+      "stat": "cyber",
+      "robotReroll": true
+     }
+    }
+   ],
+   "text": "Cyber X. If Stacked with a Robot, you may reroll this X ability roll once; keep the new result.",
+   "implementation": "v0.4: RollX → RollX",
+   "art": "cards/BU_UO",
+   "artSource": "10_Urilian Overlord.psd",
+   "printed": {
+    "cost": {
+     "G": 1,
+     "B": 1,
+     "R": 1,
+     "P": 1,
+     "W": 0
+    },
+    "stats": {
+     "cyber": "X",
+     "psionic": 2,
+     "physical": 1
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "art",
+   "role": "Mixed / control",
+   "designNote": "An actual risky Robot-adjacent roll for Lock-On matchups."
+  },
+  {
+   "id": "BU_VC",
+   "name": "Veeda Commander",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Cyborg",
+   "isCommander": true,
+   "cost": {
+    "G": 1,
+    "B": 1,
+    "R": 1,
+    "P": 1,
+    "W": 1
+   },
+   "stats": {
+    "cyber": 3,
+    "psionic": 3,
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "OnStack",
+     "effect": "VeedaStack",
+     "params": {}
+    }
+   ],
+   "text": "Once per Battle phase across your Veeda Commanders, when you form a Stack, choose +1 Cyber or +1 Psionic for that Stack until it separates. If its partner is equipped, you may choose +1 Physical instead.",
+   "implementation": "v0.4: OnStack → VeedaStack",
+   "art": "cards/BU_VC",
+   "artSource": "19_Veeda Cyborg Commander.psd",
+   "printed": {
+    "cost": {
+     "G": 2,
+     "B": 2,
+     "R": 1,
+     "P": 1,
+     "W": 2
+    },
+    "stats": {
+     "cyber": 3,
+     "psionic": 3,
+     "physical": 4
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "art",
+   "role": "Mixed / integration",
+   "designNote": "Reward stacking without blanket Physical boost."
+  },
+  {
+   "id": "BU_PI",
+   "name": "Pencar Inferno",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Robot",
+   "isCommander": false,
+   "cost": {
+    "G": 1,
+    "B": 0,
+    "R": 0,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 1,
+    "psionic": 0,
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "BeforeDice",
+     "effect": "PayBoost",
+     "params": {
+      "cost": {
+       "P": 1
+      }
+     }
+    }
+   ],
+   "text": "Once per Battle phase before its dice, pay P1: gain +1 Physical until end of turn.",
+   "implementation": "v0.4: BeforeDice → PayBoost",
+   "art": "cards/BU_PI",
+   "artSource": "21_Pencar Inferno.psd",
+   "printed": {
+    "cost": {
+     "G": 1,
+     "B": 0,
+     "R": 0,
+     "P": 1,
+     "W": 0
+    },
+    "stats": {
+     "cyber": 1,
+     "psionic": 0,
+     "physical": "X"
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "ruleBook+art",
+   "role": "Industrial",
+   "designNote": "Stable unit with paid conversion; no random X."
+  },
+  {
+   "id": "BU_SS",
+   "name": "Stealth Skyfire",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Robot",
+   "isCommander": false,
+   "cost": {
+    "G": 1,
+    "B": 0,
+    "R": 0,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 2,
+    "psionic": 0,
+    "physical": 1
+   },
+   "effects": [
+    {
+     "trigger": "Static",
+     "effect": "StealthBlock",
+     "params": {}
+    }
+   ],
+   "text": "When attacking, cannot be blocked by a lone unit with printed Physical 1. Stacks may block normally.",
+   "implementation": "v0.4: Static → StealthBlock",
+   "art": "cards/BU_SS",
+   "artSource": "20_Stealth Skyfire.psd",
+   "printed": {
+    "cost": {
+     "G": 1,
+     "B": 0,
+     "R": 0,
+     "P": 1,
+     "W": 0
+    },
+    "stats": {
+     "cyber": 2,
+     "psionic": 0,
+     "physical": 1
+    },
+    "hasRulesText": false
+   },
+   "enabled": true,
+   "origin": "art",
+   "role": "Control",
+   "designNote": "Threat that avoids a support-unit block, not all defenders."
+  },
+  {
+   "id": "BU_TG",
+   "name": "Tricapia Guardian",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Robot",
+   "isCommander": false,
+   "cost": {
+    "G": 2,
+    "B": 0,
+    "R": 0,
+    "P": 2,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 3,
+    "psionic": 0,
+    "physical": 4
+   },
+   "effects": [
+    {
+     "trigger": "Static",
+     "effect": "CalibrateSelf",
+     "params": {
+      "die": "physical",
+      "whenDefending": true
+     }
+    }
+   ],
+   "text": "When defending, may Calibrate its Physical die.",
+   "keywords": [
+    "Calibrate"
+   ],
+   "implementation": "v0.4: Static → CalibrateSelf",
+   "art": "cards/BU_TG",
+   "artSource": "27_Tricapia Guardian.psd",
+   "printed": {
+    "cost": {
+     "G": 1,
+     "B": 0,
+     "R": 0,
+     "P": 2,
+     "W": 1
+    },
+    "stats": {
+     "cyber": "X",
+     "psionic": 0,
+     "physical": 4
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "art",
+   "role": "Control / industrial",
+   "designNote": "Late defensive anchor with conditional die insurance."
+  },
+  {
+   "id": "BU_XP",
+   "name": "Xardy Piercer",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Robot",
+   "isCommander": false,
+   "cost": {
+    "G": 1,
+    "B": 0,
+    "R": 0,
+    "P": 2,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 1,
+    "psionic": 0,
+    "physical": 3
+   },
+   "effects": [
+    {
+     "trigger": "Static",
+     "effect": "StatBonus",
+     "params": {
+      "stat": "physical",
+      "bonus": 1,
+      "when": {
+       "equipped": true,
+       "inBlockedBattle": true
+      }
+     }
+    }
+   ],
+   "text": "When equipped and fighting a blocked battle, gain +1 Physical for that battle.",
+   "implementation": "v0.4: Static → StatBonus",
+   "art": "cards/BU_XP",
+   "artSource": "26_Xardy Beast.psd",
+   "printed": {
+    "cost": {
+     "G": 1,
+     "B": 0,
+     "R": 0,
+     "P": 1,
+     "W": 1
+    },
+    "stats": {
+     "cyber": 1,
+     "psionic": 0,
+     "physical": 4
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "ruleBook+art",
+   "role": "Industrial",
+   "designNote": "Equipment payoff limited to blocked battles; direct Lab damage unchanged."
+  },
+  {
+   "id": "PW_MD",
+   "name": "Mental Disrupter",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 0,
+    "B": 1,
+    "R": 1,
+    "P": 0,
+    "W": 1
+   },
+   "timing": "Pulse",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "DisableTargets",
+     "params": {
+      "max": 2,
+      "hasAbility": "psionic"
+     }
+    }
+   ],
+   "text": "Choose up to two units under enemy control with Psionic above 0. They cannot attack or defend this turn; remove them from current battles if engaged.",
+   "keywords": [
+    "Pulse"
+   ],
+   "implementation": "v0.4: OnPlay → DisableTargets",
+   "art": "cards/PW_MD",
+   "artSource": "45_Mental Disrupter.psd",
+   "printed": {
+    "cost": {
+     "G": 0,
+     "B": 1,
+     "R": 0,
+     "P": 1,
+     "W": 1
+    },
+    "hasRulesText": true
+   },
+   "enabled": true,
+   "origin": "art",
+   "role": "Flexible / control",
+   "designNote": "Symmetric narrow safety valve, not a faction-wide hate card."
+  },
+  {
+   "id": "BU_PI2",
+   "name": "Patchwork Initiate",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Cyborg",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 0,
+    "A": 1
+   },
+   "stats": {
+    "cyber": 1,
+    "psionic": 1,
+    "physical": 1
+   },
+   "effects": [],
+   "text": "",
+   "implementation": "v0.4: no ability",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Mixed / flexible",
+   "designNote": "Vanilla three-stat one-drop; test cheap Stacking carefully."
+  },
+  {
+   "id": "BU_SM",
+   "name": "Signal Mite",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Robot",
+   "isCommander": false,
+   "cost": {
+    "G": 1,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 1,
+    "psionic": 0,
+    "physical": 1
+   },
+   "effects": [
+    {
+     "trigger": "OnCreate",
+     "effect": "ReorderTop",
+     "params": {
+      "n": 2
+     }
+    }
+   ],
+   "text": "When created, look at the top two cards of your Battle Deck and return them in either order.",
+   "implementation": "v0.4: OnCreate → ReorderTop",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Control / industrial",
+   "designNote": "Trade one stat for information; playable across strategies."
+  },
+  {
+   "id": "BU_AW",
+   "name": "Assembly Wisp",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Robot",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 0,
+    "physical": 1
+   },
+   "effects": [
+    {
+     "trigger": "OnCreate",
+     "effect": "WispRelocate",
+     "params": {}
+    }
+   ],
+   "text": "When created, you may relocate one Equipment between legal units under your control, paying its listed move cost. If you moved it, look at the top card of your Battle Deck.",
+   "implementation": "v0.4: OnCreate → WispRelocate",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Industrial",
+   "designNote": "Movement uses ordinary Creation timing and costs."
+  },
+  {
+   "id": "BU_TN",
+   "name": "Targeting Node",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Robot",
+   "isCommander": false,
+   "cost": {
+    "G": 1,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 1,
+    "psionic": 0,
+    "physical": 1
+   },
+   "effects": [
+    {
+     "trigger": "Activated",
+     "effect": "TargetingNode",
+     "params": {
+      "cost": {
+       "G": 1
+      }
+     }
+    }
+   ],
+   "text": "During a blocked battle involving another Robot under your control, pay G1: that Robot may Calibrate its Cyber die. Once per Battle phase.",
+   "keywords": [
+    "Calibrate"
+   ],
+   "implementation": "v0.4: Activated → TargetingNode",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Control",
+   "designNote": "An inexpensive support node; narrower than Physical calibration."
+  },
+  {
+   "id": "BU_SL",
+   "name": "Spore Larva",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Creature",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 1,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 0,
+    "physical": 1
+   },
+   "effects": [
+    {
+     "trigger": "OnDestroyed",
+     "effect": "LarvaBurst",
+     "params": {}
+    }
+   ],
+   "text": "When destroyed, choose another Creature under your control: it gains +1 Physical until end of turn (maximum +1 from Spore Larva per unit per turn).",
+   "implementation": "v0.4: OnDestroyed → LarvaBurst",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Swarm / evolution",
+   "designNote": "Death trigger forces sequencing; weaker attacker."
+  },
+  {
+   "id": "BU_ML",
+   "name": "Mind Leech",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Creature",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 1,
+    "R": 0,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 1,
+    "physical": 1
+   },
+   "effects": [
+    {
+     "trigger": "OnBlocked",
+     "effect": "LeechShift",
+     "params": {}
+    }
+   ],
+   "text": "When this attacks and is blocked, you may give it -1 Psionic and +1 Physical until end of turn.",
+   "implementation": "v0.4: OnBlocked → LeechShift",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Swarm / evolution",
+   "designNote": "Risk: zero Psionic disorientation versus psychic defenders."
+  },
+  {
+   "id": "BU_BC2",
+   "name": "Brood Carrier",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Creature",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 1,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 0,
+    "physical": 1
+   },
+   "effects": [
+    {
+     "trigger": "OnCreate",
+     "effect": "ReorderTop",
+     "params": {
+      "n": 2,
+      "revealCreature": true
+     }
+    }
+   ],
+   "text": "When created, you may reveal another Creature in your hand. If you do, look at the top two Battle cards; return them in either order.",
+   "implementation": "v0.4: OnCreate → ReorderTop",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Swarm",
+   "designNote": "Consistency without extra cards or bodies."
+  },
+  {
+   "id": "BU_RC",
+   "name": "Relay Chimera",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Cyborg",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 0,
+    "choice": [
+     [
+      "G",
+      "B"
+     ]
+    ]
+   },
+   "stats": {
+    "cyber": 1,
+    "psionic": 0,
+    "physical": 1
+   },
+   "effects": [
+    {
+     "trigger": "Static",
+     "effect": "StatBonus",
+     "params": {
+      "stat": "psionic",
+      "bonus": 1,
+      "when": {
+       "stackedWith": "Creature"
+      }
+     }
+    },
+    {
+     "trigger": "Static",
+     "effect": "StatBonus",
+     "params": {
+      "stat": "cyber",
+      "bonus": 1,
+      "when": {
+       "stackedWith": "Robot"
+      }
+     }
+    }
+   ],
+   "text": "While Stacked with a Creature, gain +1 Psionic. While Stacked with a Robot, gain +1 Cyber.",
+   "implementation": "v0.4: Static → StatBonus; Static → StatBonus",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Mixed",
+   "designNote": "Flexible hybrid; zero-Psi exposure outside stack."
+  },
+  {
+   "id": "BU_FD",
+   "name": "Fabricator Drone",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Robot",
+   "isCommander": false,
+   "cost": {
+    "G": 1,
+    "B": 0,
+    "R": 0,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 1,
+    "psionic": 0,
+    "physical": 1
+   },
+   "effects": [
+    {
+     "trigger": "Activated",
+     "effect": "FabricatorDiscount",
+     "params": {}
+    }
+   ],
+   "text": "Once during your Creation, deplete this ready, untrapped unit: the next Equipment you create this turn costs 1 fewer P (minimum total cost 1).",
+   "implementation": "v0.4: Activated → FabricatorDiscount",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Industrial",
+   "designNote": "Trade attack for discount; one discount per Equipment."
+  },
+  {
+   "id": "BU_SH2",
+   "name": "Scrap Harvester",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Robot",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 2,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 1,
+    "psionic": 0,
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "Activated",
+     "effect": "HarvestScrap",
+     "params": {}
+    }
+   ],
+   "text": "Once during Creation, if an Equipment is in your discard, you may pay P1 and remove that Equipment from the game to draw a Battle card.",
+   "implementation": "v0.4: Activated → HarvestScrap",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Industrial",
+   "designNote": "Resource conversion competes with recursion."
+  },
+  {
+   "id": "BU_VS",
+   "name": "Vector Sentinel",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Robot",
+   "isCommander": false,
+   "cost": {
+    "G": 1,
+    "B": 0,
+    "R": 0,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 2,
+    "psionic": 0,
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "Static",
+     "effect": "CalibrateSelf",
+     "params": {
+      "die": "physical",
+      "whenDefending": true
+     }
+    }
+   ],
+   "text": "When defending, before combat dice, you may Calibrate your Physical die.",
+   "keywords": [
+    "Calibrate"
+   ],
+   "implementation": "v0.4: Static → CalibrateSelf",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Control",
+   "designNote": "Reliable defender, weaker ceiling."
+  },
+  {
+   "id": "BU_CA",
+   "name": "Countermeasure Array",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Robot",
+   "isCommander": false,
+   "cost": {
+    "G": 2,
+    "B": 0,
+    "R": 0,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 3,
+    "psionic": 0,
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "Static",
+     "effect": "LockOn",
+     "params": {
+      "cost": {
+       "G": 1
+      }
+     }
+    }
+   ],
+   "text": "Lock-On (deplete G1).",
+   "keywords": [
+    "Lock-On"
+   ],
+   "implementation": "v0.4: Static → LockOn",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Control",
+   "designNote": "Each copy can pay for its own engagement; no player-wide limit."
+  },
+  {
+   "id": "BU_RO",
+   "name": "Railgun Overseer",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Robot",
+   "isCommander": false,
+   "cost": {
+    "G": 1,
+    "B": 0,
+    "R": 0,
+    "P": 2,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 2,
+    "psionic": 0,
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "OnCreate",
+     "effect": "LinkRobot",
+     "params": {}
+    },
+    {
+     "trigger": "Static",
+     "effect": "StatBonus",
+     "params": {
+      "stat": "physical",
+      "bonus": 1,
+      "when": {
+       "linkEquipped": true
+      }
+     }
+    }
+   ],
+   "text": "When created, choose another Robot under your control. While that Robot remains equipped and both are untrapped, this gains +1 Physical.",
+   "implementation": "v0.4: OnCreate → LinkRobot; Static → StatBonus",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Industrial",
+   "designNote": "Clear vulnerable link; no repeated target selection."
+  },
+  {
+   "id": "BU_FT",
+   "name": "Foundry Titan",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Robot",
+   "isCommander": false,
+   "cost": {
+    "G": 2,
+    "B": 0,
+    "R": 0,
+    "P": 2,
+    "W": 1
+   },
+   "stats": {
+    "cyber": 3,
+    "psionic": 0,
+    "physical": 4
+   },
+   "effects": [
+    {
+     "trigger": "OnCreate",
+     "effect": "TitanRecall",
+     "params": {}
+    }
+   ],
+   "text": "When created, return one Equipment from your discard to your hand. If you control no other Robot, skip this ability.",
+   "implementation": "v0.4: OnCreate → TitanRecall",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Industrial",
+   "designNote": "Finisher that rewards infrastructure, not automatic infinite discounts."
+  },
+  {
+   "id": "BU_GM",
+   "name": "Grid Marshal",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Robot",
+   "isCommander": true,
+   "cost": {
+    "G": 2,
+    "B": 0,
+    "R": 0,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 3,
+    "psionic": 0,
+    "physical": 2
+   },
+   "protocols": {
+    "Scan": "this gains Lock-On (deplete G1).",
+    "Guard": "when this defends, it may Calibrate its Physical die."
+   },
+   "effects": [
+    {
+     "trigger": "Protocol",
+     "effect": "ProtocolLockOn",
+     "params": {
+      "mode": "Scan",
+      "cost": {
+       "G": 1
+      }
+     }
+    },
+    {
+     "trigger": "Protocol",
+     "effect": "ProtocolCalibrate",
+     "params": {
+      "mode": "Guard",
+      "die": "physical",
+      "whenDefending": true
+     }
+    }
+   ],
+   "text": "Protocol — Scan: this gains Lock-On (deplete G1). Guard: when this defends, it may Calibrate its Physical die.",
+   "keywords": [
+    "Calibrate",
+    "Lock-On",
+    "Protocol"
+   ],
+   "implementation": "v0.4: Protocol → ProtocolLockOn; Protocol → ProtocolCalibrate",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Control",
+   "designNote": "Personal operating modes, visible before combat; no remote Lock-On."
+  },
+  {
+   "id": "BU_SC2",
+   "name": "Swarm Caller",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Creature",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 1,
+    "R": 1,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 1,
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "OnCreate",
+     "effect": "SwarmCall",
+     "params": {}
+    }
+   ],
+   "text": "When created, reveal the top three cards of your Battle Deck. You may put one Creature with printed total cost 1 into your hand; return the rest to the bottom in any order.",
+   "implementation": "v0.4: OnCreate → SwarmCall",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Swarm",
+   "designNote": "Find cheap bodies; deck construction determines reliability."
+  },
+  {
+   "id": "BU_CS",
+   "name": "Carrion Sprinter",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Creature",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 2,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 0,
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "Static",
+     "effect": "SprinterHunger",
+     "params": {}
+    }
+   ],
+   "text": "When another Creature under your control is destroyed during your Battle phase, this gains +1 Physical until end of turn, once per turn.",
+   "implementation": "v0.4: Static → SprinterHunger",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Swarm",
+   "designNote": "Temporary payoff for losses, not permanent escalation."
+  },
+  {
+   "id": "BU_MA",
+   "name": "Morphic Adept",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Creature",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 0,
+    "choice": [
+     [
+      "B",
+      "R"
+     ],
+     [
+      "B",
+      "R"
+     ]
+    ]
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 2,
+    "physical": 1
+   },
+   "effects": [
+    {
+     "trigger": "BeforeDice",
+     "effect": "MorphicShift",
+     "params": {}
+    }
+   ],
+   "text": "Adaptive shift: before its combat dice, you may move 1 point of its Psionic strength to Physical or 1 Physical to Psionic until end of turn (Physical minimum 1).",
+   "implementation": "v0.4: BeforeDice → MorphicShift",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Evolution",
+   "designNote": "Player-controlled conversion, no random requirement."
+  },
+  {
+   "id": "BU_CW",
+   "name": "Chitin Weaver",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Creature",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 1,
+    "R": 2,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 2,
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "AfterEngagement",
+     "effect": "MutateOnPsiLoss",
+     "params": {}
+    }
+   ],
+   "text": "Mutation — After this unit survives a blocked battle in which it lost the Psionic battle, it gains +1 permanent Psionic.",
+   "keywords": [
+    "Mutation"
+   ],
+   "implementation": "v0.4: AfterEngagement → MutateOnPsiLoss",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Evolution",
+   "designNote": "Adapts to psychic pressure, including automatic loss at zero Psionic. No benefit from staying out of combat."
+  },
+  {
+   "id": "BU_HR",
+   "name": "Hive Regent",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Creature",
+   "isCommander": true,
+   "cost": {
+    "G": 0,
+    "B": 1,
+    "R": 2,
+    "P": 0,
+    "W": 1
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 2,
+    "physical": 3
+   },
+   "effects": [
+    {
+     "trigger": "AttackDeclared",
+     "effect": "SwarmBoost",
+     "params": {
+      "min": 3
+     }
+    }
+   ],
+   "text": "Once per your Battle phase, when at least three Creatures under your control attack, choose up to two of them to gain +1 Physical until end of turn.",
+   "implementation": "v0.4: AttackDeclared → SwarmBoost",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Swarm",
+   "designNote": "Wide attack payoff capped at two bonus damage."
+  },
+  {
+   "id": "BU_AA",
+   "name": "Apex Aberration",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Creature",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 2,
+    "R": 2,
+    "P": 0,
+    "W": 1
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": "X",
+    "physical": 3
+   },
+   "effects": [
+    {
+     "trigger": "RollX",
+     "effect": "RollX",
+     "params": {
+      "die": "red",
+      "stat": "psionic",
+      "rider": "apex"
+     }
+    }
+   ],
+   "text": "Psionic X. If its ability roll is numeric 1 or 2, gain +2 Physical for the turn; if 4 or 5, gain +1 Psionic for the turn.",
+   "implementation": "v0.4: RollX → RollX",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Evolution",
+   "designNote": "Opposing Lock-On must weigh two different threats."
+  },
+  {
+   "id": "BU_SA2",
+   "name": "Suture Architect",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Cyborg",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 1,
+    "R": 0,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 1,
+    "psionic": 1,
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "Activated",
+     "effect": "SutureRelocate",
+     "params": {}
+    }
+   ],
+   "text": "During your Creation, once per turn, you may relocate one Equipment between this and another legal unit under your control, paying its move cost. If you do, this gains +1 Psionic until end of turn.",
+   "implementation": "v0.4: Activated → SutureRelocate",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Mixed / industrial",
+   "designNote": "Equipment integration without mid-declaration shuffling."
+  },
+  {
+   "id": "BU_NI",
+   "name": "Neural Interface",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Cyborg",
+   "isCommander": false,
+   "cost": {
+    "G": 1,
+    "B": 1,
+    "R": 0,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 2,
+    "psionic": 1,
+    "physical": 1
+   },
+   "effects": [
+    {
+     "trigger": "Static",
+     "effect": "PartnerReroll",
+     "params": {}
+    }
+   ],
+   "text": "When Stacked with a Creature, its X ability roll may be rerolled once; keep the new result.",
+   "implementation": "v0.4: Static → PartnerReroll",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Mixed / evolution",
+   "designNote": "Reliability for biological risk, at a card cost."
+  },
+  {
+   "id": "BU_AS",
+   "name": "Alloy Symbiont",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Cyborg",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 1,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 1,
+    "psionic": 1,
+    "physical": 2
+   },
+   "effects": [
+    {
+     "trigger": "AfterEngagement",
+     "effect": "AlloyUpgrade",
+     "params": {}
+    }
+   ],
+   "text": "After its Stack survives a blocked battle in which it lost a Cyber or Psionic battle, you may deplete P1 for Cyber or R1 for Psionic. Its non-Cyborg partner gains +1 permanent strength in that lost channel, if its type can use it. Choose at most one channel.",
+   "implementation": "v0.4: AfterEngagement → AlloyUpgrade",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Mixed / evolution",
+   "designNote": "Combat-tested augmentation for either faction; a permanent upgrade for Robots and a permanent buff for Creatures, not inherently a Mutation."
+  },
+  {
+   "id": "BU_CE",
+   "name": "Convergence Engine",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Cyborg",
+   "isCommander": false,
+   "cost": {
+    "G": 1,
+    "B": 1,
+    "R": 1,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 2,
+    "psionic": 2,
+    "physical": 3
+   },
+   "effects": [
+    {
+     "trigger": "OnStack",
+     "effect": "Convergence",
+     "params": {}
+    }
+   ],
+   "text": "When forming a Stack, if you control both an untrapped Robot and an untrapped Creature, choose one: Calibrate its Physical die, or grant its partner +1 Physical until the Stack separates.",
+   "implementation": "v0.4: OnStack → Convergence",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Mixed",
+   "designNote": "Explicit payoff for genuine multi-faction board, not just splashing a Cyborg."
+  },
+  {
+   "id": "PW_EF",
+   "name": "Emergency Firewall",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 1,
+    "B": 0,
+    "R": 0,
+    "P": 1,
+    "W": 0
+   },
+   "timing": "Pulse",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "CounterPulse",
+     "params": {}
+    }
+   ],
+   "text": "In response to a Pulse that targets exactly one of your Robots or Cyborgs and would prevent it from attacking or defending, cancel that Pulse. Paid costs are not refunded.",
+   "keywords": [
+    "Pulse"
+   ],
+   "implementation": "v0.4: OnPlay → CounterPulse",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Control / mixed",
+   "designNote": "Broad defensive response against disabling effects rather than a dedicated answer to one card."
+  },
+  {
+   "id": "PW_SP",
+   "name": "Salvage Protocol",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 1,
+    "W": 0
+   },
+   "timing": "Operation",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "SalvageProtocol",
+     "params": {}
+    }
+   ],
+   "text": "Creation only. Remove one destroyed Robot from your discard. Replenish one depleted CU other than the CU paid for this card.",
+   "keywords": [
+    "Operation"
+   ],
+   "implementation": "v0.4: OnPlay → SalvageProtocol",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Industrial",
+   "designNote": "Tempo not ramp; cannot refund itself."
+  },
+  {
+   "id": "PW_MA",
+   "name": "Modular Assembly",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 0,
+    "choice": [
+     [
+      "G",
+      "P"
+     ],
+     [
+      "G",
+      "P"
+     ]
+    ]
+   },
+   "timing": "Operation",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "ModularAssembly",
+     "params": {
+      "maxCost": 2
+     }
+    }
+   ],
+   "text": "Search your Battle Deck for an Equipment with printed total cost 2 or less and no burn cost. Reveal it and create it attached to a legal unit under your control without paying its cost. Shuffle.",
+   "keywords": [
+    "Operation"
+   ],
+   "implementation": "v0.4: OnPlay → ModularAssembly",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Industrial",
+   "designNote": "Operation; direct fabrication rather than a redundant, more expensive tutor."
+  },
+  {
+   "id": "PW_RC",
+   "name": "Repair Circuit",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 0,
+    "choice": [
+     [
+      "G",
+      "P"
+     ]
+    ]
+   },
+   "timing": "Pulse",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "PreventDamage",
+     "params": {
+      "amount": 1,
+      "filter": {
+       "unitType": [
+        "Robot",
+        "Cyborg"
+       ]
+      }
+     }
+    }
+   ],
+   "text": "Prevent the next 1 point of ability damage to one Robot or Cyborg under your control this turn.",
+   "keywords": [
+    "Pulse"
+   ],
+   "implementation": "v0.4: OnPlay → PreventDamage",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Industrial / control",
+   "designNote": "Flexible small prevention, not a combat win guarantee."
+  },
+  {
+   "id": "PW_SJ",
+   "name": "Signal Jam",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 1,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 0
+   },
+   "timing": "Pulse",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "SignalJam",
+     "params": {}
+    }
+   ],
+   "text": "Choose one Battle Unit under enemy control. It cannot use optional activated abilities until end of turn. Does not remove static abilities or mandatory rolls.",
+   "keywords": [
+    "Pulse"
+   ],
+   "implementation": "v0.4: OnPlay → SignalJam",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Control",
+   "designNote": "Interrupts engines but does not cancel an already declared activation."
+  },
+  {
+   "id": "PW_M",
+   "name": "Molting",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 1,
+    "P": 0,
+    "W": 0
+   },
+   "timing": "Pulse",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "Molting",
+     "params": {
+      "amount": 2
+     }
+    }
+   ],
+   "text": "In response to a Power or unit ability targeting one Creature or Cyborg under your control for damage, that unit loses 1 Psionic until end of turn (must have at least 1). Prevent up to 2 damage from that effect to that unit.",
+   "keywords": [
+    "Pulse"
+   ],
+   "implementation": "v0.4: OnPlay → Molting",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Evolution / swarm",
+   "designNote": "Sheds psychic function to survive injury; useful in multiple matchups."
+  },
+  {
+   "id": "PW_FE",
+   "name": "Forced Evolution",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 0,
+    "choice": [
+     [
+      "B",
+      "R"
+     ],
+     [
+      "B",
+      "R"
+     ]
+    ]
+   },
+   "timing": "Pulse",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "PowerRoll",
+     "params": {
+      "bands": [
+       {
+        "values": [
+         1,
+         3,
+         5
+        ],
+        "stat": "psionic",
+        "amount": 2
+       },
+       {
+        "values": [
+         2,
+         4
+        ],
+        "stat": "physical",
+        "amount": 1
+       }
+      ]
+     }
+    }
+   ],
+   "text": "Choose a Creature under your control. Roll red as an ability roll. Numeric odd: +2 Psionic; numeric even: +1 Physical. Until end of turn.",
+   "keywords": [
+    "Pulse"
+   ],
+   "implementation": "v0.4: OnPlay → PowerRoll",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Evolution",
+   "designNote": "Temporary forced response, not a Mutation. Power roll is not eligible for Lock-On."
+  },
+  {
+   "id": "PW_CI",
+   "name": "Cannibalistic Instinct",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 1,
+    "P": 0,
+    "W": 0
+   },
+   "timing": "Pulse",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "CannibalInstinct",
+     "params": {}
+    }
+   ],
+   "text": "Choose a Creature under your control. Cannibalize a different Creature or Cyborg under your control. The chosen Creature gains Physical equal to the consumed unit’s permanent Physical immediately before destruction until end of turn.",
+   "keywords": [
+    "Cannibalize",
+    "Pulse"
+   ],
+   "implementation": "v0.4: OnPlay → CannibalInstinct",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Swarm / evolution",
+   "designNote": "Uncapped transfer; includes printed Physical and permanent modifications, excludes Equipment, temporary effects, damage, auras and Stack partners. Cost destroys a body; Pulse enables combat surprises."
+  },
+  {
+   "id": "PW_BR",
+   "name": "Brood Recall",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 0,
+    "B": 1,
+    "R": 1,
+    "P": 0,
+    "W": 0
+   },
+   "timing": "Operation",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "ReturnUpTo",
+     "params": {
+      "n": 2,
+      "filter": {
+       "unitType": "Creature",
+       "exactCost": 1
+      }
+     }
+    }
+   ],
+   "text": "Creation only. Return up to two Creatures with printed total cost 1 from your discard to your hand.",
+   "keywords": [
+    "Operation"
+   ],
+   "implementation": "v0.4: OnPlay → ReturnUpTo",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Swarm",
+   "designNote": "Card advantage, not free board presence."
+  },
+  {
+   "id": "PW_UC",
+   "name": "Unstable Carapace",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 1,
+    "P": 0,
+    "W": 0
+   },
+   "timing": "Pulse",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "PowerRoll",
+     "params": {
+      "requireBlocked": true,
+      "bands": [
+       {
+        "values": [
+         1,
+         2
+        ],
+        "stat": "physical",
+        "amount": 1
+       },
+       {
+        "values": [
+         3,
+         4,
+         5
+        ],
+        "stat": "psionic",
+        "amount": 1
+       }
+      ]
+     }
+    }
+   ],
+   "text": "Choose a Creature under your control in a blocked battle. Roll red as an ability roll. Numeric 1–2: +1 Physical; 3–5: +1 Psionic. Until end of turn.",
+   "keywords": [
+    "Pulse"
+   ],
+   "implementation": "v0.4: OnPlay → PowerRoll",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Evolution",
+   "designNote": "Cheap risk with counterplay; no guaranteed major bonus."
+  },
+  {
+   "id": "PW_C",
+   "name": "Crosslink",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 0,
+    "choice": [
+     [
+      "G",
+      "B"
+     ],
+     [
+      "R",
+      "P"
+     ]
+    ]
+   },
+   "timing": "Pulse",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "StackBuff",
+     "params": {
+      "cyber": 1,
+      "psionic": 1
+     }
+    }
+   ],
+   "text": "During the Power window, choose one of your existing Stacks. It gains +1 Cyber and +1 Psionic until it separates.",
+   "keywords": [
+    "Pulse"
+   ],
+   "implementation": "v0.4: OnPlay → StackBuff",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Mixed",
+   "designNote": "Flexible costs, no Physical damage burst."
+  },
+  {
+   "id": "PW_ES",
+   "name": "Emergency Separation",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 0,
+    "choice": [
+     [
+      "G",
+      "B"
+     ],
+     [
+      "R",
+      "P"
+     ]
+    ]
+   },
+   "timing": "Pulse",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "SplitStack",
+     "params": {}
+    }
+   ],
+   "text": "During the Power window, split one of your Stacks. Choose one member to remain engaged; the other returns to your Lab depleted.",
+   "keywords": [
+    "Pulse"
+   ],
+   "implementation": "v0.4: OnPlay → SplitStack",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Mixed",
+   "designNote": "Sacrifice combined power to preserve a body; no extra block."
+  },
+  {
+   "id": "PW_IN",
+   "name": "Interference Net",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 1,
+    "B": 0,
+    "R": 0,
+    "P": 1,
+    "W": 0
+   },
+   "timing": "Pulse",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "TrapUnit",
+     "params": {
+      "target": "opposingUnit",
+      "release": "nextCleanup",
+      "filter": {
+       "maxPrintedPhysical": 2
+      }
+     }
+    }
+   ],
+   "text": "Contain one unit under enemy control with printed Physical 2 or less. Free it at its owner’s next Cleanup.",
+   "keywords": [
+    "Containment",
+    "Pulse"
+   ],
+   "implementation": "v0.4: OnPlay → TrapUnit",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Control",
+   "designNote": "Short tempo effect; not a separate card type."
+  },
+  {
+   "id": "PW_PS",
+   "name": "Parasitic Snare",
+   "deck": "battle",
+   "cardType": "Power",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 0,
+    "choice": [
+     [
+      "B",
+      "R"
+     ],
+     [
+      "B",
+      "R"
+     ]
+    ]
+   },
+   "timing": "Pulse",
+   "effects": [
+    {
+     "trigger": "OnPlay",
+     "effect": "TrapUnit",
+     "params": {
+      "target": "opposingUnit",
+      "release": "nextCleanup",
+      "snarePenalty": true
+     }
+    }
+   ],
+   "text": "Contain one unit under enemy control. At its owner’s next Cleanup, free it. If you control a Creature in your Lab that can grant abilities, the freed unit loses 1 Physical until end of that turn (minimum 1).",
+   "keywords": [
+    "Containment",
+    "Pulse"
+   ],
+   "implementation": "v0.4: OnPlay → TrapUnit",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Swarm / evolution",
+   "designNote": "Temporary opening; distinct from Grankor protection."
+  },
+  {
+   "id": "EQ_SH",
+   "name": "Servo Harness",
+   "deck": "battle",
+   "cardType": "Equipment",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 1,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 0,
+    "physical": 1
+   },
+   "equip": {
+    "ability": "physical",
+    "bonus": 1,
+    "allowed": [
+     "Robot",
+     "Cyborg"
+    ],
+    "moveCost": {
+     "G": 0,
+     "B": 0,
+     "R": 0,
+     "P": 1,
+     "W": 0
+    }
+   },
+   "effects": [],
+   "text": "+1 Physical for Robots or Cyborgs. Relocate — deplete P1.",
+   "keywords": [
+    "Relocate"
+   ],
+   "implementation": "v0.4: no ability",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Industrial",
+   "designNote": "Efficient initial equipment; moving the harness costs tempo."
+  },
+  {
+   "id": "EQ_AM",
+   "name": "Adaptive Membrane",
+   "deck": "battle",
+   "cardType": "Equipment",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 1,
+    "P": 0,
+    "W": 0
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 1,
+    "physical": 0
+   },
+   "equip": {
+    "ability": "psionic",
+    "bonus": 1,
+    "allowed": [
+     "Creature",
+     "Cyborg"
+    ]
+   },
+   "effects": [
+    {
+     "trigger": "Static",
+     "effect": "ReturnOnDestroy",
+     "params": {}
+    }
+   ],
+   "text": "+1 Psionic for Creatures or Cyborgs. When its bearer is destroyed, you may return this Equipment to your hand instead of discarding it. Once per Battle phase.",
+   "implementation": "v0.4: Static → ReturnOnDestroy",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Evolution / swarm",
+   "designNote": "Preserves investment, but reattaching requires normal creation cost."
+  },
+  {
+   "id": "EQ_IP",
+   "name": "Interface Plating",
+   "deck": "battle",
+   "cardType": "Equipment",
+   "cost": {
+    "G": 0,
+    "B": 0,
+    "R": 0,
+    "P": 0,
+    "W": 0,
+    "choice": [
+     [
+      "G",
+      "B"
+     ],
+     [
+      "R",
+      "P"
+     ]
+    ]
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 0,
+    "physical": 1
+   },
+   "equip": {
+    "ability": "physical",
+    "bonus": 1,
+    "allowed": [
+     "Cyborg"
+    ],
+    "moveCost": {
+     "G": 0,
+     "B": 0,
+     "R": 0,
+     "P": 0,
+     "W": 0,
+     "choice": [
+      [
+       "R",
+       "P"
+      ]
+     ]
+    }
+   },
+   "effects": [
+    {
+     "trigger": "Static",
+     "effect": "PartnerShield",
+     "params": {}
+    }
+   ],
+   "text": "+1 Physical for Cyborgs. While Stacked, its non-Cyborg partner may ignore the first 1 ability damage dealt to it each Battle phase. Relocate — deplete R/P 1.",
+   "keywords": [
+    "Relocate"
+   ],
+   "implementation": "v0.4: Static → PartnerShield",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Mixed",
+   "designNote": "Flexible mixed build; relocation is paid."
+  },
+  {
+   "id": "BU_CF",
+   "name": "Carrion Foundress",
+   "deck": "battle",
+   "cardType": "BattleUnit",
+   "unitType": "Creature",
+   "isCommander": false,
+   "cost": {
+    "G": 0,
+    "B": 1,
+    "R": 2,
+    "P": 0,
+    "W": 1,
+    "burnPool": [
+     "B",
+     "R"
+    ]
+   },
+   "stats": {
+    "cyber": 0,
+    "psionic": 2,
+    "physical": 3
+   },
+   "effects": [
+    {
+     "trigger": "AfterEngagement",
+     "effect": "Feeding",
+     "params": {}
+    }
+   ],
+   "text": "Once per Battle phase across your Carrion Foundresses, when this or its Stack survives and destroys one or more Battle Units under enemy control in Physical combat, choose one of those destroyed cards. You may create one Creature from your hand with printed total cost no greater than that card’s printed total cost. Waive its depletion costs; pay all its printed burn costs.",
+   "keywords": [
+    "Feeding"
+   ],
+   "implementation": "v0.4: AfterEngagement → Feeding",
+   "enabled": true,
+   "origin": "v0.4",
+   "role": "Swarm / evolution",
+   "designNote": "Feeding payoff; no sum of Stack costs, no free burn, no extra combat assignment. Test 4-cost finisher and cheap body generation."
+  }
+ ]
 }
