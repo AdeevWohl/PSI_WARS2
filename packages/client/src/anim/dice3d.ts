@@ -39,7 +39,7 @@ export class Die3D {
 
   private setRest(side: number): void {
     const [x, y] = SHOW[side]!;
-    this.cube.style.transform = `${TILT} rotateX(${x}deg) rotateY(${y}deg)`;
+    this.cube.style.transform = `${TILT} rotateX(${x}deg) rotateY(${y}deg) rotateZ(0deg)`;
     this.flat.replaceChildren(svg(dieSvg(this.die, side, { size: this.size, variant: this.variant })));
   }
 
@@ -53,10 +53,31 @@ export class Die3D {
       return tl.animate(this.el, [{ transform: 'scaleX(0) translateY(-30px)' }, { transform: 'scaleX(-1) translateY(-12px)', offset: 0.4 }, { transform: 'scaleX(1) translateY(0)' }], { duration: 520, easing: EASE.outBack, delay, fill: 'backwards' });
     }
     const [x, y] = SHOW[side]!;
-    const sx = 720 + Math.round(Math.random() * 2) * 90;
-    const sy = 720 + Math.round(Math.random() * 2) * 90;
-    tl.animate(this.el, [{ transform: 'translateY(-90px) scale(0.6)', opacity: 0 }, { transform: 'translateY(6px) scale(1.05)', opacity: 1, offset: 0.55 }, { transform: 'translateY(-10px)', offset: 0.75 }, { transform: 'translateY(0) scale(1)' }], { duration, easing: EASE.outCubic, delay, fill: 'backwards' });
-    return tl.animate(this.cube, [{ transform: `${TILT} rotateX(${x + sx}deg) rotateY(${y + sy}deg) rotateZ(${sx / 4}deg)` }, { transform: `${TILT} rotateX(${x - 14}deg) rotateY(${y + 16}deg)`, offset: 0.8 }, { transform: `${TILT} rotateX(${x}deg) rotateY(${y}deg)` }], { duration, easing: EASE.outQuint, delay, fill: 'backwards' });
+    // Several whole turns on all three axes. Every keyframe lists the same transform functions
+    // in the same order, so the browser rotates the cube in 3D instead of blending flat matrices.
+    const turns = () => (2 + Math.floor(Math.random() * 2)) * 360 * (Math.random() < 0.5 ? -1 : 1);
+    const [tx, ty, tz] = [turns(), turns(), (Math.random() < 0.5 ? -1 : 1) * 180];
+    const rot = (a: number, b: number, c: number) => `${TILT} rotateX(${(x + a).toFixed(1)}deg) rotateY(${(y + b).toFixed(1)}deg) rotateZ(${c.toFixed(1)}deg)`;
+    const k = (f: number) => [tx * f, ty * f, tz * f] as const;
+    const drop = (t: number, sc: number) => `translateY(${t}px) scale(${sc})`;
+    tl.animate(this.el, [
+      { transform: drop(-120, 0.7), opacity: 0 },
+      { transform: drop(4, 1.04), opacity: 1, offset: 0.38 },
+      { transform: drop(-30, 1), offset: 0.55 },
+      { transform: drop(0, 1.02), offset: 0.72 },
+      { transform: drop(-9, 1), offset: 0.85 },
+      { transform: drop(0, 1) },
+    ], { duration, easing: 'cubic-bezier(0.25, 0.1, 0.25, 1)', delay, fill: 'backwards' });
+    const shadow = this.el.querySelector('.die-shadow');
+    if (shadow) tl.animate(shadow, [{ transform: 'scale(0.3)', opacity: 0.1 }, { transform: 'scale(1)', opacity: 1, offset: 0.38 }, { transform: 'scale(0.75)', opacity: 0.6, offset: 0.55 }, { transform: 'scale(1)', opacity: 1, offset: 0.72 }, { transform: 'scale(0.9)', opacity: 0.85, offset: 0.85 }, { transform: 'scale(1)', opacity: 1 }], { duration, delay, fill: 'backwards' });
+    return tl.animate(this.cube, [
+      { transform: rot(...k(1)) },
+      { transform: rot(...k(0.4)), offset: 0.38 },
+      { transform: rot(...k(0.12)), offset: 0.6 },
+      { transform: rot(-14, 16, 5), offset: 0.78 },
+      { transform: rot(5, -5, -2), offset: 0.9 },
+      { transform: rot(0, 0, 0) },
+    ], { duration, easing: 'cubic-bezier(0.2, 0.6, 0.35, 1)', delay, fill: 'backwards' });
   }
 
   /** Re-roll: the die lifts and spins in place, then lands on the new side. */

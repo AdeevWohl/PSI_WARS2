@@ -84,13 +84,33 @@ export class Timeline {
     });
   }
 
-  /** Await an animation (resolves immediately if it was skipped). */
+  /**
+   * Await an animation (resolves immediately if it was skipped). Safety net: if the page stops
+   * drawing frames without reporting itself hidden (an occluded or throttled window), animations
+   * never start; after their expected length plus a margin the animation is finished so the game
+   * can never freeze on presentation.
+   */
   async done(a: Animation | null | undefined): Promise<void> {
     if (!a) return;
+    const t = a.effect?.getComputedTiming();
+    const expected = Number(t?.endTime ?? t?.activeDuration ?? 1000) || 1000;
+    let timer = 0;
+    const guard = new Promise<void>((resolve) => {
+      timer = window.setTimeout(() => {
+        try {
+          a.finish();
+        } catch {
+          /* ignore */
+        }
+        resolve();
+      }, expected + 1500);
+    });
     try {
-      await a.finished;
+      await Promise.race([a.finished.then(() => undefined), guard]);
     } catch {
       /* cancelled */
+    } finally {
+      clearTimeout(timer);
     }
   }
 

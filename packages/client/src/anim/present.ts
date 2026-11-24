@@ -236,16 +236,16 @@ export class Presenter {
     const sx = from ? from.cx - cx : 0;
     const sy = from ? from.cy - cy : 320;
     await this.tl.done(this.tl.animate(wrap, [
-      { transform: `translate(-50%, -50%) translate(${sx}px, ${sy}px) scale(0.3)${fromOpponent ? ' rotateY(90deg)' : ''}`, opacity: 0.5 },
-      { transform: 'translate(-50%, -50%) scale(1.06)', opacity: 1, offset: 0.75 },
-      { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
+      { transform: `translate(-50%, -50%) translate(${sx}px, ${sy}px) scale(0.3) rotateY(${fromOpponent ? 90 : 0}deg)`, opacity: 0.5 },
+      { transform: 'translate(-50%, -50%) translate(0px, 0px) scale(1.06) rotateY(0deg)', opacity: 1, offset: 0.75 },
+      { transform: 'translate(-50%, -50%) translate(0px, 0px) scale(1) rotateY(0deg)', opacity: 1 },
     ], { duration: DUR.travel, easing: EASE.outQuint, fill: 'forwards' }));
     await this.tl.wait(650);
     if (target && target.isConnected) {
       const r = this.centre(target);
       const k = Math.max(0.2, r.w / W);
       await this.tl.done(this.tl.animate(wrap, [
-        { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
+        { transform: 'translate(-50%, -50%) translate(0px, 0px) scale(1)', opacity: 1 },
         { transform: `translate(-50%, -50%) translate(${r.cx - cx}px, ${r.cy - cy}px) scale(${k})`, opacity: 1, offset: 0.85 },
         { transform: `translate(-50%, -50%) translate(${r.cx - cx}px, ${r.cy - cy}px) scale(${k})`, opacity: 0 },
       ], { duration: DUR.travel - 120, easing: EASE.inOutQuart, fill: 'forwards' }));
@@ -618,7 +618,7 @@ export class Presenter {
           // A damage spell smites from above; sweeps just hit.
           if (e.cause === 'effect' && !this.batch.some((x) => x.type === 'SweepDamage' && x.source === e.source)) await this.bolt(r.cx, r.cy);
           else if (e.cause === 'effect') this.env.fx.burst(r.cx, r.cy, { color: '#ffffff', count: 10, speed: 2 });
-          this.floatNumber(r.cx, r.cy, `−${e.amount}`);
+          this.floatNumber(r.cx, r.cy, `−${e.amount}`, Number(e.amount) >= 3 ? 'dmg-num crit' : 'dmg-num');
           this.aura(el, 'danger');
           this.env.fx.burst(r.cx, r.cy, { color: '#ff4d6d', count: 12 + Number(e.amount) * 3, speed: 2.4 });
           this.shake(0.3 + Number(e.amount) * 0.15);
@@ -989,7 +989,13 @@ export class Presenter {
         this.sfx('labHit');
         const a = this.env.board.anchors(seat);
         if (a && !tl.instant) {
-          const num = this.temp(h('div', { class: 'dmg-num' }, `−${amount}`));
+          const num = this.temp(h('div', { class: amount >= 3 ? 'dmg-num crit' : 'dmg-num' }, `−${amount}`));
+          const hpEl = this.env.board.areaFor(seat)?.root.querySelector('.hp-wrap');
+          if (hpEl) {
+            hpEl.classList.remove('hit');
+            void (hpEl as HTMLElement).offsetWidth;
+            hpEl.classList.add('hit');
+          }
           Object.assign(num.style, { left: `${a.hp.cx}px`, top: `${a.hp.cy}px` });
           tl.done(tl.animate(num, [{ transform: 'translate(-50%, -50%) scale(0.4)', opacity: 0 }, { transform: 'translate(-50%, -80%) scale(1.5)', opacity: 1, offset: 0.2 }, { transform: 'translate(-50%, -260%) scale(1)', opacity: 0 }], { duration: 1100, easing: EASE.outQuint, fill: 'forwards' })).then(() => num.remove());
           this.env.fx.burst(a.hp.cx, a.hp.cy, { color: '#ff4d6d', count: 14 + amount * 4, speed: 3 });

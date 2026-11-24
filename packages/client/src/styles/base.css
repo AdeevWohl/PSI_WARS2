@@ -17,7 +17,7 @@ img { user-select: none; -webkit-user-drag: none; }
   font-weight: 600; letter-spacing: 0.02em; transition: transform var(--dur-micro) var(--ease-out-cubic), border-color var(--dur-micro), background var(--dur-micro);
 }
 .btn:hover:not(:disabled) { border-color: var(--accent); transform: translateY(-1px); }
-.btn:active:not(:disabled) { transform: translateY(0); }
+.btn:active:not(:disabled) { transform: translateY(1px) scale(0.96); filter: brightness(1.25); transition-duration: 60ms; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .btn.primary { background: linear-gradient(180deg, #1d6a8f, #12466a); border-color: var(--accent); color: #fff; box-shadow: 0 0 0 1px rgba(79, 209, 255, 0.25), 0 0 18px rgba(79, 209, 255, 0.18); }
 .btn.danger { border-color: var(--danger); background: linear-gradient(180deg, #5a1a2a, #3a101c); }

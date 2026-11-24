@@ -136,6 +136,18 @@ export class GameScreen {
         e.preventDefault();
       }
     }, true);
+    // Hand cards tilt toward the pointer with a moving shine.
+    this.el.addEventListener('pointermove', (e) => {
+      const card = (e.target as Element).closest('.hand.fan .card') as HTMLElement | null;
+      if (!card || this.drag.active) return;
+      const r = card.getBoundingClientRect();
+      const fx = (e.clientX - r.left) / r.width;
+      const fy = (e.clientY - r.top) / r.height;
+      card.style.setProperty('--ry', `${((fx - 0.5) * 18).toFixed(1)}deg`);
+      card.style.setProperty('--rx', `${((0.5 - fy) * 14).toFixed(1)}deg`);
+      card.style.setProperty('--mx', `${(fx * 100).toFixed(0)}%`);
+      card.style.setProperty('--my', `${(fy * 100).toFixed(0)}%`);
+    });
     // A staged spell can target a Lab: click anywhere on that player's area (not on a card).
     this.el.addEventListener('click', (e) => {
       const st = this.controller.staged();

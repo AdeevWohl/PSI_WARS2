@@ -217,3 +217,7 @@
 .sfx-vortex.tech { background: repeating-linear-gradient(0deg, rgba(79, 209, 255, 0.5) 0 2px, transparent 2px 16px), repeating-linear-gradient(90deg, rgba(79, 209, 255, 0.5) 0 2px, transparent 2px 16px), radial-gradient(circle, rgba(79, 209, 255, 0.35), transparent 70%); }
 .sfx-beam { width: 180px; height: 260px; background: linear-gradient(180deg, transparent, rgba(255, 200, 87, 0.85) 45%, rgba(255, 200, 87, 0.85) 55%, transparent); box-shadow: 0 0 40px #ffc857; border-radius: 30%; }
 .sfx-gear { width: 170px; height: 170px; border-radius: 50%; background: repeating-conic-gradient(rgba(255, 154, 60, 0.9) 0 15deg, transparent 15deg 30deg); mask: radial-gradient(circle, transparent 28%, #000 30%, #000 62%, transparent 64%); box-shadow: 0 0 30px #ff9a3c; }
+/* Big hits read as big: damage of 3 or more gets a larger, gold-rimmed number. */
+.dmg-num.crit { font-size: calc(92px * var(--font-scale)); color: #ffd36a; text-shadow: 0 0 22px rgba(255, 90, 60, 0.95), 0 5px 0 #3a0010; }
+.hp-wrap.hit { animation: hp-shake 0.45s ease; }
+@keyframes hp-shake { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
