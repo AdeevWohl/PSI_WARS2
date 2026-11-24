@@ -236,6 +236,8 @@ class Brain {
       }
       if (score === -Infinity) continue;
       if (d !== reserve && d.cardType !== 'Resource' && !this.leavesReserve(d, reserve)) score -= 8;
+      // v0.4: keep a Digital Splicing ready for Lock-On when the opponents field ability rolls.
+      if (d.cardType !== 'Resource' && this.wantsLockOnReserve() && this.readyCUs().G - (d.cost?.G ?? 0) < 1) score -= 5;
       if (score > 0 && (!best || score > best.score)) best = { score, cmd: this.playCmd(p.uid, target, this.pickPayment(p.payments, p.suggested)) };
     }
     // Equipment moves are rarely worth the risk for a heuristic player; skip.
@@ -429,8 +431,31 @@ class Brain {
     return worst;
   }
 
+  /** Do we hold Lock-On units and face units that make ability rolls? */
+  private wantsLockOnReserve(): boolean {
+    const mine = this.v.players[this.me]!.lab.some((u) => this.def(u).effects.some((e) => e.effect === 'LockOn' || e.effect === 'ProtocolLockOn'));
+    if (!mine) return false;
+    return this.opponents().some((o) => this.v.players[o]!.lab.some((u) => this.def(u).effects.some((e) => e.trigger === 'RollX' || e.trigger === 'ModifyRoll')));
+  }
+
+  /** v0.4: form a Stack before attacking when the combined fighter is clearly stronger. */
+  private stackChoice(): Command | null {
+    if (this.level === 'easy') return null;
+    let best: { a: string; b: string; score: number } | null = null;
+    for (const s of this.la.stacks) {
+      if (this.v.cards[s.a]!.depleted || this.v.cards[s.b]!.depleted) continue;
+      const st = this.fighterStrength([s.a, s.b], true);
+      const synergy = this.def(s.a).effects.some((e) => ['StackChoice', 'Convergence', 'StatBonus', 'StackShield', 'PartnerReroll'].includes(e.effect)) ? 1.5 : 0;
+      const score = st.physical + (st.cyber + st.psionic) * 0.4 + synergy;
+      if (score >= 6 && (!best || score > best.score)) best = { ...s, score };
+    }
+    return best ? { type: 'Stack', a: best.a, b: best.b } : null;
+  }
+
   private attack(): Command {
     const la = this.la;
+    const st = this.stackChoice();
+    if (st) return st;
     const att = la.attack!;
     const targets = att.targets;
     // Prefer the weakest opponent (lowest HP) — sensible in free-for-all too.
@@ -606,6 +631,11 @@ class Brain {
       }
       if (d.cardType === 'Power' && info.point === 'battlePower') {
         const e = d.effects.find((x) => x.trigger === 'OnPlay');
+        // v0.4 combat Pulses: pump an engaged unit, cannibalize for a burst, jam, disable or ping.
+        if (e && ['PowerRoll', 'StackBuff', 'CannibalInstinct', 'DamageTargets', 'DisableTargets', 'SignalJam'].includes(e.effect) && pending.length) {
+          const pick = this.powerPick(d, p.targets);
+          if (pick.score >= 3 && pick.target) return this.playCmd(p.uid, pick.target, this.pickPayment(p.payments, p.suggested));
+        }
         if (e?.effect === 'DisableUnits' && pending.length) {
           const hits = (uids: string[]) => uids.filter((u) => this.disableHits(e.params.filter, u)).reduce((s, u) => s + this.unitValue(u), 0);
           const theirs = pending.flatMap((a) => (a.seat === this.me ? a.blockers : a.units));

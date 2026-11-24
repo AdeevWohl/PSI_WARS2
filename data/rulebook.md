@@ -190,3 +190,113 @@ Free-for-all; last player standing wins.
 - **Resource Deck:** 18–24 cards, at most 20 Creation Units, at most 8 of any one Creation Unit type, at most 3 copies of any other card (such as the Creation Oracle).
 
 The Deck Builder enforces all of these. Two starter decks are included: Creature Commander and Robot Commander.
+
+## v0.4 rules and keywords
+
+These rules come from the v0.4 card set workbook (Rules and Keywords sheet) and override older text above where they differ. Interpretations of unclear wording are listed in MIGRATION_V04.md.
+
+### Lock-On (cost)
+*Robot signature.* Before an Battle Unit under enemy control makes its own special ability roll in the same blocked engagement, a unit with Lock-On may pay its printed cost to select the raw face 1–6 instead. Each Lock-On unit may activate once per engagement; each roll can be locked once. Multiple separate units/engagements can each pay and activate.
+
+**Limits and interactions:** If either side is a Stack, Lock-On can target the ability roll of either opposing member, never a different engagement. No normal combat dice, Power rolls, escape rolls or rerolls of a locked result. Face 6 uses only the printed ability result. If multiple eligible users want the same roll, controller chooses one; no stacking.
+
+### Calibrate
+*Robot signature.* Before the specified normal combat die is rolled, optionally replace its result with fixed +2 and no icons.
+
+**Limits and interactions:** Counts as normal die result for enemy Obliteration; no reroll or numeric face. Not an ability roll.
+
+### Protocol
+*Robot signature.* A unit with Protocol chooses one of its printed modes publicly when created and during each of its controller’s Creation phases. That single mode remains active until the next owner Creation selection; you may change it then or keep it. A mode grants only its listed effect and uses its own printed timing.
+
+**Limits and interactions:** No mid-combat switching unless an explicit card allows it. A unit unable to grant abilities cannot supply its mode; if it leaves play the mode ends. Duplicate Davileam commanders: choose only one to grant a protocol each phase. Grid Marshal’s Scan grants Lock-On only to itself.
+
+### Ability roll / X
+*Shared.* Special red-die raw faces 1–6; numeric 1,2,3,4,5,4. No normal die effects. Roll each X once per turn when first required, including on unblocked Lab damage. Apply stat modifiers after the roll; floor at 0.
+
+**Limits and interactions:** Lock-On only on an unit under enemy control-owned special roll in the same blocked battle. Reanimated X may become zero. No normal Cyber/Psionic die if its resolved stat is 0.
+
+### Mutation
+*Creature signature.* A Mutation is a permanent adaptation gained only through the specific combat-stress trigger printed on a card, normally after that unit survives a blocked engagement. It alters the unit’s permanent strengths while it remains in play. Mutations are not a generic term for permanent buffs.
+
+**Limits and interactions:** No universal Mutation cap; each card defines the pressure and reward. One trigger per qualifying engagement unless stated otherwise. Unblocked attacks and idle turns do not qualify. Mutations reset when the unit leaves play; permanent changes do not expire at Cleanup. Physical floor 1 for voluntary changes, Cyber/Psionic floor 0.
+
+### Cannibalize
+*Creature signature.* Destroy another Creature or Cyborg under your control as the cost of the printed ability or Power. It goes to discard with Equipment. Follow the card’s stated payoff; Cannibalize itself does not automatically grant stats.
+
+**Limits and interactions:** Destruction triggers fire; not an enemy kill or Physical combat destruction. Consuming a Stack member breaks the Stack. A unit barred from paying costs cannot be consumed. Record permanent strengths immediately before destruction; pay cost before effect resolves.
+
+### Stack and assignment
+*Shared / mixed.* One Cyborg plus one non-Cyborg; one engagement per unit. Sum strengths, resolve effects of each member as printed. Destruction of the Stack destroys both.
+
+**Limits and interactions:** When a card rewards killing an enemy in Physical combat, one Stack counts as one engagement, not two triggers unless explicitly stated. New units never retroactively enter a declared engagement.
+
+### Deplete for support
+*Shared.* Explicit unit-depletion ability requires a ready unit that can use abilities. Depleted units cannot attack but may defend under existing rules.
+
+**Limits and interactions:** Support-depleted units stay depleted until next owner Replenish; ordinary surviving attackers ready in Cleanup as before.
+
+### Battle windows / triggers
+*Shared.* Pulse cards may be played in normal priority windows, including opponent turn, with last-in-first-out responses. Resolve attack/blocked triggers before the Power window. Unit-owned before-dice abilities occur after assignment and Power window in the relevant engagement.
+
+**Limits and interactions:** No universal after-dice response window. No new assignments after declaration unless an explicit card allows it. A new unit may participate only if the corresponding declaration step has not yet occurred.
+
+### Equipment movement / Relocate
+*Shared.* Each unit may hold one Equipment, legal type and boosted stat above 0 when attached. Ordinary voluntary relocation is only in your Creation phase. Free if no move cost; otherwise pay printed Relocate cost from ready CUs.
+
+**Limits and interactions:** Newly created or restored Equipment attaches without paying Relocate. Replacing requires discarding or legally relocating old Equipment (and paying its move cost). Only explicit effects may override timing or cost. No automatic movement at attacker/defender declaration.
+
+### Containment / Grankor
+*Shared.* Containment sets a unit aside; it cannot attack, defend or use/grant abilities. Follow that card’s release condition. Grankor alone also prevents selection by Powers/abilities and use as a cost; escape at Physical + numeric roll ≥5 or second failed escape.
+
+**Limits and interactions:** Grankor protection applies to both players; no targeting or cannibalizing the contained unit to bypass it. Non-targeting global effects follow their own wording. Freed units return depleted and do not resume old assignments.
+
+### Cost & mixed payment
+*Shared.* G/B/R/P deplete matching ready CUs; A depletes any. A mixed pool R/P 2 means deplete two ready CUs, each independently R or P (RR, RP, PP). N column repeats one pool per required CU, separated by semicolons. W burns ready CUs; AC overrides which colors are legal.
+
+**Limits and interactions:** Separate burn and deplete pools: Burn R/P 1 + Mixed B/G 1 means destroy red or purple and deplete blue or green. Never reuse one CU for two payments. Empty AC uses original rule: W matches printed colored/split costs, or any if none. Any is explicit unrestricted pool. Total cost counts all required CUs once, including W. No dual-type CU cards added in this pass.
+
+### Power — Pulse
+*Shared.* Fast Power: may be played in normal priority windows on any turn, including responses. A card can have a narrower printed trigger. Trap is a name/flavor, not a separate type.
+
+**Limits and interactions:** No automatic window after dice; all normal instant rules and target legality apply. Pay at declaration; costs not refunded if countered.
+
+### Power — Operation
+*Shared.* Slow Power: may only be played in your own Creation phase when no card or ability is waiting to resolve.
+
+**Limits and interactions:** Pulses can respond to an Operation. Other Operations cannot respond. Units and Equipment still use Creation timing unless explicitly created by an effect.
+
+### Zero strengths / disorientation
+*Shared.* Robots/Cyborgs may have 0 Cyber; Creatures/Cyborgs may have 0 Psionic. If the relevant type has 0 and faces an enemy with that channel >0, it is immediately Disoriented and rolls no die in that channel. If both have 0, skip channel.
+
+**Limits and interactions:** Pure Robots ignore Psionic and pure Creatures ignore Cyber; keep original Robot-vs-Creature channel exception. For Stacks use combined strengths and eligible types. Physical always fights. Explicit effects may add a native channel from 0; a voluntary effect cannot reduce Physical below 1.
+
+### Resource Fortification
+*Shared.* One-use only: when it substitutes depletion for destruction, discard Fortification.
+
+**Limits and interactions:** May substitute for printed burn costs, including a cost paid by an effect. The fortified CU must be eligible and ready.
+
+### One-drop baseline
+*Design.* Vanilla one-drop has three printed stats; utility units trade stats for abilities. Cyborg 1/1/1 is legal.
+
+**Limits and interactions:** Physical 3 is strong; test Rupture Brute/Scrap Hulk vs cheap Cyborgs and specialists.
+
+### Feeding / free creation
+*Creature signature.* Carrion Foundress: after surviving and destroying Battle Unit under enemy control(s) in Physical combat, choose ONE destroyed card. Create one Creature from hand with printed total cost ≤ that card’s printed total cost. Waive depletion; pay every burn from its printed pool.
+
+**Limits and interactions:** Total cost = all printed required CUs (burn counts as 1). Equipment, permanent modifiers and Stack partner costs never add to victim cost. A killed Stack provides a choice of one member, not combined cost. Once per Battle phase across all copies; no extra attack or block after assignment.
+
+### Reanimated
+*Creature signature.* Creature Regenerate returns an eligible Creature or Cyborg as a ready unit at printed strengths with a permanent modifier: +2 Physical / −2 Psionic, floor 0. Reanimated is a marker, not a Mutation or a new faction.
+
+**Limits and interactions:** Printed Psionic >0 or X, total cost ≤3; no carried Equipment or old permanent modifiers. Pulse can create a surprise defender before declaration, not after assignment. X modifier applies after X roll.
+
+### Deck construction
+*Shared.* Battle 30–40, ≥12 units, ≤3 copies; Resource 18–24, ≤20 CUs, ≤8 of each CU type, ≤3 other cards each.
+
+**Limits and interactions:** 15 HP baseline; no extra faction limits. More flexible costs trade raw efficiency or paid movement for easier construction.
+
+### Permanent strength / modifiers
+*Shared.* Permanent strength means printed strength plus all permanent stat increases and decreases currently on that individual unit, including Mutations, reanimation and mechanical upgrades. For effects comparing or copying permanent strength, printed X counts as 1 before permanent modifiers.
+
+**Limits and interactions:** Ignore Equipment, temporary modifiers, damage, dice bonuses, auras and Stack partner strengths. Snapshot the value when specified; floor at 0. A permanent buff is not automatically a Mutation. All permanent changes reset when the unit leaves play.
+
