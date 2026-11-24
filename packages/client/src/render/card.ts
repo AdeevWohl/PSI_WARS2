@@ -1,16 +1,13 @@
 /**
- * Card elements. The supplied art is the card face; we overlay only dynamic information
- * that differs from what is printed (build prompt §5.3).
+ * Card elements. Every face is drawn live from card data (name, cost pips, strength boxes,
+ * type line, rules text); the supplied art is shown cropped in the illustration window, so
+ * the printed cost column, boxes and text (often out of date) never show.
  */
 import { ABILITIES, CU_TYPES, type Ability } from '@psi-wars/shared';
 import type { CardDef, Cost, StatValue, UnitStats } from '@psi-wars/engine';
 import { artUrl, hasArt, placeholder, type ArtSize } from '../assets';
 import { h } from '../ui/dom';
 
-/** Stat box centres on the printed card (fractions of width/height), measured from the art. */
-const STAT_POS: Record<Ability, number> = { cyber: 0.263, psionic: 0.5, physical: 0.741 };
-const STAT_Y = 0.795;
-const COST_Y = [0.069, 0.13, 0.19, 0.251, 0.312];
 const ABILITY_NAME: Record<Ability, string> = { cyber: 'Cyber', psionic: 'Psionic', physical: 'Physical' };
 
 export interface CardRenderOpts {
@@ -66,6 +63,140 @@ export function proceduralFace(def: CardDef): HTMLElement {
   );
 }
 
+
+const CU_LABEL: Record<string, string> = { G: 'Digital Splicing', B: 'Neurogenesis', R: 'Bio-Acceleration', P: 'Material Animation' };
+const ALL_CU = ['G', 'B', 'R', 'P'] as const;
+/** Strength boxes a unit type can use: Robots have no Psionic, Creatures no Cyber. */
+export function boxesFor(def: CardDef): Ability[] {
+  if (def.unitType === 'Robot') return ['cyber', 'physical'];
+  if (def.unitType === 'Creature') return ['psionic', 'physical'];
+  return ['cyber', 'psionic', 'physical'];
+}
+
+interface Pip { n: number; types: string[]; burn: boolean }
+
+/** Group a cost into pips: fixed colours, "one of" lights (split circles), Any, and burns. */
+export function costPips(cost: Cost | undefined): Pip[] {
+  if (!cost) return [];
+  const out: Pip[] = [];
+  const add = (types: string[], burn: boolean, n = 1) => {
+    const key = [...types].sort().join('');
+    const same = out.find((p) => p.burn === burn && [...p.types].sort().join('') === key);
+    if (same) same.n += n;
+    else out.push({ n, types: [...types], burn });
+  };
+  for (const tp of CU_TYPES) if (cost[tp]) add([tp], false, cost[tp]);
+  for (const ch of cost.choice ?? []) add(ch, false);
+  if (cost.A) add([...ALL_CU], false, cost.A);
+  if (cost.W) {
+    const coloured = ALL_CU.filter((tp) => cost[tp] > 0 || (cost.choice ?? []).some((c) => c.includes(tp)));
+    add(cost.burnPool?.length ? cost.burnPool : coloured.length ? coloured : [...ALL_CU], true, cost.W);
+  }
+  for (const b of cost.burns ?? []) add(b, true);
+  return out;
+}
+
+function pipDot(types: string[]): HTMLElement {
+  const n = types.length;
+  const bg = n === 1 ? `var(--cu-${types[0]})` : `conic-gradient(${types.map((tp, i) => `var(--cu-${tp}) ${(i / n) * 100}% ${((i + 1) / n) * 100}%`).join(', ')})`;
+  return h('span', { class: 'lf-dot', style: { background: bg } });
+}
+
+export function pipEl(p: Pip): HTMLElement {
+  const what = p.types.length === 4 ? 'any type' : p.types.map((tp) => CU_LABEL[tp]).join(' or ');
+  const title = `${p.burn ? 'Burn (destroy)' : 'Deplete'} ${p.n} — ${what}`;
+  return h('div', { class: `lf-pip${p.burn ? ' burn' : ''}`, title, 'aria-label': title }, h('span', { class: 'lf-n' }, String(p.n)), pipDot(p.types));
+}
+
+const KEYWORDS = ['Lock-On', 'Calibrate', 'Protocol', 'Mutation', 'Cannibalize', 'Reanimated', 'Relocate', 'Pulse', 'Operation', 'Assault', 'Guard', 'Precision', 'Scan', 'Stacked', 'Stack', 'Contain', 'Disoriented', 'Obliterate', 'Psionic X', 'Cyber X'];
+const KW_RE = new RegExp(`(${KEYWORDS.map((k) => k.replace(/[-]/g, '\\-')).join('|')})`, 'g');
+
+/** Rules text with keywords in bold (text nodes only — no HTML injection). */
+function richText(text: string): Node[] {
+  const out: Node[] = [];
+  for (const part of text.split(KW_RE)) {
+    if (!part) continue;
+    out.push(KEYWORDS.includes(part) ? h('b', null, part) : document.createTextNode(part));
+  }
+  return out;
+}
+
+/** Starting font size for the text panel, as a % of card width, from the text length. */
+function textSize(len: number): number {
+  if (!len) return 6;
+  return Math.max(3.2, Math.min(6.4, 74 / Math.sqrt(len)));
+}
+
+/** Shrink the text panel's font until everything fits (runs once the card is in the page). */
+export function fitText(root: ParentNode): void {
+  for (const el of Array.from(root.querySelectorAll<HTMLElement>('.lf-text'))) {
+    if (!el.isConnected || !el.clientHeight) continue;
+    let size = Number(el.dataset.size ?? 5);
+    for (let i = 0; i < 14 && el.scrollHeight > el.clientHeight + 1 && size > 2.4; i++) {
+      size *= 0.92;
+      el.style.fontSize = `${size}cqw`;
+    }
+  }
+}
+let fitQueued = false;
+function queueFit(): void {
+  if (fitQueued) return;
+  fitQueued = true;
+  requestAnimationFrame(() => {
+    fitQueued = false;
+    fitText(document);
+  });
+}
+
+const TYPE_TINT: Record<string, string> = { Creature: '#ff8a4c', Robot: '#4fd1ff', Cyborg: '#c77dff', Equipment: '#b867ff', Power: '#ffc857', Trap: '#ffc857', Resource: '#5ee6a8', CreationUnit: '#5ee6a8' };
+
+function typeLine(def: CardDef): string {
+  const parts: string[] = [];
+  if (def.cardType === 'BattleUnit') parts.push(`${def.unitType ?? ''}${def.isCommander ? ' Commander' : ''}`);
+  else if (def.cardType === 'CreationUnit') parts.push('Creation Unit');
+  else if (def.cardType === 'Equipment') parts.push(`Equipment · ${(def.equip?.allowed.length ?? 0) >= 3 ? 'Any Battle Unit' : def.equip?.allowed.join(', ') ?? ''}`);
+  else parts.push(def.cardType === 'Trap' ? 'Power' : def.cardType);
+  if (def.timing) parts.push(def.timing);
+  for (const k of def.keywords ?? []) if (k !== def.timing && k !== 'Relocate') parts.push(k);
+  return parts.join(' · ');
+}
+
+/** The live card face: art window, cost pips, name, strength boxes, type line, rules text. */
+export function liveFace(def: CardDef, size: ArtSize): HTMLElement {
+  const tint = TYPE_TINT[def.unitType ?? def.cardType] ?? '#4fd1ff';
+  const artWin = h('div', { class: 'lf-art' });
+  if (hasArt(def.art)) {
+    const im = img(def.art!, size === 'sm' ? 'md' : size, def.name);
+    im.classList.add('lf-img');
+    artWin.appendChild(im);
+  } else {
+    artWin.classList.add('lf-noart');
+    artWin.appendChild(def.cuType ? h('div', { class: `proc-cu l-${def.cuType}` }) : h('div', { class: 'proc-emblem' }, EMBLEM[def.unitType ?? def.cardType] ?? '◆'));
+  }
+  const pips = costPips(def.cost);
+  const stats = def.stats && def.cardType === 'BattleUnit'
+    ? h('div', { class: `lf-stats n${boxesFor(def).length}` }, boxesFor(def).map((a) => h('div', { class: `lf-box b-${a}`, 'data-ab': a, title: ABILITY_NAME[a] }, String(def.stats![a]))))
+    : def.equip
+      ? h('div', { class: 'lf-stats n1' },
+        h('div', { class: `lf-box wide b-${def.equip.ability}`, title: `+${def.equip.bonus} ${ABILITY_NAME[def.equip.ability]}` }, `+${def.equip.bonus} ${ABILITY_NAME[def.equip.ability]}`),
+        h('div', { class: 'lf-move', title: def.equip.moveCost ? 'Relocate cost (your Creation phase)' : 'Relocates for free in your Creation phase' }, 'Relocate', def.equip.moveCost ? h('span', { class: 'lf-pips row' }, costPips(def.equip.moveCost).map(pipEl)) : h('span', { class: 'lf-free' }, 'free')))
+      : null;
+  const text = def.text ?? '';
+  const textEl = h('div', { class: 'lf-text', 'data-size': String(textSize(text.length)), style: { fontSize: `${textSize(text.length)}cqw` } }, ...richText(text));
+  const face = h(
+    'div',
+    { class: `lf lf-${def.cardType}${def.unitType ? ` lf-u-${def.unitType}` : ''}${stats ? '' : ' no-stats'}`, style: { '--tint': tint } as any },
+    artWin,
+    pips.length ? h('div', { class: 'lf-pips' }, pips.map(pipEl)) : null,
+    h('div', { class: 'lf-name' }, def.name),
+    stats,
+    h('div', { class: 'lf-type', style: { fontSize: `${Math.min(4.1, 118 / Math.max(1, typeLine(def).length))}cqw` } }, typeLine(def)),
+    textEl,
+  );
+  queueFit();
+  return face;
+}
+
 export function createCardEl(uid: string | null, def: CardDef | null, opts: CardRenderOpts = {}): HTMLElement {
   const size = opts.size ?? 'sm';
   const el = h('div', { class: 'card', tabindex: '-1' });
@@ -77,7 +208,7 @@ export function createCardEl(uid: string | null, def: CardDef | null, opts: Card
   back.appendChild(img(backKey(deck), size, `${deck === 'battle' ? 'Battle' : 'Resource'} Deck card back`));
   if (def) {
     el.dataset.cardId = def.id;
-    front.appendChild(hasArt(def.art) ? img(def.art!, size, def.name) : proceduralFace(def));
+    front.appendChild(liveFace(def, size));
   } else {
     el.classList.add('face-down');
   }
@@ -99,47 +230,28 @@ export function describe(def: CardDef): string {
 
 const statText = (v: StatValue | number) => String(v);
 
-/** Refresh overlays (stat/cost chips) for a face-up card. */
+/** Refresh a face-up card's live strengths (boxes turn green/red when changed). */
 export function updateOverlays(el: HTMLElement, def: CardDef, opts: CardRenderOpts = {}): void {
-  const ov = el.querySelector('.overlays') as HTMLElement;
-  const chips: HTMLElement[] = [];
-  const printedStats = def.printed?.stats ?? def.stats;
-  const artShown = hasArt(def.art);
-  if (def.stats && printedStats && artShown) {
-    for (const a of ABILITIES) {
-      const printed = printedStats[a];
-      const current: StatValue | number = opts.stats ? opts.stats[a] : def.stats[a];
+  if (def.stats) {
+    const printedStats = def.printed?.stats ?? def.stats;
+    for (const box of Array.from(el.querySelectorAll<HTMLElement>('.lf-box[data-ab]'))) {
+      const a = box.dataset.ab as Ability;
+      const printed = def.stats[a];
+      const current: StatValue | number = opts.stats ? opts.stats[a] : printed;
       const xb = current === 'X' ? opts.stats?.xBonus?.[a] ?? 0 : 0;
-      if (!opts.alwaysChips && current === printed && !xb) continue;
-      let tone = 'same';
-      if (typeof current === 'number' && typeof printed === 'number') tone = current > printed ? 'up' : current < printed ? 'down' : 'same';
+      let tone = '';
+      if (typeof current === 'number' && typeof printed === 'number') tone = current > printed ? 'up' : current < printed ? 'down' : '';
       else if (typeof current === 'number' && printed === 'X') tone = 'x';
       else if (xb) tone = xb > 0 ? 'up' : 'down';
       const text = xb ? `X${xb > 0 ? '+' : ''}${xb}` : statText(current);
-      chips.push(
-        h(
-          'span',
-          { class: `chip stat-chip ${tone} c-${a}`, style: { left: `${STAT_POS[a] * 100}%`, top: `${STAT_Y * 100}%` }, title: `${ABILITY_NAME[a]} ${text} (printed ${printed})` },
-          text,
-        ),
-      );
+      if (box.textContent !== text) box.textContent = text;
+      box.classList.toggle('up', tone === 'up');
+      box.classList.toggle('down', tone === 'down');
+      box.classList.toggle('x', tone === 'x');
+      box.title = `${ABILITY_NAME[a]} ${text}${text !== String(printed) ? ` (printed ${printed}; original art ${printedStats[a]})` : ''}`;
     }
   }
-  // Costs the printed art can't show: "pay any" and "pay one of these" (Change Request 1).
-  if (def.cost && artShown && (def.cost.A || def.cost.choice?.length)) {
-    const parts = [...(def.cost.choice ?? []).map((o) => o.join('/')), ...(def.cost.A ? [`ANY ${def.cost.A}`] : [])];
-    chips.push(h('span', { class: 'chip cost-chip extra', style: { top: `${COST_Y[COST_Y.length - 1]! * 100 + 8}%` }, title: `Also pay: ${parts.join(', ')}` }, parts.join(' + ')));
-  }
-  const printedCost: Cost | undefined = def.printed?.cost;
-  if (def.cost && printedCost && artShown) {
-    [...CU_TYPES, 'W' as const].forEach((t, i) => {
-      if (def.cost![t] === printedCost[t]) return;
-      const tone = def.cost![t] > printedCost[t] ? 'down' : 'up';
-      chips.push(h('span', { class: `chip cost-chip ${tone}`, style: { top: `${COST_Y[i]! * 100}%` }, title: `Cost changed: ${printedCost[t]} → ${def.cost![t]}` }, String(def.cost![t])));
-    });
-  }
-  const markers = ov.querySelectorAll('.marker');
-  ov.replaceChildren(...chips, ...Array.from(markers));
+  queueFit();
 }
 
 export function setMarkers(el: HTMLElement, markers: { kind: string; label: string; icon: string }[]): void {
