@@ -7,6 +7,7 @@ import { ABILITIES, CU_TYPES, type Ability } from '@psi-wars/shared';
 import type { CardDef, Cost, StatValue, UnitStats } from '@psi-wars/engine';
 import { artUrl, hasArt, placeholder, type ArtSize } from '../assets';
 import { h } from '../ui/dom';
+import { cropFor } from './crops';
 
 const ABILITY_NAME: Record<Ability, string> = { cyber: 'Cyber', psionic: 'Psionic', physical: 'Physical' };
 
@@ -121,6 +122,17 @@ function richText(text: string): Node[] {
   return out;
 }
 
+/** Text panel size by text length: short / medium panels leave more room for art; long text collapses to a hover tab. */
+export type TextMode = 'none' | 's' | 'm' | 'l';
+export function textMode(text: string): TextMode {
+  const n = text.trim().length;
+  if (!n) return 'none';
+  if (n <= 80) return 's';
+  if (n <= 170) return 'm';
+  return 'l';
+}
+const PANEL: Record<TextMode, number> = { none: 0, s: 18, m: 31, l: 8.5 };
+
 /** Starting font size for the text panel, as a % of card width, from the text length. */
 function textSize(len: number): number {
   if (!len) return 6;
@@ -148,6 +160,46 @@ function queueFit(): void {
   });
 }
 
+let tipInstalled = false;
+/** One floating caption for every collapsed "Description" tab (outside the card, so it is never clipped). */
+function installDescTip(): void {
+  if (tipInstalled || typeof document === 'undefined') return;
+  tipInstalled = true;
+  const tip = h('div', { class: 'lf-tip', role: 'tooltip' });
+  document.body.appendChild(tip);
+  const show = (src: HTMLElement) => {
+    tip.replaceChildren(...richText(src.dataset.full ?? ''));
+    tip.classList.add('show');
+    const r = src.getBoundingClientRect();
+    const w = Math.min(340, window.innerWidth - 16);
+    tip.style.width = `${w}px`;
+    const left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2));
+    tip.style.left = `${left}px`;
+    const below = r.bottom + 8;
+    tip.style.top = `${below}px`;
+    requestAnimationFrame(() => {
+      if (below + tip.offsetHeight > window.innerHeight - 8) tip.style.top = `${Math.max(8, r.top - tip.offsetHeight - 8)}px`;
+    });
+  };
+  const onOver = (e: Event) => {
+    const src = (e.target as HTMLElement | null)?.closest?.('.lf-desc') as HTMLElement | null;
+    if (src) show(src);
+    else tip.classList.remove('show');
+  };
+  // Capture phase: screens that stop hover events (previews, drag) can't hide the caption.
+  let last: EventTarget | null = null;
+  const onMove = (e: Event) => {
+    if (e.target === last) return;
+    last = e.target;
+    onOver(e);
+  };
+  document.addEventListener('pointerover', onMove, true);
+  document.addEventListener('pointermove', onMove, true);
+  document.addEventListener('mouseover', onMove, true);
+  document.addEventListener('focusin', onOver, true);
+  document.addEventListener('pointerdown', () => tip.classList.remove('show'), true);
+}
+
 const TYPE_TINT: Record<string, string> = { Creature: '#ff8a4c', Robot: '#4fd1ff', Cyborg: '#c77dff', Equipment: '#b867ff', Power: '#ffc857', Trap: '#ffc857', Resource: '#5ee6a8', CreationUnit: '#5ee6a8' };
 
 function typeLine(def: CardDef): string {
@@ -168,6 +220,9 @@ export function liveFace(def: CardDef, size: ArtSize): HTMLElement {
   if (hasArt(def.art)) {
     const im = img(def.art!, size === 'sm' ? 'md' : size, def.name);
     im.classList.add('lf-img');
+    const crop = cropFor(def.art);
+    im.style.setProperty('--z', String(crop.z));
+    im.style.setProperty('--fy', String(crop.fy));
     artWin.appendChild(im);
   } else {
     artWin.classList.add('lf-noart');
@@ -182,10 +237,16 @@ export function liveFace(def: CardDef, size: ArtSize): HTMLElement {
         h('div', { class: 'lf-move', title: def.equip.moveCost ? 'Relocate cost (your Creation phase)' : 'Relocates for free in your Creation phase' }, 'Relocate', def.equip.moveCost ? h('span', { class: 'lf-pips row' }, costPips(def.equip.moveCost).map(pipEl)) : h('span', { class: 'lf-free' }, 'free')))
       : null;
   const text = def.text ?? '';
-  const textEl = h('div', { class: 'lf-text', 'data-size': String(textSize(text.length)), style: { fontSize: `${textSize(text.length)}cqw` } }, ...richText(text));
+  const mode = textMode(text);
+  const textEl = mode === 'none'
+    ? null
+    : mode === 'l'
+      ? h('div', { class: 'lf-text lf-desc', 'data-full': text, tabindex: '-1', 'aria-label': text }, h('span', { class: 'lf-desc-label' }, 'ⓘ Description'), h('span', { class: 'lf-desc-hint' }, 'hover to read'))
+      : h('div', { class: 'lf-text', 'data-size': String(textSize(text.length)), style: { fontSize: `${textSize(text.length)}cqw` } }, ...richText(text));
+  installDescTip();
   const face = h(
     'div',
-    { class: `lf lf-${def.cardType}${def.unitType ? ` lf-u-${def.unitType}` : ''}${stats ? '' : ' no-stats'}`, style: { '--tint': tint } as any },
+    { class: `lf lf-${def.cardType}${def.unitType ? ` lf-u-${def.unitType}` : ''}${stats ? '' : ' no-stats'} txt-${mode}`, style: { '--tint': tint, '--tp': `${PANEL[mode]}cqw`, '--sh': stats ? '14cqw' : '0cqw' } as any },
     artWin,
     pips.length ? h('div', { class: 'lf-pips' }, pips.map(pipEl)) : null,
     h('div', { class: 'lf-name' }, def.name),

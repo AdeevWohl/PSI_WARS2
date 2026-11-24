@@ -116,11 +116,18 @@
 .hand.fan .card:hover .card-inner { transform: perspective(700px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform 80ms linear; }
 .hand.fan .card:hover::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 4; background: radial-gradient(circle at var(--mx, 50%) var(--my, 30%), rgba(255, 255, 255, 0.28), transparent 55%); }
 
-/* ===== Live card face (v0.4 readability): everything drawn from data; art cropped to the illustration. ===== */
-.lf { position: absolute; inset: 0; container-type: size; border-radius: inherit; overflow: hidden; color: #eef3fc; font-family: var(--font-ui);
+/* ===== Live card face: everything drawn from data; art cropped to the illustration. =====
+   Built bottom-up: text panel (--tp, by text length), type line, strength row (--sh), name, and the
+   art window takes all remaining height — short text means more art. Units: cqw (card width = 100). */
+.lf { --tp: 18cqw; --sh: 14cqw; --b-text: 3cqw; --b-type: calc(var(--b-text) + var(--tp) + 1cqw); --b-stats: calc(var(--b-type) + 6.5cqw);
+  --b-name: calc(var(--b-stats) + var(--sh) + 0.6cqw); --b-art: calc(var(--b-name) + 8.5cqw + 0.8cqw); --art-h: calc(138.07cqw - 2cqw - var(--b-art));
+  position: absolute; inset: 0; container-type: size; border-radius: inherit; overflow: hidden; color: #eef3fc; font-family: var(--font-ui);
   background: linear-gradient(180deg, #0d1626, #070c16); box-shadow: inset 0 0 0 0.9cqw var(--tint), inset 0 0 0 1.6cqw rgba(0, 0, 0, 0.55); }
-.lf-art { position: absolute; left: 2cqw; right: 2cqw; top: 2cqw; height: 61cqw; overflow: hidden; border-radius: 3cqw 3cqw 1cqw 1cqw; background: #070d19; }
-.card .lf .lf-img { position: absolute; width: 132%; height: auto; max-width: none; right: 0; left: auto; top: -42%; object-fit: fill; background: none; }
+.lf.txt-none { --tp: 0cqw; --b-type: var(--b-text); }
+.lf-art { position: absolute; left: 2cqw; right: 2cqw; top: 2cqw; height: var(--art-h); overflow: hidden; border-radius: 3cqw 3cqw 1cqw 1cqw; background: #070d19; }
+/* Crop: image width = z × window; the focus point fy sits mid-window, clamped so the image always covers it. */
+.card .lf .lf-img { --img-h: calc(var(--z) * 96cqw * 1.3807); position: absolute; width: calc(var(--z) * 100%); height: auto; max-width: none; right: 0; left: auto;
+  top: clamp(calc(var(--art-h) - var(--img-h) * 0.76), calc(var(--art-h) / 2 - var(--fy) * var(--img-h)), 0cqw); object-fit: fill; background: none; }
 .lf-noart { display: grid; place-items: center; background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--tint) 45%, transparent), transparent 65%), #070d19; }
 .lf-noart .proc-emblem { font-size: 30cqw; }
 .lf-noart .proc-cu { position: absolute; inset: 14% 28%; }
@@ -132,10 +139,10 @@
 .lf-pip.burn .lf-dot { border-color: #05070b; box-shadow: 0 0 0 0.5cqw #6b7380, 0 0.6cqw 1.4cqw rgba(0, 0, 0, 0.7); }
 .lf-pips.row .lf-n { font-size: 4.6cqw; min-width: 4cqw; }
 .lf-pips.row .lf-dot { width: 6cqw; height: 6cqw; border-width: 1.1cqw; }
-.lf-name { position: absolute; left: 2cqw; right: 2cqw; top: 63.5cqw; height: 8.5cqw; display: grid; place-items: center; padding: 0 2cqw;
+.lf-name { position: absolute; left: 2cqw; right: 2cqw; bottom: var(--b-name); height: 8.5cqw; display: grid; place-items: center; padding: 0 2cqw;
   background: color-mix(in srgb, var(--tint) 26%, #0b1322); border-radius: 1cqw; font: 800 5.6cqw / 1 var(--font-display); letter-spacing: 0.02em;
   text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lf-stats { position: absolute; left: 4cqw; right: 4cqw; top: 74cqw; height: 13cqw; display: flex; align-items: center; justify-content: space-evenly; gap: 3cqw; }
+.lf-stats { position: absolute; left: 4cqw; right: 4cqw; bottom: var(--b-stats); height: var(--sh); display: flex; align-items: center; justify-content: space-evenly; gap: 3cqw; }
 .lf-box { width: 22cqw; height: 12.5cqw; display: grid; place-items: center; border-radius: 2cqw; font: 800 9cqw / 1 var(--font-display); color: #fff;
   text-shadow: 0 0.5cqw 1cqw rgba(0, 0, 0, 0.55); box-shadow: inset 0 0 0 0.6cqw rgba(255, 255, 255, 0.35), 0 0.8cqw 1.6cqw rgba(0, 0, 0, 0.6); }
 .lf-stats.n2 .lf-box { width: 28cqw; }
@@ -145,13 +152,20 @@
 .lf-box.x { box-shadow: inset 0 0 0 1cqw #b9a6ff; }
 .lf-move { display: flex; align-items: center; gap: 1.5cqw; font: 700 4.2cqw var(--font-display); color: #c9d4e6; }
 .lf-free { color: #8fe3b0; }
-.lf-type { position: absolute; left: 2cqw; right: 2cqw; top: 88.5cqw; height: 6.5cqw; display: grid; place-items: center; padding: 0 2cqw;
+.lf-type { position: absolute; left: 2cqw; right: 2cqw; bottom: var(--b-type); height: 6.5cqw; display: grid; place-items: center; padding: 0 2cqw;
   font: 700 4.1cqw / 1 var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; color: color-mix(in srgb, var(--tint) 70%, #fff);
   border-top: 0.4cqw solid color-mix(in srgb, var(--tint) 50%, transparent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lf-text { position: absolute; left: 3cqw; right: 3cqw; top: 96cqw; bottom: 3cqw; padding: 1.5cqw 2.5cqw; border-radius: 2cqw;
+.lf-text { position: absolute; left: 3cqw; right: 3cqw; bottom: var(--b-text); height: var(--tp); box-sizing: border-box; padding: 1.5cqw 2.5cqw; border-radius: 2cqw;
   background: rgba(3, 6, 12, 0.78); box-shadow: inset 0 0 0 0.4cqw color-mix(in srgb, var(--tint) 35%, transparent);
   line-height: 1.22; color: #e8eef8; overflow: hidden; overflow-wrap: anywhere; }
 .lf-text b { color: color-mix(in srgb, var(--tint) 55%, #fff); font-weight: 800; }
-.lf.no-stats .lf-type { top: 75cqw; }
-.lf.no-stats .lf-text { top: 82.5cqw; }
-.lf-CreationUnit .lf-text:empty, .lf-text:empty { display: none; }
+/* Long text: a compact tab; the full text appears in a caption on hover and in the card preview. */
+.lf-desc { display: flex; align-items: center; justify-content: center; gap: 2cqw; padding: 0 2cqw; cursor: help; pointer-events: auto;
+  background: color-mix(in srgb, var(--tint) 22%, rgba(3, 6, 12, 0.85)); }
+.lf-desc-label { font: 800 4.6cqw / 1 var(--font-display); letter-spacing: 0.04em; color: #fff; }
+.lf-desc-hint { font: 600 3.4cqw / 1 var(--font-ui); color: color-mix(in srgb, var(--tint) 45%, #cfd8e6); }
+.lf-tip { position: fixed; z-index: 9999; pointer-events: none; padding: 10px 12px; border-radius: 10px; background: rgba(6, 10, 20, 0.97);
+  border: 1px solid var(--line-bright, #4a6a96); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6); color: #e8eef8; font: 500 14px/1.4 var(--font-ui);
+  opacity: 0; transform: translateY(4px); transition: opacity 120ms, transform 120ms; }
+.lf-tip.show { opacity: 1; transform: none; }
+.lf-tip b { color: #8be9ff; }
