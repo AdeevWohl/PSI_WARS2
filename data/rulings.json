@@ -43,8 +43,8 @@
       "text": "A re-roll is optional; the player decides after seeing both totals. The new result replaces the old one."
     },
     "A9-a": {
-      "title": "Trap escape",
-      "text": "Once per turn, in the trapped unit owner's Cleanup phase. A freed unit returns to its owner's Lab depleted."
+      "title": "Containment escape",
+      "text": "Once per turn, in the contained unit owner's Cleanup phase. A released unit stays in its Lab, depleted."
     },
     "A10-a": {
       "title": "Simultaneous loss",
@@ -52,7 +52,7 @@
     },
     "B1-a": {
       "title": "Power card timing",
-      "text": "Power cards are played in your Creation phase or in any player's Battle step 3. Traps are instants (Q&A): any phase, any time."
+      "text": "Each Power has a timing: Reactive (any priority window, any turn, including responses) or Creation (your own Creation phase, nothing waiting to resolve)."
     },
     "B1-b": {
       "title": "Lodner Predator",
@@ -75,8 +75,8 @@
       "text": "To give a unit new Equipment, its old Equipment must first be moved to another legal unit or discarded. Equipment without a unit is discarded automatically."
     },
     "QA-4": {
-      "title": "Traps are instants",
-      "text": "A Trap may be played on an opposing unit at any time, in any phase, by any player. Players may respond; responses resolve last-played-first."
+      "title": "Reactive Powers",
+      "text": "A Reactive Power may be played in any priority window, on any turn. Players may respond; responses resolve last-played-first."
     },
     "QA-5": {
       "title": "Power-card window",
@@ -100,7 +100,7 @@
     },
     "HR-D": {
       "title": "Elimination",
-      "text": "An eliminated player's cards all leave the game; units they had trapped are freed and return depleted. Last player standing wins."
+      "text": "An eliminated player's cards all leave the game; restrictions their cards placed end. Last player standing wins."
     },
     "HR-E": {
       "title": "\"Opponent\" in card text",
@@ -119,16 +119,16 @@
       "text": "Optional turn timer, off by default."
     },
     "HR-K": {
-      "title": "Responding to Traps",
-      "text": "Players may respond to a Trap with a Trap; the stack resolves last-played-first."
+      "title": "Responding to Powers",
+      "text": "Players may respond to a Power with a Reactive Power; the stack resolves last-played-first."
     },
     "HR-L": {
       "title": "Power cards are instant",
-      "text": "Power cards and Traps can both be played at instant speed: in your Creation phase, in Battle step 3, and in any priority window, including in response to another card and during an opponent's turn (setting INSTANT_SCOPE = \"all\"; \"trapsOnly\" makes only Traps instant)."
+      "text": "Superseded in v0.4.1: each Power card has its own timing (Reactive or Creation)."
     },
     "HR-M": {
       "title": "Response windows",
-      "text": "Every player gets a short response window (3 s by default) so a pause reveals nothing about who holds a Trap."
+      "text": "Every player gets a short response window (3 s by default) so a pause reveals nothing about who holds a Reactive Power."
     }
   },
   "byType": {

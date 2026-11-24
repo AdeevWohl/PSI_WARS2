@@ -14,7 +14,7 @@ Each player has a **Battle Deck** (blue backs) and a **Resource Deck** (gold bac
 
 - **Battle Unit** — attacks and defends. Types: *Creature* (strong Psionic), *Robot* (strong Cyber) and *Cyborg* (both; can Stack). A *Commander* is a Battle Unit with an aura ability.
 - **Equipment** — attached under one Battle Unit to raise one of its abilities.
-- **Power** — a one-time effect, then discarded. **Traps** are a kind of Power card.
+- **Power** — a one-time effect, then discarded. Every Power is **Reactive** (fast: any priority window, including responses) or **Creation** (only in your own Creation phase, with nothing waiting to resolve).
 
 **Resource Deck cards**
 
@@ -58,7 +58,7 @@ Every turn has five phases, always in this order:
 2. **Draw** — draw 1 Resource card (resolve it), then 1 Battle card.
 3. **Creation** — pay costs to play Battle Units, Equipment and Power cards. Play as many as you can afford.
 4. **Battle** — optionally attack with your ready Battle Units; opponents defend; battles resolve.
-5. **Cleanup** — stacks split (no unit is readied here: Battle Units ready only in their controller's Replenish phase or through an effect); trapped units try to escape; victory is checked.
+5. **Cleanup** — stacks split (no unit is readied here: Battle Units ready only in their controller's Replenish phase or through an effect); restrictions that last until this Cleanup end and contained units try to escape; victory is checked.
 
 **Depleting.** Using a card depletes it (shown rotated 90° and greyed). Depleted cards are made ready again in their owner's Replenish phase.
 
@@ -90,7 +90,7 @@ Every turn has five phases, always in this order:
 
 - **Battle Units enter play ready** and may attack the turn they are created (no "summoning sickness").
 - **Equipment** is attached under one of your Battle Units. Each unit holds one Equipment. The unit must be a type the Equipment allows and have a value above 0 in the boosted ability (X counts). Equipment **works immediately** — on attack and on defence — and is **never depleted**. To give an equipped unit new Equipment, first **move** its old Equipment to another legal unit or **discard** it. Equipment can never exist on its own: if its unit leaves play, the Equipment goes to the discard pile. You may move or discard Equipment in your Creation phase and in your declaration step of a battle.
-- **Power cards** take effect and are then discarded. You may play them in your own Creation phase and in any player's Battle step 3. **Traps** may be played at any time (see *Traps and responses*).
+- **Power cards** take effect and are then discarded. Reactive Powers may be played in any priority window on any turn and in response to other cards; Creation Powers only in your own Creation phase when nothing is waiting to resolve.
 
 **RULING A7-d:** you may play Power cards during an opponent's Battle step 3 too, paying with your Creation Units that are still ready. Holding Creation Units back is a real strategy.
 
@@ -108,15 +108,15 @@ The active player is the attacker. Steps, in order:
 
 **RULING A8-a:** Cyborg Abilities come before Battle Determination.
 
-**Step 1 — Attacker's declaration.** You may first move Equipment between your units and form Stacks. Then choose any number of your ready, untrapped Battle Units (or Stacks — both members ready) to attack. Attacking does not deplete them (v0.4.1). You may choose not to attack. With several opponents, each attacker picks which opponent it attacks.
+**Step 1 — Attacker's declaration.** You may first move Equipment between your units and form Stacks. Then choose any number of your ready Battle Units that are not restricted from attacking (or Stacks — both members ready) to attack. Attacking does not deplete them (v0.4.1). You may choose not to attack. With several opponents, each attacker picks which opponent it attacks.
 
 **Stacking.** A Stack is exactly two Battle Units fighting as one: one Cyborg and one non-Cyborg. Two Cyborgs cannot stack, and a stack never has more than two units. Each unit keeps its own Equipment. A Stack's strengths are the sum of everything in it. If a Stack is destroyed, everything in it is destroyed. Both units of an attacking Stack must be ready; defending Stacks may use depleted units. Stacks separate at the end of the Battle phase.
 
-**Step 2 — Defenders' declaration.** Each attacked player may move Equipment and form Stacks, then assign defenders. Each defending unit or Stack blocks one attacker. Defenders must be ready (both members of a Stack); depleted and trapped units may not defend. Defending does not deplete (v0.4.1). Any attacker with no defender is unblocked.
+**Step 2 — Defenders' declaration.** Each attacked player may move Equipment and form Stacks, then assign defenders. Each defending unit or Stack blocks one attacker. Defenders must be ready (both members of a Stack); depleted units and units restricted from defending may not defend. Defending does not deplete (v0.4.1). Any attacker with no defender is unblocked.
 
 **RULING A8-b:** at most one defender may block each attacker. You may leave any or all attackers unblocked.
 
-**Step 3 — Power-card window.** Starting with the attacker, every player in turn order may play Power cards (including Traps), paying normally, until everyone passes in succession. This window **always happens**, even when nobody attacked. A unit removed from a battle (for example by a Trap or High-Energy Pulse) stops fighting: if it was an attacker, its defender does not fight; if it was a defender, its attacker becomes unblocked. If one unit of a Stack is trapped, the stack breaks and the other unit fights on alone.
+**Step 3 — Power-card window.** Starting with the attacker, every player in turn order may play Reactive Powers, paying normally, until everyone passes in succession. This window **always happens**, even when nobody attacked. A unit that is depleted, destroyed or restricted from fighting in this window leaves its battle: if it was an attacker, its defender does not fight; if it was the only defender, its attacker becomes unblocked. If one member of a Stack leaves, the Stack breaks and the other fights on alone.
 
 **Step 4 — Cyborg abilities.** The attacker, then the defenders, use any optional Cyborg abilities that happen now (for example Lodner Predator's attack roll).
 
@@ -139,26 +139,26 @@ The active player is the attacker. Steps, in order:
 # Cleanup phase
 
 1. Your surviving attackers return to your Lab and are made ready. Stacks separate.
-2. Each of your trapped units makes one escape attempt, following its Trap card.
+2. Restrictions that last "until your next Cleanup" end, and each of your contained units with an escape roll (Grankor Stasis Field) makes one escape attempt. Released units are depleted.
 3. Creation Units are not replenished now — that happens in your next Replenish phase.
 4. Victory is checked; play passes to the next player.
 
-**RULING A9-a:** escape attempts happen once per turn, in the trapped unit owner's Cleanup phase. A freed unit returns to its owner's Lab depleted; the Trap card goes to the discard pile of the player who played it.
+**RULING A9-a:** escape attempts happen once per turn, in the contained unit owner's Cleanup phase. A released unit stays in its Lab, depleted.
 
-# Traps and responses
+# Responses and restrictions
 
-Traps are **instants**: a Trap may be played on an opposing Battle Unit at any time, in any phase, by any player — whenever the game gives you a window. Windows open after a card is played, at the end of the Draw and Creation phases, after attackers are declared, in the Battle step 3 Power-card window, and before Cleanup escapes.
+Reactive Powers are **fast**: they may be played whenever the game gives you a window — after a card is played, at the end of the Draw and Creation phases, after attackers are declared, in the Battle step 3 Power-card window, and before Cleanup.
 
-When a card goes on the stack, every player may respond with a Trap of their own. Responses resolve **last played, first resolved**. A player who plays a card keeps priority and may play another. When everyone passes in succession, the top card resolves. A Trap whose target is no longer a legal unit when it resolves has no effect.
+When a card goes on the stack, every player may respond with a Reactive Power. Responses resolve **last played, first resolved**.
 
-A trapped unit is set aside: it cannot attack, defend, or use or grant abilities (including Commander auras). It keeps its Equipment. Power cards and Traps are both instants: they can be played in any priority window, including in response to another card and during an opponent’s turn (house rule L).
+**Restrictions (v0.4.1).** Instead of a single "trapped" condition, each effect lists exactly what it prevents, independently: attacking, defending, being chosen by Powers or abilities, using activated abilities, passive and triggered abilities (including granting Commander bonuses), and being used to pay a cost. Each restriction lasts until the end of the turn, until its owner's next Cleanup, or until an escape roll succeeds. A restricted unit stays in its Lab, keeps its Equipment and still counts as a Battle Unit in play. **Contain** means all six restrictions (Grankor Stasis Field, Interference Net).
 
-**Response windows online.** Every player gets the same short window (3 seconds by default), so a pause never reveals who holds a Trap. The optional *fast windows* setting skips players who cannot play anything — faster, but it leaks that information.
+**Response windows online.** Every player gets the same short window (3 seconds by default), so a pause never reveals who holds a Reactive Power.
 
 # Winning and losing
 
 - A player loses as soon as their Lab is at 0 HP or less.
-- A player loses as soon as they have no Battle Units in their Lab, hand and Battle Deck combined. Trapped units count as being in the Lab.
+- A player loses as soon as they have no Battle Units in their Lab, hand and Battle Deck combined. Restricted units are in the Lab and count.
 - This is checked after every damage event and at every phase change.
 
 **RULING A10-a:** if everyone remaining would lose at the same moment, the game is a draw.
@@ -170,14 +170,14 @@ Free-for-all; last player standing wins.
 - **Choosing targets:** each attacking unit picks which opponent it attacks — an army may be split.
 - **Blocking:** only the player being attacked may block.
 - **Power-card window:** every player may act, in turn order starting with the attacker, until everyone passes in succession.
-- **Elimination:** an eliminated player's cards all leave the game; units they had trapped are freed and return to their owners depleted.
+- **Elimination:** an eliminated player's cards all leave the game; restrictions their cards placed on other units end.
 - **"Opponent" in card text** means the player on the other side of that battle: Blade Master's 1 damage hits the Lab of the player whose unit it destroyed; Lodner Predator mills the defender's Resource Deck. High-Energy Pulse affects everyone.
 - **Starting HP and first turn:** the same starting HP as two players; only the first player skips their first Battle-Deck draw.
 
 # Keywords
 
 - **X ability** — rolled in Battle stage a (or when first needed this turn), using the red die unless stated: value 1–5, Obliterate = 4. X always counts as at least 1 for deciding which battles happen and for Equipment. Outside battle it shows as X.
-- **Commander aura** — "All attacking [type]s get +A and +B": while the Commander is in play and not trapped, every attacking unit of that type its owner controls (including the Commander itself) gets the bonus. In a Stack the bonus counts once per qualifying unit; two Commanders' auras add up.
+- **Commander aura** — "All attacking [type]s get +A and +B": while the Commander is in play and its passive abilities are not restricted, every attacking unit of that type controlled by the Commander's owner gets the bonus.
 - **Psionic win** — this unit (or its stack) had the strictly higher total in the Psionic battle. *Cyber win* and *Physical win* work the same way.
 - **Destroys a Battle Unit** — this unit (or its stack) won the Physical battle and destroyed the opposing unit or stack.
 - **Search deck** — look through the named deck, take the card, then shuffle that deck. If none is found, still shuffle.
@@ -256,7 +256,7 @@ These rules come from the v0.4 card set workbook (Rules and Keywords sheet) and 
 **Limits and interactions:** Separate burn and deplete pools: Burn R/P 1 + Mixed B/G 1 means destroy red or purple and deplete blue or green. Never reuse one CU for two payments. Empty AC uses original rule: W matches printed colored/split costs, or any if none. Any is explicit unrestricted pool. Total cost counts all required CUs once, including W. No dual-type CU cards added in this pass.
 
 ### Power — Reactive
-*Shared.* Fast Power: may be played in normal priority windows on any turn, including responses. A card can have a narrower printed trigger. Trap is a name/flavor, not a separate type.
+*Shared.* Fast Power: may be played in normal priority windows on any turn, including responses. A card can have a narrower printed trigger. "Trap" is a description, not a card type.
 
 **Limits and interactions:** No automatic window after dice; all normal instant rules and target legality apply. Pay at declaration; costs not refunded if countered.
 

@@ -1,0 +1,11 @@
+deck_a,deck_b,games,a_wins,b_wins,draws,a_win_pct,a_win_pct_when_a_first,avg_turns
+robot-control,robot-industrial,40,18,22,0,45.0,52.4,12.2
+robot-control,creature-swarm,40,7,33,0,17.5,28.6,9.3
+robot-control,creature-evolution,40,15,25,0,37.5,31.6,11.2
+robot-control,mixed-integration,40,20,20,0,50.0,52.2,13.7
+robot-industrial,creature-swarm,40,21,19,0,52.5,73.3,9.6
+robot-industrial,creature-evolution,40,22,18,0,55.0,68.2,11.2
+robot-industrial,mixed-integration,40,29,11,0,72.5,71.4,12.7
+creature-swarm,creature-evolution,40,27,13,0,67.5,85.0,10.6
+creature-swarm,mixed-integration,40,35,5,0,87.5,95.2,9.7
+creature-evolution,mixed-integration,40,29,11,0,72.5,76.2,12.0

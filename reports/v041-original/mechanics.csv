@@ -1,0 +1,38 @@
+mechanic,total,per_game,robot-control,robot-industrial,creature-swarm,creature-evolution,mixed-integration
+"Activated: Fabricator Drone",97,0.242,0,97,0,0,0
+"Activated: Loquidor Stalker",1,0.003,1,0,0,0,0
+"Activated: Scrap Harvester",12,0.030,0,12,0,0,0
+"Calibrate",78,0.195,78,0,0,0,0
+"Cannibalize",54,0.135,0,0,54,0,0
+"Counter (Emergency Firewall)",1,0.003,1,0,0,0,0
+"Depletion by Fabricator Drone",97,0.242,0,97,0,0,0
+"Depletion by Parasitic Snare",30,0.075,0,0,30,0,0
+"Equipment relocated (free)",49,0.122,11,14,0,16,8
+"Equipment relocated (paid)",1,0.003,0,1,0,0,0
+"Escape failed",22,0.055,6,1,7,4,4
+"Escape succeeded",76,0.190,7,18,18,18,15
+"Feeding: Creature created",6,0.015,0,0,0,6,0
+"Feeding: triggered",33,0.083,0,0,0,33,0
+"Lock-On",2,0.005,2,0,0,0,0
+"Lock-On face 1",1,0.003,1,0,0,0,0
+"Lock-On face 5",1,0.003,1,0,0,0,0
+"Mutation",22,0.055,0,0,0,22,0
+"Permanent upgrade",3,0.007,0,0,0,0,3
+"Power cast: Creation",118,0.295,0,103,15,0,0
+"Power cast: Reactive",367,0.917,92,0,84,102,89
+"Protocol Davileam Commander: Assault",41,0.102,41,0,0,0,0
+"Protocol Davileam Commander: Guard",54,0.135,54,0,0,0,0
+"Protocol Grid Marshal: Guard",223,0.557,223,0,0,0,0
+"Protocol Grid Marshal: Scan",8,0.020,8,0,0,0,0
+"Reanimated return",23,0.058,0,0,0,23,0
+"Reanimated stat change",46,0.115,0,0,0,46,0
+"Resource Fortification used",74,0.185,20,14,17,23,0
+"Restriction: Grankor Stasis Field",92,0.230,49,0,0,0,43
+"Restriction: Interference Net",41,0.102,41,0,0,0,0
+"Revived (Robo Refurb)",10,0.025,0,10,0,0,0
+"Stack fights",136,0.340,0,0,0,0,136
+"Stack fights lost (both destroyed)",5,0.013,0,0,0,0,5
+"Stack fights won (kill)",73,0.182,0,0,0,0,73
+"Stacks formed",254,0.635,0,0,0,0,254
+"X roll",323,0.807,0,0,0,323,0
+"X roll (locked)",1,0.003,0,0,0,1,0

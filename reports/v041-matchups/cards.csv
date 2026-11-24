@@ -1,0 +1,92 @@
+card_id,name,type,decks_using,times_played,games_played_in,win_pct_when_played,fights,kills,deaths,lab_damage,activations,mutations_granted,cannibalized
+BU_AD,"Acorbeac Destroyer",Cyborg,"mixed-integration",1611,1350,44.1,2553,761,554,1413.5,0,0,0
+EQ_AM,"Adaptive Membrane",Equipment,"creature-evolution",2034,1564,53.8,0,0,0,0.0,0,0,0
+BU_AS,"Alloy Symbiont",Cyborg,"mixed-integration",1633,1366,46.3,2898,736,738,2092.5,0,0,0
+BU_AA,"Apex Aberration",Creature,"",0,0,,0,0,0,0.0,0,0,0
+BU_AW,"Assembly Wisp",Robot,"robot-industrial",2066,1707,69.1,2124,265,1412,1936.0,0,0,0
+BU_BC,"Bellarn Cyborg",Cyborg,"",0,0,,0,0,0,0.0,0,0,0
+PW_BP,"Bio Pulse",Power,"",0,0,,0,0,0,0.0,0,0,0
+BU_BC2,"Brood Carrier",Creature,"creature-swarm",2305,1826,65.8,1887,268,1489,1886.0,0,0,265
+PW_BR,"Brood Recall",Power,"creature-swarm",416,352,44.9,0,0,0,0.0,0,0,0
+PW_CI,"Cannibalistic Instinct",Power,"creature-swarm",1173,1046,58.0,0,0,0,0.0,0,0,0
+BU_CF,"Carrion Foundress",Creature,"creature-evolution",858,858,69.5,1012,507,159,1747.0,0,0,0
+BU_CS,"Carrion Sprinter",Creature,"creature-swarm",1336,1162,67.6,1131,230,609,2443.0,0,0,75
+BU_CW,"Chitin Weaver",Creature,"creature-evolution",1291,1114,64.0,1223,386,359,1332.0,0,49,0
+BU_CE,"Convergence Engine",Cyborg,"mixed-integration",1195,1004,56.6,2723,1446,240,2496.0,0,0,0
+BU_CA,"Countermeasure Array",Robot,"",0,0,,0,0,0,0.0,0,0,0
+PW_CR,"Creature Regenerate",Power,"creature-evolution",688,600,49.3,0,0,0,0.0,0,0,0
+PW_C,"Crosslink",Power,"mixed-integration",639,515,58.3,0,0,0,0.0,0,0,0
+EQ_CO,"Cyber Onslaught",Equipment,"robot-industrial",1030,1004,67.2,0,0,0,0.0,0,0,0
+BU_DC,"Davileam Commander",Robot,"robot-control",780,780,64.6,1155,562,135,1691.0,1954,0,0
+PW_EF,"Emergency Firewall",Power,"robot-control",46,46,43.5,0,0,0,0.0,0,0,0
+PW_ES,"Emergency Separation",Power,"",0,0,,0,0,0,0.0,0,0,0
+PW_EH,"Equipment Hunter",Power,"robot-industrial",1246,1246,63.2,0,0,0,0.0,0,0,0
+PW_EM,"Equipment Mechanic",Power,"robot-industrial",177,155,44.5,0,0,0,0.0,0,0,0
+BU_FD,"Fabricator Drone",Robot,"robot-industrial",2518,1762,69.8,1987,346,1063,453.0,2531,0,0
+BU_FB,"Fengar Berserker",Creature,"",0,0,,0,0,0,0.0,0,0,0
+PW_FE,"Forced Evolution",Power,"creature-evolution / mixed-integration",2092,1874,46.8,0,0,0,0.0,0,0,0
+BU_FT,"Foundry Titan",Robot,"robot-industrial",1602,1357,82.2,2855,2101,214,3445.0,0,0,0
+BU_GS,"Garilian Seer",Creature,"",0,0,,0,0,0,0.0,0,0,0
+TR_GSF,"Grankor Stasis Field",Power,"robot-control / mixed-integration",2485,2485,32.1,0,0,0,0.0,2451,0,0
+BU_GM,"Grid Marshal",Robot,"robot-control",2086,1732,47.0,2751,861,561,3569.0,6952,0,0
+PW_HEP,"High-Energy Pulse",Power,"",0,0,,0,0,0,0.0,0,0,0
+BU_HR,"Hive Regent",Creature,"creature-swarm",1895,1642,68.3,2048,1177,294,2980.0,0,0,2
+BU_HB,"Hydra Bot",Robot,"robot-industrial",3559,2539,67.4,4794,1612,1469,8436.0,0,0,0
+EQ_IP,"Interface Plating",Equipment,"mixed-integration",1894,1625,37.7,0,0,0,0.0,0,0,0
+PW_IN,"Interference Net",Power,"robot-control",1128,953,44.4,0,0,0,0.0,1124,0,0
+BU_JP,"Javarow Protector",Cyborg,"",0,0,,0,0,0,0.0,0,0,0
+BU_JPA,"Jingwa Psi Avenger",Creature,"",0,0,,0,0,0,0.0,0,0,0
+EQ_KA,"Kranthard Armour",Equipment,"",0,0,,0,0,0,0.0,0,0,0
+BU_KC,"Kyler Revenant",Cyborg,"",0,0,,0,0,0,0.0,0,0,0
+BU_LP,"Lodner Predator",Cyborg,"",0,0,,0,0,0,0.0,0,0,0
+BU_LQ,"Loquidor Stalker",Robot,"robot-control",1705,1431,57.1,2948,1058,711,4186.0,90,0,0
+BU_LS,"Marrow Parasite",Creature,"creature-evolution",1824,1548,63.2,1767,770,343,2473.0,0,445,0
+PW_MD,"Mental Disrupter",Power,"",0,0,,0,0,0,0.0,0,0,0
+EQ_MS,"Mental Shield",Equipment,"",0,0,,0,0,0,0.0,0,0,0
+BU_ML,"Mind Leech",Creature,"creature-swarm / creature-evolution",4403,3626,61.3,4431,1108,1922,4276.0,0,0,156
+PW_MA,"Modular Assembly",Power,"robot-industrial",1048,1048,65.2,0,0,0,0.0,0,0,0
+PW_M,"Molting",Power,"",0,0,,0,0,0,0.0,0,0,0
+BU_MA,"Morphic Adept",Creature,"creature-evolution",2204,1884,55.6,2776,932,854,1743.0,0,0,0
+BU_NI,"Neural Interface",Cyborg,"mixed-integration",1781,1495,38.3,2134,313,818,1026.5,0,0,0
+BU_NA,"Nomis Analyzer",Robot,"robot-control",1472,1242,49.0,1737,223,600,689.0,0,0,0
+PW_OS,"Overload Strike",Power,"",0,0,,0,0,0,0.0,0,0,0
+PW_PS,"Parasitic Snare",Power,"creature-swarm",919,919,56.5,0,0,0,0.0,0,0,0
+BU_PI2,"Patchwork Initiate",Cyborg,"mixed-integration",4143,2883,34.7,5399,718,2159,5257.5,0,0,0
+BU_PI,"Pencar Inferno",Robot,"",0,0,,0,0,0,0.0,0,0,0
+EQ_PA,"Physical Augmentation",Equipment,"robot-control / creature-swarm",1934,1630,55.1,0,0,0,0.0,0,0,0
+EQ_PB,"Psi Bolster",Equipment,"creature-evolution",541,541,53.0,0,0,0,0.0,0,0,0
+BU_PH,"Psi Hatchling",Creature,"creature-swarm / creature-evolution / mixed-integration",8331,6366,54.4,10988,2728,4036,9225.5,0,0,86
+BU_RO,"Railgun Overseer",Robot,"robot-industrial",1979,1676,74.0,2439,923,639,2901.0,0,0,0
+BU_RC,"Relay Chimera",Cyborg,"mixed-integration",3812,2653,34.0,4612,447,2469,3764.0,0,0,0
+PW_RC,"Repair Circuit",Power,"",0,0,,0,0,0,0.0,0,0,0
+PW_RR,"Robo Refurb",Power,"robot-industrial",411,411,72.3,0,0,0,0.0,0,0,0
+BU_BB,"Rupture Brute",Creature,"creature-swarm / creature-evolution / mixed-integration",8024,6115,70.0,10214,3939,2713,36968.0,0,0,64
+PW_SP,"Salvage Protocol",Power,"",0,0,,0,0,0,0.0,0,0,0
+BU_SD,"Scout Drone",Robot,"robot-control / robot-industrial / mixed-integration",8113,6266,48.3,11137,2337,4474,10478.0,0,0,0
+BU_SH2,"Scrap Harvester",Robot,"robot-industrial",1751,1480,73.9,2473,654,843,2364.0,199,0,0
+BU_SH,"Scrap Hulk",Robot,"robot-industrial / mixed-integration",4773,3686,70.6,8089,2794,1682,25293.5,0,0,0
+EQ_SH,"Servo Harness",Equipment,"robot-industrial / mixed-integration",4026,2953,63.5,0,0,0,0.0,0,0,0
+BU_SA,"Shadow Assassin",Creature,"creature-evolution",3565,2573,61.4,4572,2137,707,8249.0,0,0,0
+BU_SC,"Siana Commander",Creature,"creature-evolution",692,692,57.8,657,412,71,787.0,0,334,0
+PW_SJ,"Signal Jam",Power,"",0,0,,0,0,0,0.0,0,0,0
+BU_SM,"Signal Mite",Robot,"robot-control",2160,1794,42.6,2413,358,1262,1594.0,0,0,0
+BU_SL,"Spore Larva",Creature,"creature-swarm / creature-evolution",5575,4177,63.6,4900,837,3516,5112.0,0,0,434
+PW_SB,"Static Burst",Power,"",0,0,,0,0,0,0.0,0,0,0
+BU_SS,"Stealth Skyfire",Robot,"",0,0,,0,0,0,0.0,0,0,0
+BU_SA2,"Suture Architect",Cyborg,"mixed-integration",1831,1544,43.5,2938,625,872,2273.0,0,0,0
+BU_SC2,"Swarm Caller",Creature,"creature-swarm",3129,2382,69.5,2830,797,1121,5440.0,0,0,21
+BU_TN,"Targeting Node",Robot,"robot-control",2164,1805,40.2,2815,421,1355,1840.0,544,0,0
+BU_TB,"Therabot Seeker",Robot,"robot-control",2867,2027,46.0,3463,616,1418,2048.0,37,0,0
+BU_TI,"Third I",Cyborg,"",0,0,,0,0,0,0.0,0,0,0
+BU_TS,"Trangarey Scythe",Creature,"creature-swarm",3121,2339,68.8,2934,1209,877,8200.0,0,0,70
+BU_TG,"Tricapia Guardian",Robot,"robot-control",744,744,71.4,1207,740,141,3246.0,122,0,0
+PW_UC,"Unstable Carapace",Power,"",0,0,,0,0,0,0.0,0,0,0
+BU_UO,"Urilian Overlord",Cyborg,"",0,0,,0,0,0,0.0,0,0,0
+BU_VS,"Vector Sentinel",Robot,"robot-control",3348,2398,45.8,4842,1396,1582,6903.0,878,0,0
+BU_VC,"Veeda Commander",Cyborg,"",0,0,,0,0,0,0.0,0,0,0
+EQ_VCS,"Vegian Cyber Shield",Equipment,"",0,0,,0,0,0,0.0,0,0,0
+BU_DSH,"Vesper Ripper",Creature,"creature-evolution",2004,1674,63.3,2574,1170,562,4611.0,0,0,0
+BU_BM,"Veydran Executioner",Cyborg,"",0,0,,0,0,0,0.0,0,0,0
+BU_WR,"Warend Reaper",Creature,"",0,0,,0,0,0,0.0,0,0,0
+BU_XP,"Xardy Piercer",Robot,"robot-industrial",2220,1859,75.0,4117,1504,665,4634.0,0,0,0
+BU_ZM,"Zomber Mercenary",Cyborg,"",0,0,,0,0,0,0.0,0,0,0

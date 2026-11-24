@@ -94,3 +94,55 @@ Simulation after the change (400 games, same setup) — see reports/v04-sim.md:
 - Win rates: Swarm 72.5%, Industrial 61.3%, Evolution 53.8%, Control 33.1%, Mixed 29.4%.
 - Other counts: Cannibalize 47, Lock-On 4, Stack fights 180 (6 Stacks lost).
 - Little change from v0.4, as expected: before, depleted units could already defend, so attacking never cost a unit its block. The new rules mainly make effect-based depletion (Snare, Fabricator) a real combat cost.
+
+---
+
+# v0.4.1 refinement pass (Reactive/Creation, restrictions, shortcuts, AI, telemetry)
+
+Note: the only v0.4.1 message received before this pass was the Battle Unit readiness prompt (implemented above, kept as core rules). The list below follows the later request that summarised the remaining items.
+
+## Status of the requested items
+| # | Requirement | Status |
+|---|---|---|
+| 1 | Rename Pulse/Operation to Reactive/Creation | **Done.** Card data, engine (old names still accepted for older data), UI type lines and keywords, rulebook, rulings, PDF, spreadsheet. Card names such as High-Energy Pulse are unchanged. |
+| 2 | Source-specific restrictions instead of trapped/untrapped | **Done for every v0.4 card.** Restrictions block attack, defend, target, activate, passive and cost independently, each with a duration: end of turn, the owner's next Cleanup, or until an escape roll succeeds. Used by Grankor, Interference Net, High-Energy Pulse, Mental Disrupter and Signal Jam. The old trapped zone remains only so the frozen v0.3 card data and its tests still run. |
+| 3 | Remove trapped/untrapped references | **Done.** Rewrote the texts of Garilian Seer, Fabricator Drone, Railgun Overseer, Convergence Engine and Interference Net. All eligibility checks now use restrictions, and the rulebook and rulings are updated. |
+| 4 | Interference Net / Grankor revisions | **Partly done.** Both now run on restrictions (Grankor: all six until escape at Physical + roll ≥ 5 or a second failure; Net: all six until the owner's next Cleanup, printed Physical ≤ 2). **The "previously specified revisions" text was never received.** Send it and both cards can be updated. Parasitic Snare keeps its v0.4.1 text and readiness behaviour. |
+| 5a | Atomic Equipment Mechanic payment | **Done.** The Equipment and host are chosen first, then base plus Equipment cost is paid in one payment. The card is only offered when some Equipment is affordable together with the base cost. |
+| 5b | Individual Creation Unit selection | **Done.** `Payment.pick` lists exact CU uids and the engine validates them. A new click-to-choose picker cycles each unit through deplete, burn and unused. Burning a fortified CU is now the player's choice. |
+| 5c | Choosing between eligible Lock-On users | **Done** (prompt "Lock-On: which unit?"). No current card combination can produce two Lock-On units in one engagement; the test uses a test-only Cyborg. |
+| 5d | Marrow Parasite Stack choice | **Done.** Its controller chooses which destroyed member to compare with when the rewards differ. |
+| 5e | Equipment relocation AI | **Done.** Moves Equipment off units that can't fight onto ready ones when the gain beats the Relocate cost: 1,373 free and 12 paid moves in 10,000 games. |
+| 5f | Browser testing | **Done for:** the CU picker (paid exactly as chosen), the Protocol dialog and marker, the activated-ability button (Fabricator Drone), Grankor targeting/staging/containment marker, keyword captions, Reactive/Creation type lines, the Description hover caption and the card preview. **Not clicked through in the browser:** Lock-On face choice, Calibrate, Marrow choice, Equipment Mechanic. These use the same decision and card-choice dialogs, and their engine flows have automated tests. |
+| 6 | AI improvements | **Done:** only ready, unrestricted units count as blockers; a Stack is formed only when its odds against the strongest blocker beat the best single attack (accounting for the two-for-one risk); growth units are attacked with into blocks (Mutation, Alloy, Feeding); resource reservation covers every Reactive Power worth holding, with mixed/Any/burn costs; lethal Cannibalistic Instinct on an unblocked attacker is recognised; Equipment relocation; Lock-On unit choice; Marrow choice. |
+| 7 | Card- and mechanic-level telemetry | **Done:** `tools/sim/v041.ts` writes games.csv, matchups.csv, decks.csv, cards.csv and mechanics.csv. |
+| 8 | Simulations | **Done:** the 400-game run on the original v0.4 seeds, plus 1,000 games per non-mirror matchup (10,000 games, seats alternating). No errors and no turn-limit games. |
+
+## Still open / known limitations
+- Interference Net and Grankor revision text (see 4).
+- The fuller earlier v0.4.1 prompt was never received, so I can't confirm nothing else from it is missing.
+- Swarm Caller still puts the other revealed cards on the bottom in their existing order (no reorder prompt).
+- These costs are still paid automatically with the suggested payment, without the picker: activated abilities, Lock-On, Relocate, and Equipment Mechanic's combined cost.
+- Duplicate Davileam Protocols trigger once per Battle phase per controller (interpretation 5).
+- AI: Lock-On is used rarely (40 times in 10,000 games), and Grid Marshal almost always picks Guard over Scan.
+
+## Simulation baseline (Normal AI, 15 Lab HP) — reports/v041-original and reports/v041-matchups
+- Original 400 seeds: first player 57.8%. Win rates: Swarm 71.3%, Industrial 58.8%, Evolution 53.1%, Control 37.5%, Mixed 29.4%.
+- 10,000 games: first player 57.1%, average 11.3 turns. Win rates: Swarm 65.2%, Industrial 62.0%, Evolution 55.8%, Control 34.6%, Mixed 32.4%.
+- Matchups (first-named deck's win %): Control–Swarm 18.5, Control–Industrial 31.3, Control–Evolution 31.2, Control–Mixed 57.4, Industrial–Swarm 47.2, Industrial–Evolution 60.1, Industrial–Mixed 72.0, Swarm–Evolution 54.2, Swarm–Mixed 72.4, Evolution–Mixed 68.7.
+- Mechanics per game:
+  - Stacks formed 0.69, Stack fights 0.39 (2,229 kills, only 64 Stacks lost)
+  - Grankor 0.25, Interference Net 0.11, escapes succeeded 1,940 vs 599 failed
+  - Calibrate 0.22, Resource Fortification used 0.19, Cannibalize 0.12, Mutation 0.08
+  - Reanimated returns 0.07, Feeding 0.085 triggers (228 creations)
+  - Lock-On 0.004
+- Card outliers (win % in games where the card was played; this reflects when it gets played, not only how strong it is):
+  - High: Foundry Titan 82, Xardy Piercer 75, Railgun Overseer 74, Scrap Harvester 74, Robo Refurb 72, Tricapia Guardian 71
+  - Low: Grankor 32, Relay Chimera 34, Patchwork Initiate 35, Interface Plating 38, Neural Interface 38, Targeting Node 40
+
+## Observations for the next balance revision (nothing was changed)
+1. First-player advantage is steady at about 57%.
+2. Robot Control and Mixed Integration trail in almost every matchup; Robot Industrial's Equipment engine (Foundry Titan, Xardy, Railgun) over-performs.
+3. Lock-On rarely has an eligible roll. Control's main tool is mostly idle.
+4. Grankor usually lasts only one Cleanup: escapes succeed about three times as often as they fail.
+5. Mixed Integration's Stacks win their fights (2,229 kills, 64 losses), but the deck still loses. Its cheap Cyborgs (Patchwork, Relay Chimera, Neural Interface) under-perform on their own.

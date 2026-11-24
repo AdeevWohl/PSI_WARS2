@@ -111,7 +111,7 @@ export function pickPayment(host: HTMLElement, view: GameView, seat: Seat, def: 
     };
     const body = h('div', { class: 'pay-box' }, h('div', { class: 'pay-cost' }, h('span', { class: 'dim' }, 'Cost'), h('div', { class: 'lf-pips row big' }, costPips(cost).map(pipEl))), grid, status);
     const m = openModal(host, `Pay for ${def.name}`, 'Click a Creation Unit to deplete it; click again to burn it (if the cost burns). Silver = deplete, black = burn.', body, [{ label: 'Cancel', onClick: () => { m.close(); resolve(null); } }], { dismissable: false });
-    m.el.querySelector('.row')?.appendChild(payBtn);
+    m.el.querySelector('.modal > .row')?.appendChild(payBtn);
     draw();
   });
 }
