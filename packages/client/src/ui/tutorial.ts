@@ -92,7 +92,7 @@ const STEPS: Step[] = [
     when: (c) => myPrompt(c, 'declareAttackers'),
     skip: (c) => c.view.turn.number > 9,
     until: (c) => evBy(c, 'AttackersDeclared', (e) => e.seat === c.me && (e.attacks as unknown[]).length > 0) || c.view.turn.active !== c.me,
-    text: 'Click your unit to send it into battle, then click Attack (or Space). Attacking depletes it, but survivors are made ready again in Cleanup, and depleted units can still block.',
+    text: 'Click your unit to send it into battle, then click Attack (or Space). Attacking does not deplete it, so it can still block on your opponent’s turn. Only ready units can attack or block.',
   },
   {
     id: 'battle', title: 'How battles work', target: '.breakdown',

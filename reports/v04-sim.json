@@ -3,7 +3,7 @@
  "ai": "normal",
  "gamesPerOrderedPair": 20,
  "startingHP": 15,
- "seconds": 26,
+ "seconds": 17,
  "legality": {
   "robot-control": [],
   "robot-industrial": [],
@@ -14,33 +14,33 @@
  "errors": [],
  "firstPlayer": {
   "games": 400,
-  "wins": 229,
+  "wins": 234,
   "draws": 0
  },
  "decks": {
   "robot-control": {
    "games": 160,
-   "wins": 54,
+   "wins": 53,
    "draws": 0
   },
   "robot-industrial": {
    "games": 160,
-   "wins": 99,
+   "wins": 98,
    "draws": 0
   },
   "creature-swarm": {
    "games": 160,
-   "wins": 115,
+   "wins": 116,
    "draws": 0
   },
   "creature-evolution": {
    "games": 160,
-   "wins": 82,
+   "wins": 86,
    "draws": 0
   },
   "mixed-integration": {
    "games": 160,
-   "wins": 50,
+   "wins": 47,
    "draws": 0
   }
  },
@@ -62,12 +62,12 @@
   },
   "robot-control vs mixed-integration": {
    "games": 20,
-   "wins": 14,
+   "wins": 13,
    "draws": 0
   },
   "robot-industrial vs robot-control": {
    "games": 20,
-   "wins": 16,
+   "wins": 15,
    "draws": 0
   },
   "robot-industrial vs creature-swarm": {
@@ -82,7 +82,7 @@
   },
   "robot-industrial vs mixed-integration": {
    "games": 20,
-   "wins": 10,
+   "wins": 11,
    "draws": 0
   },
   "creature-swarm vs robot-control": {
@@ -92,22 +92,22 @@
   },
   "creature-swarm vs robot-industrial": {
    "games": 20,
-   "wins": 7,
+   "wins": 8,
    "draws": 0
   },
   "creature-swarm vs creature-evolution": {
    "games": 20,
-   "wins": 12,
+   "wins": 11,
    "draws": 0
   },
   "creature-swarm vs mixed-integration": {
    "games": 20,
-   "wins": 17,
+   "wins": 18,
    "draws": 0
   },
   "creature-evolution vs robot-control": {
    "games": 20,
-   "wins": 13,
+   "wins": 14,
    "draws": 0
   },
   "creature-evolution vs robot-industrial": {
@@ -122,7 +122,7 @@
   },
   "creature-evolution vs mixed-integration": {
    "games": 20,
-   "wins": 13,
+   "wins": 15,
    "draws": 0
   },
   "mixed-integration vs robot-control": {
@@ -147,120 +147,123 @@
   }
  },
  "turns": {
-  "average": 11.7125,
+  "average": 11.475,
   "median": 10,
   "stalemates": 0
  },
  "firstBattleUnitTurnAvg": 2.7294871794871796,
- "labDamagePerGame": 19.815,
+ "labDamagePerGame": 19.775,
  "resources": {
-  "burnedForCostsPerGame": 0.7575,
+  "burnedForCostsPerGame": 0.755,
   "destroyedByEffectsPerGame": 0,
   "creationPhasesWithNoReadyCU": "0.1%"
  },
  "mechanics": {
-  "lockOns": 3,
-  "calibrations": 105,
-  "protocolChoices": 359,
+  "lockOns": 4,
+  "calibrations": 87,
+  "protocolChoices": 343,
   "mutations": {
-   "Carrion Foundress": 1,
-   "Marrow Parasite": 15,
+   "Carrion Foundress": 2,
+   "Marrow Parasite": 13,
    "Siana Commander": 3,
-   "Chitin Weaver": 3,
-   "Rupture Brute": 2,
+   "Mind Leech": 2,
+   "Chitin Weaver": 2,
    "Vesper Ripper": 1
   },
-  "cannibalized": 0,
-  "feedingTriggers": 32,
+  "cannibalized": 47,
+  "feedingTriggers": 33,
   "feedingCreations": 9,
   "reanimated": {
-   "returned": 24,
-   "laterDestroyed": 10,
-   "kills": 8
+   "returned": 23,
+   "laterDestroyed": 8,
+   "kills": 14
   },
   "stacks": {
-   "formed": 389,
-   "fights": 226,
-   "wins": 116,
-   "losses": 5
+   "formed": 333,
+   "fights": 180,
+   "wins": 95,
+   "losses": 6
   },
-  "containments": 163,
+  "containments": 136,
   "counters": 0,
   "damagePrevented": 0,
   "activations": {
-   "Protocol Grid Marshal: Guard": 261,
-   "Protocol Davileam Commander: Assault": 42,
-   "Fabricator Drone:FabricatorDiscount": 164,
-   "Calibrate (Vector Sentinel)": 49,
-   "Calibrate (Grid Marshal)": 21,
-   "Protocol Davileam Commander: Guard": 53,
+   "Protocol Grid Marshal: Guard": 242,
+   "Protocol Davileam Commander: Assault": 38,
+   "Fabricator Drone:FabricatorDiscount": 109,
+   "Calibrate (Vector Sentinel)": 47,
+   "Calibrate (Grid Marshal)": 17,
+   "Protocol Davileam Commander: Guard": 60,
+   "Lock-On by Therabot Seeker": 3,
    "Protocol Grid Marshal: Scan": 3,
-   "Lock-On by Therabot Seeker": 2,
    "Lock-On by Grid Marshal": 1,
-   "Calibrate (Tricapia Guardian)": 9,
-   "Calibrate (Targeting Node)": 26,
+   "Calibrate (Tricapia Guardian)": 7,
+   "Calibrate (Targeting Node)": 16,
    "Loquidor Stalker:Intercept": 2,
    "Scrap Harvester:HarvestScrap": 14
   }
  },
  "cardsPlayed": {
-  "Creation Oracle": 661,
-  "Resource Fortification": 366,
-  "Scout Drone": 343,
-  "Rupture Brute": 309,
-  "Psi Hatchling": 308,
-  "Spore Larva": 230,
-  "Scrap Hulk": 203,
-  "Mind Leech": 178,
-  "Relay Chimera": 170,
-  "Patchwork Initiate": 169,
-  "Servo Harness": 166,
-  "Hydra Bot": 157,
-  "Shadow Assassin": 144,
-  "Vector Sentinel": 132,
-  "Swarm Caller": 121,
-  "Trangarey Scythe": 119,
-  "Fabricator Drone": 115,
-  "Therabot Seeker": 107,
-  "Brood Carrier": 100,
-  "Grankor Stasis Field": 97,
-  "Suture Architect": 87,
-  "Signal Mite": 85,
-  "Acorbeac Destroyer": 85,
-  "Adaptive Membrane": 84,
-  "Grid Marshal": 83,
-  "Morphic Adept": 83,
-  "Hive Regent": 82,
-  "Xardy Piercer": 81,
-  "Assembly Wisp": 81,
-  "Targeting Node": 77,
-  "Scrap Harvester": 77,
+  "Creation Oracle": 653,
+  "Resource Fortification": 356,
+  "Scout Drone": 330,
+  "Psi Hatchling": 307,
+  "Rupture Brute": 306,
+  "Spore Larva": 222,
+  "Scrap Hulk": 201,
+  "Mind Leech": 180,
+  "Relay Chimera": 166,
+  "Patchwork Initiate": 164,
+  "Servo Harness": 160,
+  "Hydra Bot": 156,
+  "Shadow Assassin": 139,
+  "Vector Sentinel": 130,
+  "Fabricator Drone": 116,
+  "Swarm Caller": 116,
+  "Trangarey Scythe": 115,
+  "Therabot Seeker": 100,
+  "Brood Carrier": 98,
+  "Grankor Stasis Field": 95,
+  "Forced Evolution": 91,
+  "Assembly Wisp": 84,
+  "Signal Mite": 84,
+  "Morphic Adept": 82,
+  "Acorbeac Destroyer": 82,
+  "Adaptive Membrane": 81,
+  "Suture Architect": 81,
+  "Grid Marshal": 80,
+  "Hive Regent": 80,
+  "Xardy Piercer": 77,
+  "Railgun Overseer": 77,
   "Vesper Ripper": 77,
   "Marrow Parasite": 77,
-  "Railgun Overseer": 75,
-  "Loquidor Stalker": 75,
-  "Physical Augmentation": 74,
-  "Interface Plating": 72,
-  "Neural Interface": 70,
-  "Alloy Symbiont": 69,
+  "Targeting Node": 75,
+  "Scrap Harvester": 73,
+  "Interface Plating": 73,
+  "Loquidor Stalker": 72,
+  "Physical Augmentation": 69,
+  "Neural Interface": 69,
   "Carrion Sprinter": 65,
-  "Foundry Titan": 60,
-  "Nomis Analyzer": 60,
-  "Chitin Weaver": 57,
-  "Convergence Engine": 55,
-  "Equipment Hunter": 48,
+  "Alloy Symbiont": 64,
+  "Foundry Titan": 61,
+  "Nomis Analyzer": 57,
+  "Chitin Weaver": 56,
+  "Convergence Engine": 52,
+  "Equipment Hunter": 47,
+  "Cannibalistic Instinct": 47,
   "Interference Net": 42,
-  "Cyber Onslaught": 39,
-  "Modular Assembly": 38,
-  "Tricapia Guardian": 37,
-  "Carrion Foundress": 35,
-  "Davileam Commander": 34,
-  "Siana Commander": 30,
-  "Psi Bolster": 27,
-  "Parasitic Snare": 24,
-  "Creature Regenerate": 24,
-  "Brood Recall": 23,
-  "Equipment Mechanic": 12,
-  "Robo Refurb": 12
+  "Cyber Onslaught": 41,
+  "Modular Assembly": 39,
+  "Carrion Foundress": 38,
+  "Crosslink": 37,
+  "Davileam Commander": 33,
+  "Tricapia Guardian": 32,
+  "Siana Commander": 28,
+  "Parasitic Snare": 25,
+  "Psi Bolster": 24,
+  "Creature Regenerate": 23,
+  "Brood Recall": 21,
+  "Robo Refurb": 14,
+  "Equipment Mechanic": 11
  }
 }

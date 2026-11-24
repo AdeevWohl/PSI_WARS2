@@ -27,7 +27,7 @@ export function eligibleAttackers(s: GameState, seat: Seat): string[] {
   return out;
 }
 
-/** Defenders may be depleted; trapped units are not in the Lab; disabled units cannot defend. */
+/** v0.4.1: defenders must be ready (both members of a Stack); trapped units are not in the Lab; disabled units cannot defend. */
 export function eligibleBlockers(s: GameState, seat: Seat): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
@@ -37,7 +37,7 @@ export function eligibleBlockers(s: GameState, seat: Seat): string[] {
     const units = fighterUnits(s, uid);
     units.forEach((u) => seen.add(u));
     if (units.some((u) => attacking.has(u))) continue;
-    if (units.every((u) => !isDisabled(s, u))) out.push(uid);
+    if (units.every((u) => !card(s, u).depleted && !isDisabled(s, u))) out.push(uid);
   }
   return out;
 }
@@ -90,7 +90,7 @@ register('declareAttackers', (ctx, t) => {
   if (a.type !== 'DeclareAttackers') return;
   for (const d of a.attacks) {
     const units = fighterUnits(s, d.uid);
-    for (const u of units) card(s, u).depleted = true; // attacking depletes
+    // v0.4.1: attacking does not deplete; each unit fights in only one engagement per Battle phase.
     b.attacks.push({ id: d.uid, seat, units, target: d.target, blockers: [], status: 'pending' });
   }
   emit(ctx, { type: 'AttackersDeclared', seat, attacks: b.attacks.map((x) => ({ id: x.id, units: x.units, target: x.target })) });
@@ -591,13 +591,9 @@ register('endBattle', (ctx) => {
   endOfBattle(ctx);
   const b = s.battle;
   if (b) {
-    // §A9.1: surviving attackers return to the Lab and are replenished.
-    for (const a of b.attacks) {
-      for (const u of a.units) {
-        const c = s.cards[u];
-        if (c && c.zone === 'lab') c.depleted = false;
-      }
-    }
+    // v0.4.1: no automatic replenishment of surviving attackers — readiness only changes by
+    // Replenish or explicit effects (combat never depleted them).
+    void b;
   }
   // Stacks separate at the end of the Battle phase; Disoriented ends (RULING A8-c).
   for (const c of Object.values(s.cards)) {

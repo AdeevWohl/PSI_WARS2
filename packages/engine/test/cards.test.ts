@@ -361,8 +361,9 @@ describe('Stacking', () => {
     const [bm, lp, ls] = sc.ids[0]!.lab;
     const d = drive(sc);
     expect(d.tryDo({ type: 'Stack', a: bm!, b: lp! }).ok).toBe(false);
-    d.do({ type: 'Stack', a: bm!, b: ls! });
-    expect(getLegalActions(d.state, 0)!.attack!.eligible).toEqual([lp]);
+    // v0.4.1: a depleted unit cannot join a Stack at all.
+    expect(d.tryDo({ type: 'Stack', a: bm!, b: ls! }).ok).toBe(false);
+    expect(getLegalActions(d.state, 0)!.attack!.eligible).toEqual([bm, lp]);
   });
   it('stacking is not allowed in the Creation phase', () => {
     const sc = scenario({ seats: [{ lab: ['BU_BM', 'BU_LS'] }, {}] });

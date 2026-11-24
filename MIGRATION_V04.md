@@ -75,3 +75,22 @@ See reports/v04-sim.md. Results:
 4. **First-player advantage** (57%) is slightly above the 45–55% target.
 5. **Many Powers in the example decks were rarely or never cast by the AI.** This was improved after the 400-game run (Cannibalistic Instinct and Forced Evolution now get played); re-run the simulation to update these numbers.
 6. **Burn costs barely tax resources.** CU starvation is near zero.
+
+---
+
+# v0.4.1 — Battle Unit readiness
+
+Implemented exactly as specified (supersedes earlier depletion rules):
+- Attacking and defending no longer deplete. The Cleanup re-readying of surviving attackers is removed; readiness changes only through the controller's Replenish phase or effects.
+- Attackers and defenders must be ready, including both members of a Stack. Depleted units can't join Stacks. Each unit fights in one engagement per Battle phase (declarations reject a second use; Loquidor Stalker must be ready and unengaged).
+- New `depleteUnit` helper (v04.ts): a unit depleted during an unresolved engagement leaves it. Its Stack breaks and the ready partner fights on; an empty defending side makes the attacker unblocked; an empty attacking side cancels the attack. Readying it again doesn't return it to the fight. Used by Parasitic Snare, Fabricator Drone and Emergency Separation.
+- Depletion doesn't switch off passive, triggered or aura abilities, Equipment, targeting or Cannibalize. Only combat eligibility checks readiness.
+- **Parasitic Snare** (Pulse, unchanged cost): "Choose a Battle Unit under enemy control. Deplete it. It loses 1 Physical until the end of the turn." The text is overridden in the import script because the workbook still has the old text.
+- AI: uses Fabricator Drone only when its other ready units cover every ready enemy attacker, or the possible Lab damage is small. Plays Parasitic Snare on an engaged enemy (removing it from its fight) or on a ready blocker before attacking.
+- Updated: rulebook (Steps 1–2, Cleanup, the v0.4.1 section), tutorial text, one v0.3 Stacking test (depleted units can no longer stack). New tests: 8 readiness tests plus 2 AI tests.
+
+Simulation after the change (400 games, same setup) — see reports/v04-sim.md:
+- First player won 58.5%. Games averaged 11.5 turns. No errors or stalemates.
+- Win rates: Swarm 72.5%, Industrial 61.3%, Evolution 53.8%, Control 33.1%, Mixed 29.4%.
+- Other counts: Cannibalize 47, Lock-On 4, Stack fights 180 (6 Stacks lost).
+- Little change from v0.4, as expected: before, depleted units could already defend, so attacking never cost a unit its block. The new rules mainly make effect-based depletion (Snare, Fabricator) a real combat cost.

@@ -1,7 +1,7 @@
 // v0.4 card set: payment solver, Power timing, Calibrate, Lock-On, Mutation, Cannibalize, feeding.
 import { describe, expect, it } from 'vitest';
-import { canAfford, enumeratePayments, getLegalActions, type Cost } from '../src/index';
-import { defsV04, drive, scenario } from './helpers';
+import { canAfford, chooseCommand, enumeratePayments, getLegalActions, getLegalView, seedRng, viewFor, type Cost } from '../src/index';
+import { defsV04, drive, rules, scenario } from './helpers';
 
 const sc4 = (o: Parameters<typeof scenario>[0]) => scenario({ ...o, defs: defsV04 });
 const cost = (c: Partial<Cost>): Cost => ({ G: 0, B: 0, R: 0, P: 0, W: 0, ...c });
@@ -137,5 +137,100 @@ describe('v0.4 Carrion Foundress', () => {
     d.do({ type: 'ChooseFromList', choice: hatch });
     expect(d.state.cards[hatch]!.zone).toBe('lab');
     expect(d.ofType('FeedingTriggered')[0]).toMatchObject({ limit: 1 });
+  });
+});
+
+describe('v0.4.1 Battle Unit readiness', () => {
+  it('attacking and defending do not deplete; Cleanup does not ready; Replenish does', () => {
+    // Psi Hatchling 0/2/1 attacks Psi Hatchling; a tie on every die destroys nothing.
+    const sc = sc4({ at: 'battle', seats: [{ lab: ['BU_PH', { id: 'BU_SD', depleted: true }] }, { lab: ['BU_PH'] }], dice: [3, 3, 3, 3] });
+    const [att, tired] = sc.ids[0]!.lab as [string, string];
+    const def = sc.ids[1]!.lab[0]!;
+    const d = drive(sc);
+    d.do({ type: 'DeclareAttackers', attacks: [{ uid: att, target: 1 }] });
+    expect(d.state.cards[att]!.depleted).toBe(false);
+    d.do({ type: 'AssignBlockers', blocks: [{ blocker: def, attacker: att }] });
+    d.passUntil(['main']); // battle, Cleanup, then the opponent's turn begins (their Replenish)
+    expect(d.state.cards[att]!.depleted).toBe(false);
+    expect(d.state.cards[def]!.depleted).toBe(false);
+    expect(d.state.cards[tired]!.depleted).toBe(true); // not readied by Cleanup or the opponent's Replenish
+    d.passUntil(['declareAttackers']);
+    d.do({ type: 'DeclareAttackers', attacks: [] });
+    d.passUntil(['main']); // our turn again: our Replenish readies it
+    expect(d.state.turn.active).toBe(0);
+    expect(d.state.cards[tired]!.depleted).toBe(false);
+  });
+
+  it('depleted units cannot attack, defend or join Stacks', () => {
+    const sc = sc4({ at: 'battle', seats: [{ lab: ['BU_PH', { id: 'BU_BB', depleted: true }, 'BU_PI2'] }, { lab: [{ id: 'BU_PH', depleted: true }, 'BU_SD'] }] });
+    const [ph, bb, pi] = sc.ids[0]!.lab as [string, string, string];
+    const la = getLegalActions(sc.state, 0)!;
+    expect(la.attack!.eligible).not.toContain(bb);
+    expect(la.stacks.some((x) => x.a === bb || x.b === bb)).toBe(false);
+    expect(la.stacks.some((x) => (x.a === pi && x.b === ph) || (x.b === pi && x.a === ph))).toBe(true);
+    const d = drive(sc);
+    d.do({ type: 'DeclareAttackers', attacks: [{ uid: ph, target: 1 }] });
+    d.expectPrompt('declareBlockers', 1);
+    expect(getLegalActions(d.state, 1)!.block!.blockers).toEqual([sc.ids[1]!.lab[1]]);
+  });
+
+  it('a unit fights in one engagement only: an attacker cannot also block, a blocker cannot block twice', () => {
+    const sc = sc4({ at: 'battle', seats: [{ lab: ['BU_PH', 'BU_BB'] }, { lab: ['BU_SD'] }] });
+    const [a1, a2] = sc.ids[0]!.lab as [string, string];
+    const d = drive(sc);
+    d.do({ type: 'DeclareAttackers', attacks: [{ uid: a1, target: 1 }, { uid: a2, target: 1 }] });
+    const sd = sc.ids[1]!.lab[0]!;
+    expect(d.tryDo({ type: 'AssignBlockers', blocks: [{ blocker: sd, attacker: a1 }, { blocker: sd, attacker: a2 }] }).ok).toBe(false);
+  });
+
+  it('Parasitic Snare depletes a declared defender: it leaves the fight and the attacker is unblocked', () => {
+    const sc = sc4({ at: 'battle', autoPassNoPlay: true, seats: [{ lab: ['BU_BB'], hand: ['PW_PS'], cus: { B: 1, R: 1 } }, { lab: ['BU_SD'], hp: 15 }] });
+    const att = sc.ids[0]!.lab[0]!;
+    const sd = sc.ids[1]!.lab[0]!;
+    const d = drive(sc);
+    d.do({ type: 'DeclareAttackers', attacks: [{ uid: att, target: 1 }] });
+    d.do({ type: 'AssignBlockers', blocks: [{ blocker: sd, attacker: att }] });
+    d.expectPrompt('priority', 0); // Power window
+    d.do({ type: 'PlayCard', uid: sc.ids[0]!.hand[0]!, target: sd });
+    d.passUntil(['main']);
+    expect(d.ofType('UnitDepleted').some((e) => e.uid === sd)).toBe(true);
+    expect(d.ofType('RemovedFromBattle').some((e) => e.uid === sd && e.reason === 'depleted')).toBe(true);
+    expect(d.last('UnblockedHit')).toMatchObject({ attackId: att, damage: 3 });
+    expect(d.state.players[1]!.labHP).toBe(12);
+  });
+
+  it('depleting one Stack member breaks the Stack; the ready partner keeps fighting', () => {
+    // Attacking Stack: Patchwork Initiate (Cyborg 1/1/1) + Rupture Brute (0/0/3). Snare hits the Initiate.
+    const sc = sc4({ at: 'battle', autoPassNoPlay: true, seats: [{ lab: ['BU_PI2', 'BU_BB'] }, { hand: ['PW_PS'], cus: { B: 1, R: 1 } }] });
+    const [pi, bb] = sc.ids[0]!.lab as [string, string];
+    const d = drive(sc);
+    d.do({ type: 'Stack', a: pi, b: bb });
+    d.do({ type: 'DeclareAttackers', attacks: [{ uid: pi, target: 1 }] });
+    d.expectPrompt('priority', 1);
+    d.do({ type: 'PlayCard', uid: sc.ids[1]!.hand[0]!, target: pi });
+    d.passUntil(['main']);
+    expect(d.ofType('Unstacked').some((e) => e.reason === 'depleted')).toBe(true);
+    const hit = d.last('UnblockedHit');
+    expect(hit.units).toEqual([bb]);
+    expect(hit.damage).toBe(3);
+  });
+
+  it('a depleted unit keeps its passive abilities (Hydra Bot stays +1 Cyber while equipped)', () => {
+    const sc = sc4({ seats: [{ lab: [{ id: 'BU_HB', equip: 'EQ_CO', depleted: true }] }, {}] });
+    const hb = sc.ids[0]!.lab[0]!;
+    // printed 2 + Cyber Onslaught 1 + Hydra Bot's own +1 while equipped
+    expect(viewFor(sc.state, 0).unitStats[hb]!.cyber).toBe(4);
+  });
+});
+
+describe('v0.4.1 AI and depletion costs', () => {
+  const aiCmd = (s: ReturnType<typeof scenario>['state']) => chooseCommand('normal', viewFor(s, 0), getLegalView(s, 0)!, rules, seedRng('ai'));
+  it('does not deplete its only blocker for Fabricator Drone when enemy attackers are ready', () => {
+    const sc = sc4({ at: 'creation', seats: [{ lab: ['BU_FD'], hand: ['EQ_SH'], cus: { P: 1 } }, { lab: ['BU_BB', 'BU_BB'] }] });
+    expect(aiCmd(sc.state).type).not.toBe('Activate');
+  });
+  it('uses Fabricator Drone when it can spare the body', () => {
+    const sc = sc4({ at: 'creation', seats: [{ lab: ['BU_FD', 'BU_BB', 'BU_BB'], hand: ['EQ_SH'], cus: { P: 1 } }, { lab: ['BU_PH'] }] });
+    expect(aiCmd(sc.state)).toMatchObject({ type: 'Activate', ability: 'FabricatorDiscount' });
   });
 });

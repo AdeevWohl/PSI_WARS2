@@ -103,7 +103,7 @@ EFFECTS = {
     'Crosslink': [E('OnPlay', 'StackBuff', cyber=1, psionic=1)],
     'Emergency Separation': [E('OnPlay', 'SplitStack')],
     'Interference Net': [E('OnPlay', 'TrapUnit', target='opposingUnit', release='nextCleanup', filter={'maxPrintedPhysical': 2})],
-    'Parasitic Snare': [E('OnPlay', 'TrapUnit', target='opposingUnit', release='nextCleanup', snarePenalty=True)],
+    'Parasitic Snare': [E('OnPlay', 'DepleteUnit', physical=-1)],
     'Adaptive Membrane': [E('Static', 'ReturnOnDestroy')],
     'Interface Plating': [E('Static', 'PartnerShield')],
     'Carrion Foundress': [E('AfterEngagement', 'Feeding')],
@@ -111,6 +111,11 @@ EFFECTS = {
 VANILLA = {'Rupture Brute', 'Psi Hatchling', 'Scout Drone', 'Scrap Hulk', 'Patchwork Initiate', 'Cyber Onslaught', 'Kranthard Armour',
            'Mental Shield', 'Physical Augmentation', 'Servo Harness', 'Bio-Acceleration', 'Digital Splicing', 'Material Animation', 'Neurogenesis'}
 KEEP_OLD_EFFECTS = {'Creation Oracle', 'Resource Fortification'}
+
+# Rules changes made after the workbook (v0.4.1): text overrides by card name.
+TEXT_OVERRIDES = {
+    'Parasitic Snare': 'Choose a Battle Unit under enemy control. Deplete it. It loses 1 Physical until the end of the turn.',
+}
 
 PROTOCOLS = {
     'Davileam Commander': {
@@ -127,7 +132,7 @@ PROTOCOLS = {
 KEYWORD_OF = {
     'LockOn': 'Lock-On', 'ProtocolLockOn': 'Lock-On', 'CalibrateSelf': 'Calibrate', 'ProtocolCalibrate': 'Calibrate', 'ProtocolPrecision': 'Calibrate',
     'TargetingNode': 'Calibrate', 'MarrowMutation': 'Mutation', 'SianaMutation': 'Mutation', 'MutateOnPsiLoss': 'Mutation',
-    'CannibalizeOnCreate': 'Cannibalize', 'CannibalInstinct': 'Cannibalize', 'TrapUnit': 'Containment', 'Feeding': 'Feeding',
+    'CannibalizeOnCreate': 'Cannibalize', 'CannibalInstinct': 'Cannibalize', 'TrapUnit': 'Containment', 'Feeding': 'Feeding', 'DepleteUnit': 'Deplete',
 }
 
 TYPE = {'Battle Unit': 'BattleUnit', 'Creation Unit': 'CreationUnit', 'Equipment': 'Equipment', 'Power': 'Power', 'Resource': 'Resource'}
@@ -233,7 +238,7 @@ def main(path):
         else:
             raise SystemExit(f'no engine effects defined for {name}')
         text = r['Proposed Rules Text']
-        d['text'] = '' if text in (None, 'None') else str(text)
+        d['text'] = TEXT_OVERRIDES.get(name, '' if text in (None, 'None') else str(text))
         kws = sorted({KEYWORD_OF[e['effect']] for e in d['effects'] if e['effect'] in KEYWORD_OF} | ({'Protocol'} if name in PROTOCOLS else set()) | ({d['timing']} if ctype == 'Power' else set()) | ({'Relocate'} if ctype == 'Equipment' and 'moveCost' in d.get('equip', {}) else set()) | ({'Reanimated'} if name == 'Creature Regenerate' else set()))
         if kws:
             d['keywords'] = kws

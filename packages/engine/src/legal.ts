@@ -43,7 +43,8 @@ export interface LegalActions {
 }
 
 function stackOptions(s: GameState, seat: Seat): { a: string; b: string }[] {
-  const lab = player(s, seat).lab.filter((u) => !card(s, u).stackPartner);
+  // v0.4.1: depleted units cannot join an attacking or defending Stack.
+  const lab = player(s, seat).lab.filter((u) => !card(s, u).stackPartner && !card(s, u).depleted);
   const cyborgs = lab.filter((u) => defOf(s, u).unitType === 'Cyborg');
   const others = lab.filter((u) => defOf(s, u).unitType !== 'Cyborg');
   const out: { a: string; b: string }[] = [];

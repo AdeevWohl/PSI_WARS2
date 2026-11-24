@@ -58,7 +58,7 @@ Every turn has five phases, always in this order:
 2. **Draw** — draw 1 Resource card (resolve it), then 1 Battle card.
 3. **Creation** — pay costs to play Battle Units, Equipment and Power cards. Play as many as you can afford.
 4. **Battle** — optionally attack with your ready Battle Units; opponents defend; battles resolve.
-5. **Cleanup** — surviving attackers return to your Lab; stacks split; trapped units try to escape; victory is checked.
+5. **Cleanup** — stacks split (no unit is readied here: Battle Units ready only in their controller's Replenish phase or through an effect); trapped units try to escape; victory is checked.
 
 **Depleting.** Using a card depletes it (shown rotated 90° and greyed). Depleted cards are made ready again in their owner's Replenish phase.
 
@@ -108,11 +108,11 @@ The active player is the attacker. Steps, in order:
 
 **RULING A8-a:** Cyborg Abilities come before Battle Determination.
 
-**Step 1 — Attacker's declaration.** You may first move Equipment between your units and form Stacks. Then choose any number of your ready, untrapped Battle Units (or Stacks) to attack. Attacking depletes them. You may choose not to attack. With several opponents, each attacker picks which opponent it attacks.
+**Step 1 — Attacker's declaration.** You may first move Equipment between your units and form Stacks. Then choose any number of your ready, untrapped Battle Units (or Stacks — both members ready) to attack. Attacking does not deplete them (v0.4.1). You may choose not to attack. With several opponents, each attacker picks which opponent it attacks.
 
 **Stacking.** A Stack is exactly two Battle Units fighting as one: one Cyborg and one non-Cyborg. Two Cyborgs cannot stack, and a stack never has more than two units. Each unit keeps its own Equipment. A Stack's strengths are the sum of everything in it. If a Stack is destroyed, everything in it is destroyed. Both units of an attacking Stack must be ready; defending Stacks may use depleted units. Stacks separate at the end of the Battle phase.
 
-**Step 2 — Defenders' declaration.** Each attacked player may move Equipment and form Stacks, then assign defenders. Each defending unit or Stack blocks one attacker. Depleted units may defend; trapped units may not. Any attacker with no defender is unblocked.
+**Step 2 — Defenders' declaration.** Each attacked player may move Equipment and form Stacks, then assign defenders. Each defending unit or Stack blocks one attacker. Defenders must be ready (both members of a Stack); depleted and trapped units may not defend. Defending does not deplete (v0.4.1). Any attacker with no defender is unblocked.
 
 **RULING A8-b:** at most one defender may block each attacker. You may leave any or all attackers unblocked.
 
@@ -231,9 +231,9 @@ These rules come from the v0.4 card set workbook (Rules and Keywords sheet) and 
 **Limits and interactions:** When a card rewards killing an enemy in Physical combat, one Stack counts as one engagement, not two triggers unless explicitly stated. New units never retroactively enter a declared engagement.
 
 ### Deplete for support
-*Shared.* Explicit unit-depletion ability requires a ready unit that can use abilities. Depleted units cannot attack but may defend under existing rules.
+*Shared.* Explicit unit-depletion ability requires a ready unit that can use abilities. Depleted units can neither attack nor defend (v0.4.1).
 
-**Limits and interactions:** Support-depleted units stay depleted until next owner Replenish; ordinary surviving attackers ready in Cleanup as before.
+**Limits and interactions:** Depleted units stay depleted until their controller's next Replenish phase or an explicit effect. Combat never depletes.
 
 ### Battle windows / triggers
 *Shared.* Pulse cards may be played in normal priority windows, including opponent turn, with last-in-first-out responses. Resolve attack/blocked triggers before the Power window. Unit-owned before-dice abilities occur after assignment and Power window in the relevant engagement.
@@ -299,4 +299,17 @@ These rules come from the v0.4 card set workbook (Rules and Keywords sheet) and 
 *Shared.* Permanent strength means printed strength plus all permanent stat increases and decreases currently on that individual unit, including Mutations, reanimation and mechanical upgrades. For effects comparing or copying permanent strength, printed X counts as 1 before permanent modifiers.
 
 **Limits and interactions:** Ignore Equipment, temporary modifiers, damage, dice bonuses, auras and Stack partner strengths. Snapshot the value when specified; floor at 0. A permanent buff is not automatically a Mutation. All permanent changes reset when the unit leaves play.
+
+## v0.4.1 — Battle Unit readiness
+
+These rules supersede earlier depletion rules.
+
+- A Battle Unit must be **ready** to attack or defend. Both members of an attacking or defending Stack must be ready when the Stack is committed to combat.
+- Attacking and defending **do not deplete**. Units keep their readiness after combat unless an effect changes it. There is no automatic readying in Cleanup.
+- Depleted Battle Units become ready in their controller's **Replenish** phase, or through an explicit effect.
+- A Battle Unit takes part in **only one engagement per Battle phase**, however ready it is (explicit abilities may override this).
+- Depletion alone does **not** stop a unit from granting continuous abilities or Commander bonuses, using triggered abilities, activating abilities that don't need it ready, keeping or receiving Equipment, being targeted, or being Cannibalized / used as a cost that doesn't require readiness.
+- **Depleted mid-combat:** a unit depleted after being declared but before its engagement resolves leaves that engagement. If it is in a Stack, the Stack breaks and the eligible partner keeps fighting. If the whole defending side leaves, the attacker becomes unblocked; if the whole attacking side leaves, the engagement is cancelled. Readying it again does not put it back.
+- There is no summoning sickness.
+- **Parasitic Snare** (Pulse): choose a Battle Unit under enemy control. Deplete it. It loses 1 Physical until the end of the turn.
 

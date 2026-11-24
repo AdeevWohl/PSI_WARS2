@@ -998,7 +998,7 @@ export function activations(s: GameState, seat: Seat, p: Prompt): Activation[] {
     for (const u of lab) {
       const e = effectOf(s, u, 'Intercept');
       if (!e || !unblocked.length || !canUseAbilities(s, u) || isJammed(s, u) || isDisabled(s, u) || usedThisTurn(s, `intercept:${u}`)) continue;
-      if (card(s, u).stackPartner || engagementOf(s, u)) continue;
+      if (card(s, u).stackPartner || engagementOf(s, u) || card(s, u).depleted) continue;
       if (!canAfford(s, seat, costOfParam(e.params.cost))) continue;
       out.push({ uid: u, ability: 'Intercept', label: `Pay ${costLabel(costOfParam(e.params.cost))}: defend against an unblocked attacker`, cost: costOfParam(e.params.cost) });
     }
@@ -1012,7 +1012,7 @@ export function performActivate(ctx: Ctx, seat: Seat, cmd: Extract<Command, { ty
   emit(ctx, { type: 'AbilityActivated', seat, uid: u, cardId: card(s, u).cardId, ability: cmd.ability });
   switch (cmd.ability) {
     case 'FabricatorDiscount':
-      card(s, u).depleted = true;
+      depleteUnit(ctx, u, u);
       markUsed(s, `fab:${u}`, u);
       s.turnEffects.push({ kind: 'equipDiscount', source: u, seat });
       break;
@@ -1365,8 +1365,8 @@ const V04_EFFECTS: Record<string, EffectImpl> = {
       removeFromBattle(ctx, leave, 'separated');
       card(s, stay).stackPartner = null;
       card(s, leave).stackPartner = null;
-      card(s, leave).depleted = true;
       emit(ctx, { type: 'Unstacked', uids: [stay, leave], reason: 'separation', seat: e.controller });
+      depleteUnit(ctx, leave, e.source);
     },
   },
 
@@ -1615,6 +1615,40 @@ export function attachEquipment(ctx: Ctx, seat: Seat, eq: string, host: string, 
   card(s, host).equipment = eq;
   emit(ctx, { type: 'EquipmentAttached', seat, uid: eq, cardId: card(s, eq).cardId, unit: host, via });
 }
+
+/**
+ * v0.4.1: deplete a Battle Unit. A depleted unit cannot attack or defend; if it is in an unresolved
+ * engagement it leaves it (its Stack breaks and the partner keeps fighting; a side left empty makes
+ * the attacker unblocked, or cancels the attack). Passive and triggered abilities keep working.
+ */
+export function depleteUnit(ctx: Ctx, uid: string, source: string | null): void {
+  const s = ctx.s;
+  const c = s.cards[uid];
+  if (!c || c.zone !== 'lab') return;
+  c.depleted = true;
+  emit(ctx, { type: 'UnitDepleted', uid, cardId: c.cardId, seat: c.owner, source, sourceCardId: source ? s.cards[source]?.cardId ?? null : null });
+  if (engagementOf(s, uid)) {
+    const p = c.stackPartner;
+    if (p) {
+      c.stackPartner = null;
+      card(s, p).stackPartner = null;
+      emit(ctx, { type: 'Unstacked', uids: [uid, p], reason: 'depleted', seat: c.owner });
+    }
+    removeFromBattle(ctx, uid, 'depleted');
+  }
+}
+
+V04_EFFECTS.DepleteUnit = {
+  targets: (s, seat) => enemyUnits(s, seat),
+  run(ctx, t) {
+    const e = t as EffectTask;
+    const s = ctx.s;
+    if (!e.target || s.cards[e.target]?.zone !== 'lab') return void emit(ctx, { type: 'EffectFizzled', source: e.source, reason: 'targetGone' });
+    depleteUnit(ctx, e.target, e.source);
+    const loss = Number(e.params.physical ?? 0);
+    if (loss) addMod(ctx, e.target, 'physical', loss, 'temp', e.source, name(s, e.source));
+  },
+};
 
 Object.assign(EFFECTS, V04_EFFECTS);
 

@@ -4091,20 +4091,18 @@
    "effects": [
     {
      "trigger": "OnPlay",
-     "effect": "TrapUnit",
+     "effect": "DepleteUnit",
      "params": {
-      "target": "opposingUnit",
-      "release": "nextCleanup",
-      "snarePenalty": true
+      "physical": -1
      }
     }
    ],
-   "text": "Contain one unit under enemy control. At its owner’s next Cleanup, free it. If you control a Creature in your Lab that can grant abilities, the freed unit loses 1 Physical until end of that turn (minimum 1).",
+   "text": "Choose a Battle Unit under enemy control. Deplete it. It loses 1 Physical until the end of the turn.",
    "keywords": [
-    "Containment",
+    "Deplete",
     "Pulse"
    ],
-   "implementation": "v0.4: OnPlay → TrapUnit",
+   "implementation": "v0.4: OnPlay → DepleteUnit",
    "enabled": true,
    "origin": "v0.4",
    "role": "Swarm / evolution",

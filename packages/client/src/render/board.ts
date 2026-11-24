@@ -327,7 +327,7 @@ export class Board {
       this.slotEls.set(uid, s);
     }
     seen.add(`slot:${uid}`);
-    // On the battlefield an attacker is depleted by attacking, but it is shown as attacking, not spent.
+    // v0.4.1: attacking no longer depletes; a depleted attacker (an effect) is still shown as attacking.
     const attacking = zone === 'battle' && v.battle?.attacks.some((x) => x.units.includes(uid));
     s.classList.toggle('depleted', c.depleted && zone !== 'trapped' && !attacking);
     s.classList.toggle('attacking', !!attacking);

@@ -310,6 +310,15 @@ class Brain {
           const t = byValue(mine.filter(engaged))[0];
           return t ? { score: 4, target: t } : { score: -Infinity, target: null };
         }
+        case 'DepleteUnit': {
+          // Parasitic Snare: knock an engaged enemy out of its fight, or a ready blocker before we attack.
+          const ready = enemy.filter((u) => !this.v.cards[u]!.depleted);
+          const inFight = byValue(ready.filter(engaged))[0];
+          if (inFight) return { score: 4 + this.unitValue(inFight), target: inFight };
+          const myAttackers = this.v.players[this.me]!.lab.filter((u) => !this.v.cards[u]!.depleted).length;
+          if (!this.v.battle && myAttackers && ready.length) return { score: 2 + this.unitValue(byValue(ready)[0]!) * 0.5, target: byValue(ready)[0]! };
+          return { score: -Infinity, target: null };
+        }
         case 'SignalJam': {
           const t = enemy.find((u) => engaged(u) && this.def(u).effects.some((x) => ['LockOn', 'PayBoost', 'TargetingNode', 'NomisBoost', 'Intercept'].includes(x.effect)));
           return t ? { score: 3, target: t } : { score: -Infinity, target: null };
@@ -632,7 +641,7 @@ class Brain {
       if (d.cardType === 'Power' && info.point === 'battlePower') {
         const e = d.effects.find((x) => x.trigger === 'OnPlay');
         // v0.4 combat Pulses: pump an engaged unit, cannibalize for a burst, jam, disable or ping.
-        if (e && ['PowerRoll', 'StackBuff', 'CannibalInstinct', 'DamageTargets', 'DisableTargets', 'SignalJam'].includes(e.effect) && pending.length) {
+        if (e && ['PowerRoll', 'StackBuff', 'CannibalInstinct', 'DamageTargets', 'DisableTargets', 'SignalJam', 'DepleteUnit'].includes(e.effect) && pending.length) {
           const pick = this.powerPick(d, p.targets);
           if (pick.score >= 3 && pick.target) return this.playCmd(p.uid, pick.target, this.pickPayment(p.payments, p.suggested));
         }
@@ -716,7 +725,14 @@ class Brain {
   private mainActivation(): Command | null {
     const me = this.v.players[this.me]!;
     for (const a of this.la.activations ?? []) {
-      if (a.ability === 'FabricatorDiscount' && (me.hand ?? []).some((u) => this.def(u).cardType === 'Equipment')) return { type: 'Activate', uid: a.uid, ability: a.ability };
+      if (a.ability === 'FabricatorDiscount' && (me.hand ?? []).some((u) => this.def(u).cardType === 'Equipment')) {
+        // Depleting it costs its attack and its block this round: only worth it when we can spare the body.
+        const ready = this.opponents().flatMap((o) => this.v.players[o]!.lab.filter((u) => !this.v.cards[u]!.depleted));
+        const incoming = ready.reduce((n, u) => n + this.strength(u, true).physical, 0);
+        const blockers = me.lab.filter((u) => u !== a.uid && !this.v.cards[u]!.depleted).length;
+        // Safe when the other blockers cover every ready attacker, or the possible Lab damage is small.
+        if (this.level === 'easy' || blockers >= ready.length || incoming <= Math.min(2, me.labHP - 1)) return { type: 'Activate', uid: a.uid, ability: a.ability };
+      }
       if (a.ability === 'HarvestScrap' && (me.hand ?? []).length <= 4 && this.level !== 'easy') return { type: 'Activate', uid: a.uid, ability: a.ability };
     }
     return null;
