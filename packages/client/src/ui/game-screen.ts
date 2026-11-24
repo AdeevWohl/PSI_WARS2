@@ -95,6 +95,8 @@ export class GameScreen {
           this.tl.skip();
           return;
         }
+        // Already handled by the press that skipped an animation.
+        if (this.replayed && this.replayed.uid === ctx.uid && performance.now() - this.replayed.at < 800) return;
         void this.controller.click(ctx, ev);
       },
       hover: (ctx, el) => this.hover(ctx, el),
@@ -137,6 +139,10 @@ export class GameScreen {
     // Click anywhere fast-forwards the animation queue (capture: the click does nothing else).
     this.el.addEventListener('pointerdown', (e) => {
       if (this.playing && this.tl.busy) {
+        // Skipping redraws the board, and the browser drops a click whose card moved between
+        // press and release; so the press that skips also counts as the click on that card.
+        const card = (e.target as Element).closest('.card') as (HTMLElement & { __ctx?: CardCtx }) | null;
+        if (card?.__ctx && !this.drag.active) this.deferredClick = { ctx: card.__ctx, ev: e as unknown as MouseEvent };
         this.tl.skip();
         e.stopPropagation();
         e.preventDefault();
@@ -266,6 +272,7 @@ export class GameScreen {
   // ---------- presentation queue ----------
 
   private deferredClick: { ctx: CardCtx; ev: MouseEvent } | null = null;
+  private replayed: { uid: string; at: number } | null = null;
 
   private async pump(): Promise<void> {
     if (this.playing) return;
@@ -285,7 +292,10 @@ export class GameScreen {
     if (d && d.ctx.uid) {
       // Re-find the card's current context (the board was re-rendered).
       const el = this.board.elements().get(d.ctx.uid) as (HTMLElement & { __ctx?: CardCtx }) | undefined;
-      if (el?.__ctx) void this.controller.click(el.__ctx, d.ev);
+      if (el?.__ctx) {
+        this.replayed = { uid: d.ctx.uid, at: performance.now() };
+        void this.controller.click(el.__ctx, d.ev);
+      }
     }
   }
 

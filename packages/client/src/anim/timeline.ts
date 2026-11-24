@@ -57,7 +57,12 @@ export class Timeline {
     const anim = el.animate(keyframes, { ...opts, duration: Math.max(duration, 0), delay, fill: opts.fill ?? 'none' });
     const he = el as HTMLElement;
     const prevWill = he.style.willChange;
-    he.style.willChange = 'transform, opacity';
+    // will-change: opacity is a "grouping" hint: on a preserve-3d element (dice cubes, card
+    // flips) it makes the browser draw the 3D object flat for as long as the animation runs.
+    // ...and on a perspective container (a die's box) it flattens the cube inside. Skip both.
+    const cs = getComputedStyle(el);
+    const is3d = cs.transformStyle === 'preserve-3d' || cs.perspective !== 'none';
+    if (!is3d) he.style.willChange = 'transform, opacity';
     this.running.add(anim);
     const done = () => {
       this.running.delete(anim);
