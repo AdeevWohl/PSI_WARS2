@@ -178,9 +178,22 @@ export class BattleStage {
         eqA = `${strA} + ${ta - strA} = `;
         eqD = `${strD} + ${td - strD} = `;
       } else {
-        ta = td = null;
-        eqA = `${strA} + ? = `;
-        eqD = `${strD} + ? = `;
+        // Physical before any re-roll: strength + die + 1 for each surviving Cyber/Psionic side 5.
+        const dieKilled = (a: Ability, side: 'att' | 'def') => ahead.some((x) => x.type === 'Obliterated' && x.die === a && (x.by === 'both' || x.by === (side === 'att' ? 'def' : 'att')));
+        const plus = (side: 'att' | 'def', d: Record<string, any>) => (['cyber', 'psionic'] as const).reduce((n, a) => n + (d[a] != null && !dieKilled(a, side) ? Number((diceTable[a][String(d[a])] as { physicalPlus?: number } | undefined)?.physicalPlus ?? 0) : 0), 0);
+        const pbA = killed('att') ? 0 : diceTable.physical[String(att.physical)]?.bonus ?? 0;
+        const pbD = killed('def') ? 0 : diceTable.physical[String(def.physical)]?.bonus ?? 0;
+        const xA = plus('att', att);
+        const xD = plus('def', def);
+        const pa = strA + pbA + xA;
+        const pd = strD + pbD + xD;
+        eqA = `${strA} + ${pbA}${xA ? ` + ${xA}` : ''} = `;
+        eqD = `${strD} + ${pbD}${xD ? ` + ${xD}` : ''} = `;
+        r.att.replaceChildren(h('span', { class: 'bs-sum' }, eqA), h('b', null, String(pa)));
+        r.def.replaceChildren(h('span', { class: 'bs-sum' }, eqD), h('b', null, String(pd)));
+        r.note.textContent = 'Before any re-roll — a re-roll icon lets that side roll its Physical die again';
+        r.note.classList.add('show');
+        continue;
       }
       r.att.replaceChildren(h('span', { class: 'bs-sum' }, eqA), h('b', null, ta === null ? '?' : String(ta)));
       r.def.replaceChildren(h('span', { class: 'bs-sum' }, eqD), h('b', null, td === null ? '?' : String(td)));
@@ -217,7 +230,9 @@ export class BattleStage {
     const r = this.rows[ab];
     const tag = h('div', { class: 'bs-win', style: { '--ab': DIE_COLOR[ab] } as any }, `${w === 'att' ? 'ATTACKER' : 'DEFENDER'} WINS ${NAME[ab].toUpperCase()}`);
     r.row.appendChild(tag);
-    if (!this.tl.instant) this.tl.animate(tag, [{ transform: 'translate(-50%, -50%) scale(1.8)', opacity: 0 }, { transform: 'translate(-50%, -50%) scale(1)', opacity: 1, offset: 0.3 }, { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 }], { duration: 600, easing: EASE.outBack, fill: 'forwards' });
+    // Pops in, holds, then fades so the sums underneath can be read again.
+    if (this.tl.instant) tag.remove();
+    else this.tl.done(this.tl.animate(tag, [{ transform: 'translate(-50%, -50%) scale(1.8)', opacity: 0 }, { transform: 'translate(-50%, -50%) scale(1)', opacity: 1, offset: 0.15 }, { transform: 'translate(-50%, -50%) scale(1)', opacity: 1, offset: 0.7 }, { transform: 'translate(-50%, -50%) scale(0.85)', opacity: 0 }], { duration: 1700, easing: 'ease-out', fill: 'forwards' })).then(() => tag.remove());
   }
 
   /** Reveal each battle's maths in turn, then say what happened. */
@@ -229,6 +244,7 @@ export class BattleStage {
     for (const ab of ['cyber', 'psionic', 'physical'] as const) {
       if (this.presented && (ab !== 'physical' || this.physicalShown)) continue;
       const r = this.rows[ab];
+      if (ab === 'physical') r.note.classList.remove('show');
       const a: Part = att[ab];
       const d: Part = def[ab];
       if (!a || !d) {

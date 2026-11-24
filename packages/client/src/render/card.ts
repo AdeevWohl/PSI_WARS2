@@ -37,7 +37,7 @@ const EMBLEM: Record<string, string> = { Creature: '✦', Robot: '⚙', Cyborg: 
 
 /** Readable card face built from data, for cards whose art has not arrived (§5.3 fallback). */
 export function proceduralFace(def: CardDef): HTMLElement {
-  const typeLine = def.cardType === 'BattleUnit' ? `${def.unitType ?? ''}${def.isCommander ? ' Commander' : ''}` : def.cardType === 'CreationUnit' ? 'Creation Unit' : def.cardType;
+  const typeLine = def.cardType === 'BattleUnit' ? `${def.unitType ?? ''}${def.isCommander ? ' Commander' : ''}` : def.cardType === 'CreationUnit' ? 'Creation Unit' : def.cardType ?? '';
   const cost = def.cost;
   return h(
     'div',

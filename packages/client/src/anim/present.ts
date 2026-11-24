@@ -39,7 +39,7 @@ export interface PresentEnv {
 }
 
 /** Events after which the rest of the board re-lays out (cards left or joined a row). */
-const LAYOUT = new Set(['UnitDestroyed', 'StackResolved', 'UnitTrapped', 'UnitFreed', 'UnitRevived', 'CardReturnedToHand', 'BattleEnded', 'CUDestroyed']);
+const LAYOUT = new Set(['UnitDestroyed', 'StackResolved', 'UnitTrapped', 'UnitFreed', 'UnitRevived', 'CardReturnedToHand', 'BattleEnded']);
 
 /** Events that get their own readable beat (a hold afterwards) and a caption. */
 const BEATS = new Set(['CardPlayed', 'AttackersDeclared', 'BlockersAssigned', 'BattleResolved', 'UnitDestroyed', 'UnitDamaged', 'LabDamaged', 'UnitTrapped', 'EscapeAttempt', 'CardsRevealed', 'CardDiscarded', 'UnitRevived', 'Obliterated', 'Disoriented', 'SweepDamage', 'StackResolving', 'EquipmentAttached', 'EquipmentMoved', 'UnitsDisabled', 'PlayerEliminated']);
@@ -107,7 +107,7 @@ export class Presenter {
           // Other cards make room only once the event that changes the layout has played
           // (e.g. after a destroyed unit has shattered), not at the start of the batch.
           const a = flipFrom(this.tl, el, b, { paused: true, duration: DUR.std + 120 });
-          if (a) this.reflow.push(a);
+          if (a) this.reflow.push({ a, el });
         } else {
           flipFrom(this.tl, el, b, { duration: DUR.std + 80 });
         }
@@ -135,7 +135,7 @@ export class Presenter {
       this.narrate(ev);
       try {
         await this.step(ev);
-        if (LAYOUT.has(ev.type)) this.releaseReflow();
+        if (LAYOUT.has(ev.type)) this.releaseReflow(this.reflowScope(ev));
         if (BEATS.has(ev.type) && !this.tl.instant) await this.tl.wait(HOLD[settings().holdTime] ?? HOLD.normal);
       } catch (err) {
         console.warn('animation step failed', ev?.type, err);
@@ -143,31 +143,45 @@ export class Presenter {
     }
     this.env.onEvent(events.length);
     if (this.reflow.length && !this.tl.instant) {
-      const pending = [...this.reflow];
+      const pending = this.reflow.map((r) => r.a);
       this.releaseReflow();
       await Promise.all(pending.map((a) => this.tl.done(a)));
     }
     this.finish();
   }
 
-  private reflow: Animation[] = [];
+  private reflow: { a: Animation; el: HTMLElement }[] = [];
 
-  /** Let the rest of the board slide into its new layout. */
-  private releaseReflow(): void {
-    for (const a of this.reflow) {
+  /** Which waiting cards an event's layout change affects: that player's area and the battlefield. */
+  private reflowScope(e: GameEvent): (el: HTMLElement) => boolean {
+    const bf = this.env.board.root.querySelector('.battlefield');
+    const area = typeof e.seat === 'number' ? this.env.board.areaFor(e.seat)?.root : undefined;
+    if (e.type === 'StackResolved' || e.type === 'BattleEnded') return (el) => !!bf?.contains(el);
+    if (e.type === 'CardReturnedToHand') return (el) => !!area?.querySelector('.hand')?.contains(el);
+    return (el) => !!area?.contains(el) || !!bf?.contains(el);
+  }
+
+  /** Let (part of) the board slide into its new layout. */
+  private releaseReflow(scope: (el: HTMLElement) => boolean = () => true): void {
+    const keep: { a: Animation; el: HTMLElement }[] = [];
+    for (const r of this.reflow) {
+      if (!scope(r.el)) {
+        keep.push(r);
+        continue;
+      }
       try {
-        a.currentTime = 0;
-        a.play();
+        r.a.currentTime = 0;
+        r.a.play();
       } catch {
         /* ignore */
       }
     }
-    this.reflow = [];
+    this.reflow = keep;
   }
 
   /** Release anything still pinned/hidden and clear overlays. */
   finish(): void {
-    for (const a of this.reflow) {
+    for (const { a } of this.reflow) {
       try {
         a.play();
         a.finish();
@@ -455,7 +469,8 @@ export class Presenter {
   private async flyTemp(cardId: string | null, deck: 'battle' | 'resource', from: { cx: number; cy: number; w: number }, to: { cx: number; cy: number }, flip: boolean): Promise<void> {
     if (this.tl.instant) return;
     const def = cardId ? this.view.defs[cardId] ?? null : null;
-    const el = createCardEl(null, def ?? ({ deck } as any), { size: 'sm' });
+    // Unknown (hidden) card: a face-down card of the right deck.
+    const el = createCardEl(null, def ?? ({ deck, name: '', effects: [], text: '' } as any), { size: 'sm' });
     if (!def) el.classList.add('face-down');
     const w = from.w;
     Object.assign(el.style, { position: 'absolute', left: `${to.cx - w / 2}px`, top: `${to.cy - w / 0.7243 / 2}px`, width: `${w}px` });
@@ -610,7 +625,8 @@ export class Presenter {
         return;
       }
       case 'UnitDamaged': {
-        const el = this.el(e.uid);
+        // A unit killed outright is already off the board: aim at its stand-in at the old spot.
+        const el = this.el(e.uid) ?? this.ghosts.get(String(e.uid));
         this.sfx('damage');
         if (this.stage && String(e.attackId) === this.stage.attackId) this.stage.damaged(e);
         if (el) {

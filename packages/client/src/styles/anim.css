@@ -108,7 +108,7 @@
 
 /* ---------- Change Request 1, Part D: readability ---------- */
 /* Caption strip: what is happening, in words, at the top of the battlefield. */
-.caption-strip { position: absolute; left: calc((1920px - 392px) / 2); top: 10px; transform: translateX(-50%); z-index: 55; max-width: 1100px; padding: 9px 22px; border-radius: 999px; background: rgba(6, 10, 20, 0.88); border: 1px solid var(--line-bright); color: var(--text); font: 600 calc(19px * var(--font-scale)) var(--font-ui); text-align: center; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); opacity: 0; transition: opacity 0.4s; pointer-events: none; }
+.caption-strip { position: absolute; left: calc((1920px - 392px) * 0.58); top: 10px; transform: translateX(-50%); z-index: 55; max-width: 1100px; padding: 9px 22px; border-radius: 999px; background: rgba(6, 10, 20, 0.88); border: 1px solid var(--line-bright); color: var(--text); font: 600 calc(19px * var(--font-scale)) var(--font-ui); text-align: center; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); opacity: 0; transition: opacity 0.4s; pointer-events: none; }
 .caption-strip.show { opacity: 1; }
 .caption-strip.big { border-color: var(--gold); color: #fff; font-weight: 700; }
 
@@ -161,7 +161,7 @@
 .bs-row { position: relative; transition: opacity 0.3s, transform 0.3s, box-shadow 0.3s; }
 .bs-row.active { opacity: 1; transform: scale(1.04); box-shadow: 0 0 0 2px var(--ab), 0 0 34px color-mix(in srgb, var(--ab) 55%, transparent); }
 .bs-mid:has(.bs-row.active) .bs-row:not(.active):not(.won-att):not(.won-def) { opacity: 0.35; }
-.bs-win { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 6px 18px; border-radius: 10px; background: rgba(4, 8, 16, 0.92); border: 2px solid var(--ab); color: #fff; font: 900 calc(24px * var(--font-scale)) var(--font-display); letter-spacing: 0.08em; text-shadow: 0 0 14px var(--ab); white-space: nowrap; pointer-events: none; animation: bs-win-out 0.5s ease 1.05s forwards; }
+.bs-win { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 6px 18px; border-radius: 10px; background: rgba(4, 8, 16, 0.92); border: 2px solid var(--ab); color: #fff; font: 900 calc(24px * var(--font-scale)) var(--font-display); letter-spacing: 0.08em; text-shadow: 0 0 14px var(--ab); white-space: nowrap; pointer-events: none; }
 @keyframes bs-win-out { to { opacity: 0; transform: translate(-50%, -50%) scale(0.85); } }
 
 /* ---------- Spell staging and targeting (Change Request 1) ---------- */
@@ -221,3 +221,6 @@
 .dmg-num.crit { font-size: calc(92px * var(--font-scale)); color: #ffd36a; text-shadow: 0 0 22px rgba(255, 90, 60, 0.95), 0 5px 0 #3a0010; }
 .hp-wrap.hit { animation: hp-shake 0.45s ease; }
 @keyframes hp-shake { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+/* The re-roll question sits low so the battle spotlight above it stays visible. */
+.modal-backdrop:has(> .modal-low) { place-items: end center; padding-bottom: 36px; background: rgba(2, 4, 10, 0.2); }
+.modal.modal-low { z-index: 60; }

@@ -386,7 +386,9 @@ export class GameScreen {
     const view = this.source.view(viewer);
     this.lastView = view;
     this.namer.learn(view);
-    const legal: LegalView | null = !curtained && viewer !== null && view.prompt?.seat === viewer ? this.source.legal(viewer) : null;
+    // Decisions wait until the animations showing how we got here have finished (a re-roll
+    // prompt must not cover the dice it is about).
+    const legal: LegalView | null = !curtained && !this.playing && viewer !== null && view.prompt?.seat === viewer ? this.source.legal(viewer) : null;
     this.controller.sync(view, curtained ? null : legal);
     this.board.render(view);
     this.decorateExtras(view);

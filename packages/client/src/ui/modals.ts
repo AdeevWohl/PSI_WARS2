@@ -125,7 +125,7 @@ export function promptModal(host: HTMLElement, view: GameView, legal: LegalView,
       m = openModal(host, 'Re-roll your Physical die?', null, body, [
         { label: 'Keep result', onClick: () => { m.close(); answer(false); } },
         { label: 'Re-roll', primary: true, onClick: () => { m.close(); answer(true); } },
-      ]);
+      ], { className: 'modal-low' });
       void names;
       return m;
     }
