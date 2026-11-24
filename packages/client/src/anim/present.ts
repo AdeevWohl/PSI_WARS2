@@ -90,6 +90,16 @@ export class Presenter {
         this.fighters.set(String(e.attackId), { att: a.units, def: d.units, attSeat: a.seat, defSeat: d.seat });
       }
     }
+    // An X rolled in this batch shows "X" on the card until its die has landed.
+    for (const e of events) {
+      if (e.type !== 'XRolled') continue;
+      const chip = board.elements().get(String(e.uid))?.querySelector(`.stat-chip.c-${String(e.stat)}`) as HTMLElement | null;
+      if (chip) {
+        this.heldX.set(`${e.uid}:${e.stat}`, { chip, text: chip.textContent ?? '' });
+        chip.textContent = 'X';
+        chip.classList.add('x-pending');
+      }
+    }
     // Which cards each event moves ("claims")
     const claimed = new Set<string>();
     for (const e of events) for (const u of this.claims(e)) claimed.add(u);
@@ -151,6 +161,19 @@ export class Presenter {
   }
 
   private reflow: { a: Animation; el: HTMLElement }[] = [];
+  private heldX = new Map<string, { chip: HTMLElement; text: string }>();
+
+  /** Show a rolled X's value on its card (it lasts for the rest of the turn). */
+  private releaseX(uid: string, stat: string, pop = false): void {
+    const k = `${uid}:${stat}`;
+    const held = this.heldX.get(k);
+    if (!held) return;
+    this.heldX.delete(k);
+    held.chip.textContent = held.text;
+    held.chip.classList.remove('x-pending');
+    held.chip.classList.add('x-set');
+    if (pop && !this.tl.instant) this.tl.animate(held.chip, [{ transform: 'translate(-50%, -50%) scale(2.2)', filter: 'brightness(2)' }, { transform: 'translate(-50%, -50%) scale(1)', filter: 'none' }], { duration: 520, easing: EASE.outBack });
+  }
 
   /** Which waiting cards an event's layout change affects: that player's area and the battlefield. */
   private reflowScope(e: GameEvent): (el: HTMLElement) => boolean {
@@ -190,6 +213,10 @@ export class Presenter {
       }
     }
     this.reflow = [];
+    for (const k of [...this.heldX.keys()]) {
+      const [uid, stat] = k.split(':');
+      this.releaseX(uid!, stat!);
+    }
     for (const a of this.pins.values()) {
       try {
         a.play();
@@ -810,14 +837,20 @@ export class Presenter {
       case 'RollModified':
       case 'AbilityRoll': {
         const el = this.el(e.uid);
-        if (!el || tl.instant) return;
+        if (!el || tl.instant) {
+          this.releaseX(String(e.uid), String(e.stat ?? ''));
+          return;
+        }
         const r = this.centre(el);
-        const die = new Die3D('physical', Number(e.side), v.config.diceVariant, 40);
-        const label = e.type === 'XRolled' ? `X = ${e.value}` : e.type === 'RollModified' ? `${Number(e.delta) > 0 ? '+' : ''}${e.delta}` : Number(e.side) === 6 ? 'Obliterate!' : '';
-        const pop = this.temp(h('div', { class: 'mini-roll', style: { left: `${r.cx}px`, top: `${r.y - 10}px` } }, die.el, label ? h('span', null, label) : null));
-        this.sfx('dice');
-        await tl.done(die.roll(tl, Number(e.side)));
-        await tl.wait(420);
+        const die = new Die3D('physical', Number(e.side), v.config.diceVariant, 58);
+        const label = e.type === 'XRolled' ? `${String(e.stat ?? '').slice(0, 1).toUpperCase()}${String(e.stat ?? '').slice(1)} X = ${e.value}` : e.type === 'RollModified' ? `${Number(e.delta) > 0 ? '+' : ''}${e.delta} ${String(e.stat ?? '')}` : Number(e.side) === 6 ? 'Obliterate!' : '';
+        // The result is only shown once the die has landed.
+        const text = h('span', { class: 'mini-roll-text', style: { opacity: '0' } }, label);
+        const pop = this.temp(h('div', { class: 'mini-roll', style: { left: `${r.cx}px`, top: `${r.y - 10}px` } }, die.el, label ? text : null));
+        await tl.done(die.roll(tl, Number(e.side), 0, 1500));
+        if (label) await tl.done(tl.animate(text, [{ opacity: 0, transform: 'scale(1.8)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 320, easing: EASE.outBack, fill: 'forwards' }));
+        if (e.type === 'XRolled') this.releaseX(String(e.uid), String(e.stat ?? ''), true);
+        await tl.wait(700);
         pop.remove();
         this.temps.delete(pop);
         return;

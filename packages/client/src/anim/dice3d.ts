@@ -12,8 +12,12 @@ import { EASE, type Timeline } from './timeline';
 // Which cube face shows each side, and the cube rotation that brings it to the front.
 const FACE_OF: Record<number, string> = { 1: 'front', 6: 'back', 3: 'right', 4: 'left', 2: 'top', 5: 'bottom' };
 const SHOW: Record<number, [number, number]> = { 1: [0, 0], 6: [0, 180], 3: [0, -90], 4: [0, 90], 2: [-90, 0], 5: [90, 0] };
-/** The die rests slightly turned toward the viewer so its depth shows (the rolled face stays readable). */
-const TILT = 'rotateX(-20deg) rotateY(26deg)';
+/** While tumbling the die is turned toward the viewer so its depth shows; it settles almost
+ * face-on so the result face clearly dominates. */
+const TILT_MID: [number, number] = [-20, 26];
+const TILT_REST: [number, number] = [-6, 8];
+const tilt = (k: number) => `rotateX(${(TILT_REST[0] + (TILT_MID[0] - TILT_REST[0]) * k).toFixed(1)}deg) rotateY(${(TILT_REST[1] + (TILT_MID[1] - TILT_REST[1]) * k).toFixed(1)}deg)`;
+const TILT = tilt(0);
 
 export class Die3D {
   readonly el: HTMLElement;
@@ -39,6 +43,9 @@ export class Die3D {
   }
 
   private setRest(side: number): void {
+    queueMicrotask(() => {
+      if (settings().dice === 'instant') this.markResult();
+    });
     const [x, y] = SHOW[side]!;
     this.cube.style.transform = `${TILT} rotateX(${x}deg) rotateY(${y}deg) rotateZ(0deg)`;
     this.flat.replaceChildren(svg(dieSvg(this.die, side, { size: this.size, variant: this.variant })));
@@ -63,7 +70,8 @@ export class Die3D {
     // Rolling to the right turns the cube about its Y axis (and a little about X): ~1.5 turns, decelerating.
     const spinY = dir * (360 + 180 + Math.round(Math.random() * 2) * 90);
     const spinX = (Math.random() < 0.5 ? -1 : 1) * (180 + Math.round(Math.random()) * 90);
-    const rot = (f: number, wob = 0) => `${TILT} rotateX(${(x + spinX * f).toFixed(1)}deg) rotateY(${(y + spinY * f).toFixed(1)}deg) rotateZ(${wob.toFixed(1)}deg)`;
+    // The view tilt eases from three-quarter (tumbling) to almost face-on (landed).
+    const rot = (f: number, wob = 0) => `${tilt(Math.min(1, f / 0.15))} rotateX(${(x + spinX * f).toFixed(1)}deg) rotateY(${(y + spinY * f).toFixed(1)}deg) rotateZ(${wob.toFixed(1)}deg)`;
     const at = (fx: number, hy: number, sc = 1) => `translate(${(-dir * fx * sz * 2.6).toFixed(1)}px, ${(-hy * sz).toFixed(1)}px) scale(${sc})`;
     // Path: in from the side and above, first impact, bounce, second impact, small hop, settle.
     const path: [number, number, number, number][] = [
@@ -82,7 +90,17 @@ export class Die3D {
     if (shadow) tl.animate(shadow, path.map(([o, , hgt]) => ({ offset: o, transform: `translateY(${(hgt * sz).toFixed(1)}px) scale(${(1 - Math.min(hgt, 1) * 0.5).toFixed(2)})`, opacity: 1 - Math.min(hgt, 1) * 0.6 })), { duration, easing: 'linear', delay, fill: 'backwards' });
     // A clack on each impact.
     if (!tl.instant) for (const o of [0.26, 0.58, 0.82]) setTimeout(() => playSfx('dice'), tl.dur(delay + duration * o));
-    return tl.animate(this.cube, path.map(([o, , , spin]) => ({ offset: o, transform: rot(spin, o > 0.8 && o < 1 ? (o < 0.9 ? 4 : -2) : 0) })), { duration, easing: 'linear', delay, fill: 'backwards' });
+    this.el.classList.remove('landed');
+    const anim = tl.animate(this.cube, path.map(([o, , , spin]) => ({ offset: o, transform: rot(spin, o > 0.8 && o < 1 ? (o < 0.9 ? 4 : -2) : 0) })), { duration, easing: 'linear', delay, fill: 'backwards' });
+    void anim.finished.then(() => this.markResult(), () => this.markResult());
+    return anim;
+  }
+
+  /** Light up the face that counts once the die has settled. */
+  markResult(): void {
+    this.cube.querySelectorAll('.face3d.result').forEach((f) => f.classList.remove('result'));
+    this.cube.querySelector(`.f-${FACE_OF[this.side]}`)?.classList.add('result');
+    this.el.classList.add('landed');
   }
 
   /** Re-roll: the die lifts and spins in place, then lands on the new side. */
