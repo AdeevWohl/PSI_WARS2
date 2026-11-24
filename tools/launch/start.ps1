@@ -18,6 +18,15 @@ function Fail($text) {
   exit 1
 }
 
+# Any unexpected error: show it and keep the window open instead of closing.
+trap {
+  Say ''
+  Say "PROBLEM: $($_.Exception.Message)" 'Red'
+  Say ''
+  Read-Host 'Press Enter to close'
+  exit 1
+}
+
 Say ''
 Say '  PSI WARS' 'Cyan'
 Say ''
@@ -37,7 +46,9 @@ if (-not (Test-Path 'node_modules')) {
 }
 
 Say 'Building the game...'
-& npm run build --silent *> (Join-Path $env:TEMP 'psiwars-build.log')
+# Run through cmd so build warnings on stderr are logged, not treated as a PowerShell error.
+$buildLog = Join-Path $env:TEMP 'psiwars-build.log'
+& cmd /c "npm run build --silent > `"$buildLog`" 2>&1"
 if ($LASTEXITCODE -ne 0) { Fail "The build failed. Details are in $env:TEMP\psiwars-build.log" }
 
 Say 'Starting the game server...'

@@ -176,8 +176,6 @@ export function eventLine(e: GameEvent, names: (s: unknown) => string, n: Namer,
       return { text: Array.isArray(e.cards) ? `You see their hand: ${(e.cards as { cardId: string }[]).map((c) => names(c.cardId)).join(', ') || 'empty'}.` : 'Their hand was looked at.' };
     case 'UnitJammed':
       return { text: `${n.name(e.uid as string)} is Signal-Jammed this turn.` };
-    case 'EquipmentMoved':
-      return { text: `${n.name(e.uid as string)} is relocated to ${n.name(e.toUnit as string)}${e.paid ? ' (Relocate cost paid)' : ''}.` };
     default:
       return null;
   }
