@@ -285,13 +285,28 @@ export class Board {
       a.hand.setAttribute('aria-label', `Your hand, ${n} cards`);
     } else {
       const n = p.handCount;
-      const backs = Array.from({ length: n }, (_, i) => {
-        const el = createCardEl(null, null, { size: 'sm' });
-        el.classList.add('hand-back');
+      // Cards this viewer has seen revealed stay face up (hover or click for a closer look).
+      const known = (p as { revealedHand?: { uid: string; cardId: string }[] }).revealedHand ?? [];
+      const faces = known.map((k, i) => {
+        const def = v.defs[k.cardId]!;
+        const el = createCardEl(k.uid, def, { size: 'sm' });
+        el.classList.add('hand-back', 'revealed');
         el.style.setProperty('--i', String(i));
+        const ctx: CardCtx = { uid: k.uid, zone: 'hand', owner: a.seat, def };
+        (el as any).__ctx = ctx;
+        el.title = `${def.name} (revealed)`;
+        el.addEventListener('pointerenter', () => this.hooks.hover(ctx, el));
+        el.addEventListener('pointerleave', () => this.hooks.hover(null));
+        el.addEventListener('click', () => this.hooks.hover(ctx, el));
         return el;
       });
-      a.hand.replaceChildren(...backs, h('span', { class: 'count' }, String(n)));
+      const backs = Array.from({ length: Math.max(0, n - faces.length) }, (_, i) => {
+        const el = createCardEl(null, null, { size: 'sm' });
+        el.classList.add('hand-back');
+        el.style.setProperty('--i', String(i + faces.length));
+        return el;
+      });
+      a.hand.replaceChildren(...faces, ...backs, h('span', { class: 'count' }, String(n)));
       a.hand.classList.remove('fan');
       a.hand.setAttribute('aria-label', `${p.name}'s hand: ${n} cards`);
     }

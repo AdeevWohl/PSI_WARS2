@@ -61,7 +61,9 @@ export function checkViews(s: GameState): string[] {
     for (const o of s.players) {
       if (o.seat === p.seat) continue;
       for (const uid of [...o.hand, ...o.battleDeck, ...o.resourceDeck]) {
-        if (!allowed.has(uid) && tokens.has(`"${uid}"`)) {
+        // A hand card this seat has seen revealed may appear in its view (it stays face up for it).
+        const seen = o.hand.includes(uid) && s.cards[uid]!.revealedTo?.includes(p.seat);
+        if (!allowed.has(uid) && !seen && tokens.has(`"${uid}"`)) {
           errs.push(`seat ${p.seat} view contains hidden uid ${uid}`);
           break;
         }

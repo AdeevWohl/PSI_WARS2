@@ -71,6 +71,7 @@ export function moveCard(
     s.stack = s.stack.filter((x) => x.uid !== uid);
   }
   if (opts.owner !== undefined) c.owner = opts.owner;
+  if (c.zone !== zone) delete c.revealedTo;
   c.zone = zone;
   const toArr = zoneArray(s, c.owner, zone);
   if (toArr) {
@@ -172,6 +173,16 @@ export function matchesFilter(def: CardDef, filter: Record<string, any> | undefi
   }
   if (filter.cuType && def.cuType !== filter.cuType) return false;
   return true;
+}
+
+/** Remember that `seats` (all seats when omitted) have seen these cards; they stay face up for them. */
+export function markRevealed(s: GameState, uids: string[], seats?: Seat[]): void {
+  const all = seats ?? s.players.map((p) => p.seat);
+  for (const u of uids) {
+    const c = s.cards[u];
+    if (!c) continue;
+    c.revealedTo = [...new Set([...(c.revealedTo ?? []), ...all])];
+  }
 }
 
 export function isPowerLike(def: CardDef): boolean {

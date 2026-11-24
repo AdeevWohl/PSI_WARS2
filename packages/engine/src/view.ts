@@ -12,6 +12,8 @@ export interface PlayerView {
   handCount: number;
   /** Full hand for the viewer only; null for everyone else. */
   hand: string[] | null;
+  /** Cards in this hand that the viewer has seen revealed (they stay face up for the viewer). */
+  revealedHand?: { uid: string; cardId: string }[];
   battleDeckCount: number;
   resourceDeckCount: number;
   discard: string[];
@@ -125,6 +127,7 @@ export function viewFor(s: GameState, viewer: Seat | null): GameView {
       eliminated: p.eliminated,
       handCount: p.hand.length,
       hand: p.seat === viewer ? [...p.hand] : null,
+      revealedHand: p.seat === viewer ? [] : p.hand.filter((u) => viewer !== null && s.cards[u]!.revealedTo?.includes(viewer)).map((u) => ({ uid: u, cardId: s.cards[u]!.cardId })),
       battleDeckCount: p.battleDeck.length,
       resourceDeckCount: p.resourceDeck.length,
       discard: [...p.discard],

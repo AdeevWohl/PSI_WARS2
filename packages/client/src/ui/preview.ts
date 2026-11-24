@@ -2,6 +2,7 @@
 import type { CardDef, UnitStats } from '@psi-wars/engine';
 import { createCardEl, describe, updateOverlays } from '../render/card';
 import { h } from './dom';
+import { KEYWORD_HELP, keywordsFor } from '../render/keywords';
 
 export class Preview {
   readonly el = h('div', { class: 'preview', 'aria-hidden': 'true' });
@@ -22,6 +23,7 @@ export class Preview {
       h('div', { class: 'pv-type' }, type),
       def.text ? h('div', null, def.text) : null,
       def.protocols ? h('div', { class: 'pv-protocols' }, ...Object.entries(def.protocols).map(([m, d]) => h('div', null, h('b', null, `${m}: `), d))) : null,
+      ...keywordsFor(def).map((k) => h('div', { class: 'pv-kw' }, h('b', null, `${k}: `), KEYWORD_HELP[k]!)),
     );
     this.el.replaceChildren(card, text);
     this.el.classList.toggle('right', opts.side === 'right');

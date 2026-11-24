@@ -19,7 +19,7 @@ import {
 import { autoPayment, burnOnly, canAfford, eligibleDestroyTypes, pay, totalCost } from './payment';
 import { shuffleInPlace } from './rng';
 import { canHoldEquipment, fighterStrength, fighterUnits, isDisabled, unitHasAbility, unitStrength } from './stats';
-import { card, defOf, emit, matchesFilter, moveCard, opponentsOf, player } from './state';
+import { card, defOf, emit, markRevealed, matchesFilter, moveCard, opponentsOf, player } from './state';
 import { ask, push, pushSeq, register } from './tasks';
 import { checkVictory, damageLab } from './victory';
 import type { Ability, Attack, CardDef, Cost, Ctx, GameState, Prompt, Resolution, Seat, Task } from './types';
@@ -1481,6 +1481,7 @@ const V04_EFFECTS: Record<string, EffectImpl> = {
       const opp = e.opponent;
       if (opp === undefined) return;
       const hand = player(s, opp).hand;
+      markRevealed(s, hand, [e.controller]);
       emit(ctx, { type: 'HandLooked', seat: e.controller, of: opp, cards: hand.map((u) => ({ uid: u, cardId: card(s, u).cardId })), to: [e.controller], redacted: { type: 'HandLooked', seat: e.controller, of: opp, count: hand.length } });
     },
   },
@@ -1501,6 +1502,7 @@ const V04_EFFECTS: Record<string, EffectImpl> = {
         const ans = answerOf(t);
         if (ans === undefined) return decide(ctx, seat, name(s, e.source), defOf(s, e.source).text, [{ token: 'yes', label: 'Reveal a Creature and look at the top two', score: 1 }], t, { uid: e.source }, { label: 'No' });
         if (ans !== 'yes') return;
+        markRevealed(s, [others[0]!]);
         emit(ctx, { type: 'CardsRevealed', seat, cards: [{ uid: others[0], cardId: card(s, others[0]!).cardId }], source: e.source });
         push(ctx, { ...strip(t), revealed: true });
         return;
@@ -1537,7 +1539,10 @@ const V04_EFFECTS: Record<string, EffectImpl> = {
         }
       }
       const ch = a && a.type === 'ChooseFromList' ? a.choice : null;
-      if (ch && opts.includes(ch)) moveCard(ctx, ch, 'hand');
+      if (ch && opts.includes(ch)) {
+        moveCard(ctx, ch, 'hand');
+        markRevealed(s, [ch]);
+      }
       const rest = deck.slice(0, 3).filter((u) => top.includes(u));
       for (const u of rest) { deck.splice(deck.indexOf(u), 1); deck.push(u); }
       emit(ctx, { type: 'DeckReordered', seat, source: e.source, toBottom: rest.length });

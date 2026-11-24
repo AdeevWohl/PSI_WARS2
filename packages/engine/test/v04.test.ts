@@ -234,3 +234,20 @@ describe('v0.4.1 AI and depletion costs', () => {
     expect(aiCmd(sc.state)).toMatchObject({ type: 'Activate', ability: 'FabricatorDiscount' });
   });
 });
+
+describe('revealed cards stay face up for the players who saw them', () => {
+  it('Nomis Analyzer: the controller keeps seeing the opponent hand; the opponent view is unchanged; moving the card forgets it', () => {
+    const sc = sc4({ at: 'creation', seats: [{ hand: ['BU_NA'], cus: { G: 2, P: 1 } }, { hand: ['PW_OS', 'BU_PH'] }, { hand: ['BU_SD'] }] });
+    const d = drive(sc);
+    d.do({ type: 'PlayCard', uid: sc.ids[0]!.hand[0]! });
+    const [os, ph] = sc.ids[1]!.hand as [string, string];
+    const mine = viewFor(d.state, 0).players[1]!.revealedHand!.map((x) => x.uid).sort();
+    expect(mine).toEqual([os, ph].sort());
+    expect(viewFor(d.state, 2).players[1]!.revealedHand).toEqual([]); // a third player saw nothing
+    // Once the card leaves the hand, the memory is cleared.
+    d.state.cards[os]!.zone = 'discard';
+    d.state.players[1]!.hand = [ph];
+    d.state.players[1]!.discard.push(os);
+    expect(viewFor(d.state, 0).players[1]!.revealedHand!.map((x) => x.uid)).toEqual([ph]);
+  });
+});

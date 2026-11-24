@@ -1,7 +1,7 @@
 import { CU_TYPES, type Command } from '@psi-wars/shared';
 import { shuffleInPlace } from './rng';
 import { isDisabled } from './stats';
-import { card, defOf, emit, isPowerLike, matchesFilter, moveCard, opponentsOf, player } from './state';
+import { card, defOf, emit, isPowerLike, markRevealed, matchesFilter, moveCard, opponentsOf, player } from './state';
 import { ask, register } from './tasks';
 import { checkVictory, damageLab } from './victory';
 import { damageUnit } from './damage';
@@ -211,11 +211,13 @@ export const EFFECTS: Record<string, EffectImpl> = {
       const choice = answerChoice(t);
       const hand = player(s, opp).hand;
       if (choice) {
+        markRevealed(s, [choice]);
         emit(ctx, { type: 'CardsRevealed', seat: opp, cards: [{ uid: choice, cardId: card(s, choice).cardId }], source: e.source });
         return;
       }
       const powers = hand.filter((u) => isPowerLike(defOf(s, u)));
       if (powers.length === 0) {
+        markRevealed(s, hand);
         emit(ctx, { type: 'CardsRevealed', seat: opp, cards: hand.map((u) => ({ uid: u, cardId: card(s, u).cardId })), source: e.source, wholeHand: true });
         return;
       }
@@ -266,6 +268,7 @@ export const EFFECTS: Record<string, EffectImpl> = {
       const powers = hand.filter((u) => isPowerLike(defOf(s, u)));
       if (powers.length === 0) {
         // Prove it: the hand is shown, as with the old reveal ability.
+        markRevealed(s, hand);
         emit(ctx, { type: 'CardsRevealed', seat: opp, cards: hand.map((u) => ({ uid: u, cardId: card(s, u).cardId })), source: e.source, wholeHand: true });
         return;
       }
@@ -288,6 +291,7 @@ export const EFFECTS: Record<string, EffectImpl> = {
         const choice = answerChoice(t);
         if (choice && deck.includes(choice)) {
           moveCard(ctx, choice, 'hand');
+          markRevealed(s, [choice]);
           emit(ctx, { type: 'CardSearched', seat: e.controller, uid: choice, cardId: card(s, choice).cardId, revealed: true, source: e.source });
         }
         shuffleDeck(ctx, e.controller, 'battleDeck');

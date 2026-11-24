@@ -8,6 +8,7 @@ import type { CardDef, Cost, StatValue, UnitStats } from '@psi-wars/engine';
 import { artUrl, hasArt, placeholder, type ArtSize } from '../assets';
 import { h } from '../ui/dom';
 import { cropFor } from './crops';
+import { KEYWORD_HELP, keywordsFor } from './keywords';
 
 const ABILITY_NAME: Record<Ability, string> = { cyber: 'Cyber', psionic: 'Psionic', physical: 'Physical' };
 
@@ -161,6 +162,8 @@ function queueFit(): void {
 }
 
 let tipInstalled = false;
+/** Card definitions behind collapsed descriptions (for their keyword list). */
+const descDefs = new Map<string, CardDef>();
 /** One floating caption for every collapsed "Description" tab (outside the card, so it is never clipped). */
 function installDescTip(): void {
   if (tipInstalled || typeof document === 'undefined') return;
@@ -168,7 +171,8 @@ function installDescTip(): void {
   const tip = h('div', { class: 'lf-tip', role: 'tooltip' });
   document.body.appendChild(tip);
   const show = (src: HTMLElement) => {
-    tip.replaceChildren(...richText(src.dataset.full ?? ''));
+    const kws = keywordsFor(descDefs.get(src.dataset.card ?? '') ?? ({ text: src.dataset.full ?? '' } as CardDef));
+    tip.replaceChildren(h('div', null, ...richText(src.dataset.full ?? '')), ...kws.map((k) => h('div', { class: 'lf-tip-kw' }, h('b', null, `${k}: `), KEYWORD_HELP[k]!)));
     tip.classList.add('show');
     const r = src.getBoundingClientRect();
     const w = Math.min(340, window.innerWidth - 16);
@@ -241,8 +245,9 @@ export function liveFace(def: CardDef, size: ArtSize): HTMLElement {
   const textEl = mode === 'none'
     ? null
     : mode === 'l'
-      ? h('div', { class: 'lf-text lf-desc', 'data-full': text, tabindex: '-1', 'aria-label': text }, h('span', { class: 'lf-desc-label' }, 'ⓘ Description'), h('span', { class: 'lf-desc-hint' }, 'hover to read'))
+      ? h('div', { class: 'lf-text lf-desc', 'data-full': text, 'data-card': def.id, tabindex: '-1', 'aria-label': text }, h('span', { class: 'lf-desc-label' }, 'ⓘ Description'), h('span', { class: 'lf-desc-hint' }, 'hover to read'))
       : h('div', { class: 'lf-text', 'data-size': String(textSize(text.length)), style: { fontSize: `${textSize(text.length)}cqw` } }, ...richText(text));
+  if (mode === 'l') descDefs.set(def.id, def);
   installDescTip();
   const face = h(
     'div',

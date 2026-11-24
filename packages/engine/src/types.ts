@@ -156,6 +156,8 @@ export interface CardInstance {
   flags?: Record<string, number | string | boolean>;
   /** v0.4: a linked unit (Railgun Overseer's chosen Robot). */
   link?: string | null;
+  /** Seats that have seen this card while it sits in a hidden zone (a hand); cleared when it moves. */
+  revealedTo?: Seat[];
   /** v0.4: failed escape attempts from containment. */
   escapeFails?: number;
 }

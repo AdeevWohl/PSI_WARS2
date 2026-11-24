@@ -179,7 +179,8 @@ export class Presenter {
   private reflowScope(e: GameEvent): (el: HTMLElement) => boolean {
     const bf = this.env.board.root.querySelector('.battlefield');
     const area = typeof e.seat === 'number' ? this.env.board.areaFor(e.seat)?.root : undefined;
-    if (e.type === 'StackResolved' || e.type === 'BattleEnded') return (el) => !!bf?.contains(el);
+    if (e.type === 'BattleEnded') return () => true;
+    if (e.type === 'StackResolved') return (el) => !!bf?.contains(el);
     if (e.type === 'CardReturnedToHand') return (el) => !!area?.querySelector('.hand')?.contains(el);
     return (el) => !!area?.contains(el) || !!bf?.contains(el);
   }
@@ -1103,6 +1104,8 @@ export class Presenter {
         return;
       }
       case 'BattleEnded': {
+        // Units come home and every Lab makes room for them in the same motion (no overlap).
+        this.releaseReflow();
         const anims = [...this.pins.keys()].filter((u) => this.start.before.get(u)?.zone === 'battle').map((u) => this.release(u));
         await Promise.all(anims.map((x) => tl.done(x)));
         return;

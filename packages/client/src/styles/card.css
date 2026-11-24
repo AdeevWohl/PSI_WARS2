@@ -169,3 +169,10 @@
   opacity: 0; transform: translateY(4px); transition: opacity 120ms, transform 120ms; }
 .lf-tip.show { opacity: 1; transform: none; }
 .lf-tip b { color: #8be9ff; }
+
+.lf-tip-kw { margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(139, 233, 255, 0.18); font-size: 12.5px; color: #b9c6da; }
+.lf-tip-kw b { color: #ffd36a; }
+.pv-kw { margin-top: 6px; font-size: 12.5px; line-height: 1.4; color: #b9c6da; }
+.pv-kw b { color: #ffd36a; }
+.pv-protocols { margin-top: 6px; font-size: 13px; }
+.hand-back.revealed { box-shadow: 0 0 0 2px #ffd36a, 0 0 10px rgba(255, 211, 106, 0.5); cursor: zoom-in; }
