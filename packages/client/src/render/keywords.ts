@@ -13,7 +13,7 @@ export const KEYWORD_HELP: Record<string, string> = {
   Operation: 'A slow Power: only in your own Creation phase, with nothing waiting to resolve. Pulses can respond to it.',
   Stack: 'A Cyborg joined with one non-Cyborg unit. They fight as one, adding their strengths; destroying the Stack destroys both.',
   Contain: 'The unit is set aside: it cannot attack, defend, or use or grant abilities until the card frees it.',
-  Deplete: 'A depleted unit cannot attack or defend until it is readied (in its controller\'s Replenish phase). Its passive abilities still work.',
+  Deplete: 'Use a ready card; it stays depleted until its controller\'s Replenish phase. Depleting Creation Units pays costs; a depleted Battle Unit cannot attack or defend, but its passive abilities still work.',
   Disoriented: 'Lost the Cyber or Psionic battle (or has 0 in it): it cannot destroy its opponent this battle.',
   Obliterate: 'Die face 6: destroys the opponent\'s die of the same type. As a number it counts as 4.',
   'Ability roll': 'A roll of the red die for a card ability (X values included). Numeric value: faces 1–5 as shown, face 6 = 4.',
