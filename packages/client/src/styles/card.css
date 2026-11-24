@@ -176,3 +176,20 @@
 .pv-kw b { color: #ffd36a; }
 .pv-protocols { margin-top: 6px; font-size: 13px; }
 .hand-back.revealed { box-shadow: 0 0 0 2px #ffd36a, 0 0 10px rgba(255, 211, 106, 0.5); cursor: zoom-in; }
+
+.mk-restricted { border-color: #7fd4ff; }
+.slot:has(.mk-restricted[aria-label*='contained']) .card.unit { filter: saturate(0.35) brightness(0.8) hue-rotate(160deg); }
+
+/* Creation Unit picker */
+.pay-box { display: flex; flex-direction: column; gap: 12px; min-width: min(520px, 80vw); }
+.pay-cost { display: flex; align-items: center; gap: 10px; container-type: inline-size; }
+.pay-cost .lf-pips.row.big .lf-n { font-size: 16px; min-width: 14px; }
+.pay-cost .lf-pips.row.big .lf-dot { width: 24px; height: 24px; border-width: 4px; }
+.pay-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.pay-cu { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 74px; padding: 8px 4px; border-radius: 10px;
+  background: #0d1626; border: 2px solid #2a3a55; color: #cfd8e6; font: 700 12px var(--font-ui); cursor: pointer; }
+.pay-cu .pay-dot { width: 26px; height: 26px; border-radius: 50%; background: var(--cu); box-sizing: border-box; border: 4px solid transparent; }
+.pay-cu.deplete { border-color: #d9e0ea; } .pay-cu.deplete .pay-dot { border-color: #d9e0ea; }
+.pay-cu.burn { border-color: #6b7380; background: #05070b; } .pay-cu.burn .pay-dot { border-color: #05070b; box-shadow: 0 0 0 2px #6b7380; }
+.pay-fort { position: absolute; top: 2px; right: 6px; color: #ffd36a; }
+.pay-status { font-size: 13px; color: #ff9db0; } .pay-status.ok { color: #8fe3b0; }

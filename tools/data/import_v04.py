@@ -54,7 +54,7 @@ EFFECTS = {
     'Overload Strike': [E('OnPlay', 'DealDamage', amount=3, labAmount=2)],
     'Robo Refurb': [E('OnPlay', 'ReviveToLab', filter={'cardType': 'BattleUnit', 'unitType': 'Robot', 'maxCost': 3})],
     'Static Burst': [E('OnPlay', 'DamageTargets', amount=1, max=2, filter={'unitType': RC})],
-    'Grankor Stasis Field': [E('OnPlay', 'TrapUnit', target='opposingUnit', release='escape'), E('TrapEscapeCheck', 'PhysicalPlusRoll', die='red', threshold=5, atLeast=True, maxFails=2)],
+    'Grankor Stasis Field': [E('OnPlay', 'Restrict', kinds=['attack', 'defend', 'target', 'activate', 'passive', 'cost'], until='escape', label='Grankor Stasis Field: contained'), E('TrapEscapeCheck', 'PhysicalPlusRoll', die='red', threshold=5, atLeast=True, maxFails=2)],
     'Fengar Berserker': [E('RollX', 'RollX', die='red', stat='psionic', rider='face6Physical')],
     'Garilian Seer': [E('RollX', 'RollX', die='red', stat='psionic', rider='seer')],
     'Warend Reaper': [E('OnCreate', 'CannibalizeOnCreate')],
@@ -102,7 +102,7 @@ EFFECTS = {
     'Unstable Carapace': [E('OnPlay', 'PowerRoll', requireBlocked=True, bands=[{'values': [1, 2], 'stat': 'physical', 'amount': 1}, {'values': [3, 4, 5], 'stat': 'psionic', 'amount': 1}])],
     'Crosslink': [E('OnPlay', 'StackBuff', cyber=1, psionic=1)],
     'Emergency Separation': [E('OnPlay', 'SplitStack')],
-    'Interference Net': [E('OnPlay', 'TrapUnit', target='opposingUnit', release='nextCleanup', filter={'maxPrintedPhysical': 2})],
+    'Interference Net': [E('OnPlay', 'Restrict', kinds=['attack', 'defend', 'target', 'activate', 'passive', 'cost'], until='ownerCleanup', filter={'maxPrintedPhysical': 2}, label='Interference Net: contained')],
     'Parasitic Snare': [E('OnPlay', 'DepleteUnit', physical=-1)],
     'Adaptive Membrane': [E('Static', 'ReturnOnDestroy')],
     'Interface Plating': [E('Static', 'PartnerShield')],
@@ -114,8 +114,22 @@ KEEP_OLD_EFFECTS = {'Creation Oracle', 'Resource Fortification'}
 
 # Rules changes made after the workbook (v0.4.1): text overrides by card name.
 TEXT_OVERRIDES = {
+    # v0.4.1: the trapped/untrapped condition no longer exists; restrictions say exactly what they stop.
+    'Garilian Seer': 'Psionic X. After its X ability roll, you may discard a Battle card to give another unit under your control +1 Physical until end of turn.',
+    'Fabricator Drone': 'Once during your Creation, deplete this ready unit: the next Equipment you create this turn costs 1 fewer P (minimum total cost 1).',
+    'Railgun Overseer': 'When created, choose another Robot under your control. While that Robot remains equipped, this gains +1 Physical.',
+    'Convergence Engine': 'When forming a Stack, if you control both a Robot and a Creature, choose one: Calibrate its Physical die, or grant its partner +1 Physical until the Stack separates.',
+    'Interference Net': 'Contain one Battle Unit under enemy control with printed Physical 2 or less: until its owner\'s next Cleanup it cannot attack, defend, use or grant abilities, be chosen by a Power or ability, or be used to pay a cost. It is then released depleted.',
     'Parasitic Snare': 'Choose a Battle Unit under enemy control. Deplete it. It loses 1 Physical until the end of the turn.',
 }
+
+def rename_timing(text):
+    """v0.4.1: Pulse -> Reactive, Operation -> Creation (card names like High-Energy Pulse are kept)."""
+    text = re.sub(r'(?<!Energy )(?<!Bio )\bPulses\b', 'Reactive Powers', text)
+    text = re.sub(r'(?<!Energy )(?<!Bio )\bPulse\b', 'Reactive Power', text)
+    text = re.sub(r'\bOperations\b', 'Creation Powers', text)
+    return re.sub(r'\bOperation\b', 'Creation Power', text)
+
 
 PROTOCOLS = {
     'Davileam Commander': {
@@ -132,7 +146,7 @@ PROTOCOLS = {
 KEYWORD_OF = {
     'LockOn': 'Lock-On', 'ProtocolLockOn': 'Lock-On', 'CalibrateSelf': 'Calibrate', 'ProtocolCalibrate': 'Calibrate', 'ProtocolPrecision': 'Calibrate',
     'TargetingNode': 'Calibrate', 'MarrowMutation': 'Mutation', 'SianaMutation': 'Mutation', 'MutateOnPsiLoss': 'Mutation',
-    'CannibalizeOnCreate': 'Cannibalize', 'CannibalInstinct': 'Cannibalize', 'TrapUnit': 'Containment', 'Feeding': 'Feeding', 'DepleteUnit': 'Deplete',
+    'CannibalizeOnCreate': 'Cannibalize', 'CannibalInstinct': 'Cannibalize', 'TrapUnit': 'Contain', 'Restrict': 'Contain', 'Feeding': 'Feeding', 'DepleteUnit': 'Deplete',
 }
 
 TYPE = {'Battle Unit': 'BattleUnit', 'Creation Unit': 'CreationUnit', 'Equipment': 'Equipment', 'Power': 'Power', 'Resource': 'Resource'}
@@ -226,7 +240,7 @@ def main(path):
             if mc:
                 d['equip']['moveCost'] = mc
         if ctype == 'Power':
-            d['timing'] = (r['Power timing'] or 'Pulse').strip()
+            d['timing'] = {'Pulse': 'Reactive', 'Operation': 'Creation'}.get((r['Power timing'] or 'Pulse').strip(), (r['Power timing'] or 'Reactive').strip())
         if name in PROTOCOLS:
             d['protocols'] = PROTOCOLS[name]
         if name in KEEP_OLD_EFFECTS:
@@ -238,7 +252,7 @@ def main(path):
         else:
             raise SystemExit(f'no engine effects defined for {name}')
         text = r['Proposed Rules Text']
-        d['text'] = TEXT_OVERRIDES.get(name, '' if text in (None, 'None') else str(text))
+        d['text'] = rename_timing(TEXT_OVERRIDES.get(name, '' if text in (None, 'None') else str(text)))
         kws = sorted({KEYWORD_OF[e['effect']] for e in d['effects'] if e['effect'] in KEYWORD_OF} | ({'Protocol'} if name in PROTOCOLS else set()) | ({d['timing']} if ctype == 'Power' else set()) | ({'Relocate'} if ctype == 'Equipment' and 'moveCost' in d.get('equip', {}) else set()) | ({'Reanimated'} if name == 'Creature Regenerate' else set()))
         if kws:
             d['keywords'] = kws

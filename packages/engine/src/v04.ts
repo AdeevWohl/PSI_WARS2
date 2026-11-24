@@ -14,15 +14,15 @@ import { numericValue, rollSide } from './dice';
 import { damageUnit } from './damage';
 import { EFFECTS, removeFromBattle, type EffectImpl, type EffectTask } from './effects';
 import {
-  addMod, canUseAbilities, effectOf, hasEffect, hooks, isJammed, markUsed, permanentStrength, usedThisTurn,
+  addMod, addRestriction, canUseAbilities, effectOf, hasEffect, hooks, isJammed, isRestricted, markUsed, permanentStrength, removeRestrictions, selectable, usedThisTurn,
 } from './mods';
-import { autoPayment, burnOnly, canAfford, eligibleDestroyTypes, pay, totalCost } from './payment';
+import { addCosts, autoPayment, burnOnly, canAfford, eligibleDestroyTypes, pay, totalCost } from './payment';
 import { shuffleInPlace } from './rng';
 import { canHoldEquipment, fighterStrength, fighterUnits, isDisabled, unitHasAbility, unitStrength } from './stats';
 import { card, defOf, emit, markRevealed, matchesFilter, moveCard, opponentsOf, player } from './state';
 import { ask, push, pushSeq, register } from './tasks';
 import { checkVictory, damageLab } from './victory';
-import type { Ability, Attack, CardDef, Cost, Ctx, GameState, Prompt, Resolution, Seat, Task } from './types';
+import type { Ability, Attack, CardDef, Cost, Ctx, GameState, Prompt, Resolution, Restriction, Seat, Task } from './types';
 
 const ZERO: Cost = { G: 0, B: 0, R: 0, P: 0, W: 0 };
 const cost = (c: Partial<Cost>): Cost => ({ ...ZERO, ...c });
@@ -194,7 +194,18 @@ register('abilityRoll', (ctx, t) => {
     return;
   }
   if (phase === 'lock') {
-    const lockers = lockOnCandidates(s, t.uid, t.attackId ?? null);
+    const all = lockOnCandidates(s, t.uid, t.attackId ?? null);
+    // Several eligible Lock-On units: their controller picks which one (if any) locks this roll.
+    if (all.length > 1 && t.locker === undefined && ans === undefined) {
+      const owner = card(s, all[0]!.uid).owner;
+      return decide(ctx, owner, 'Lock-On: which unit?', `${name(s, t.uid)} is about to make an ability roll. Choose which of your units uses Lock-On (each can lock once per battle).`,
+        all.map((l) => ({ token: l.uid, label: `${name(s, l.uid)} (${costLabel(l.cost)})`, score: 1 - totalCost(l.cost) * 0.1 })), t, { uid: t.uid }, { label: 'No Lock-On', score: 0.4 });
+    }
+    if (all.length > 1 && t.locker === undefined) {
+      if (!ans) return void push(ctx, { ...strip(t), locker: null, asked: true });
+      return void push(ctx, { ...strip(t), locker: ans });
+    }
+    const lockers = t.locker ? all.filter((l) => l.uid === t.locker) : t.locker === null ? [] : all;
     if (lockers.length && ans === undefined && !t.asked) {
       const lk = lockers[0]!;
       const owner = card(s, lk.uid).owner;
@@ -263,7 +274,7 @@ register('seerOffer', (ctx, t) => {
   if (!c || c.zone !== 'lab') return;
   const seat = c.owner;
   const hand = player(s, seat).hand.filter((u) => defOf(s, u).deck === 'battle');
-  const others = player(s, seat).lab.filter((u) => u !== t.uid);
+  const others = player(s, seat).lab.filter((u) => u !== t.uid && selectable(s, u));
   if (!hand.length || !others.length) return;
   const ans = answerOf(t);
   if (ans === undefined) {
@@ -552,7 +563,7 @@ register('afterBlockers', (ctx) => {
 /** "Choose up to N of them: +1 Physical", asked one unit at a time. */
 register('chooseBoost', (ctx, t) => {
   const s = ctx.s;
-  const cands: string[] = (t.candidates as string[]).filter((u) => s.cards[u]?.zone === 'lab');
+  const cands: string[] = (t.candidates as string[]).filter((u) => s.cards[u]?.zone === 'lab' && selectable(s, u));
   if (!cands.length || t.left <= 0) return;
   const ans = answerOf(t);
   if (ans === undefined) {
@@ -638,9 +649,11 @@ export function afterEngagement(ctx: Ctx, t: Task): Task[] {
         const me = snap[u];
         const victims = theirs.map((v) => snap[v]).filter((x): x is NonNullable<typeof x> => !!x);
         if (me && victims.length) {
-          // A destroyed Stack offers a choice of member; the better reward is taken (Physical first).
-          if (victims.some((v) => v.physical >= me.physical)) addMod(ctx, u, 'physical', 1, 'mutation', u, `${name(s, u)} Mutation`);
-          else if (victims.some((v) => v.psionic > me.psionic)) addMod(ctx, u, 'psionic', 1, 'mutation', u, `${name(s, u)} Mutation`);
+          const reward = (v: { physical: number; psionic: number }) => (v.physical >= me.physical ? 'physical' : v.psionic > me.psionic ? 'psionic' : null);
+          const opts = theirs.filter((v) => snap[v]).map((v) => ({ victim: v, reward: reward(snap[v]!) }));
+          // A destroyed Stack: its controller chooses which member to compare with (when it matters).
+          if (new Set(opts.map((o) => o.reward)).size > 1) tasks.push({ k: 'marrow', uid: u, opts });
+          else if (opts[0]?.reward) addMod(ctx, u, opts[0].reward as Ability, 1, 'mutation', u, `${name(s, u)} Mutation`);
         }
       }
     }
@@ -660,6 +673,19 @@ export function afterEngagement(ctx: Ctx, t: Task): Task[] {
   }
   return tasks;
 }
+
+register('marrow', (ctx, t) => {
+  const s = ctx.s;
+  if (s.cards[t.uid]?.zone !== 'lab') return;
+  const opts = t.opts as { victim: string; reward: Ability | null }[];
+  const ans = answerOf(t);
+  if (ans === undefined) {
+    return decide(ctx, card(s, t.uid).owner, 'Marrow Parasite: Mutation', 'You destroyed a Stack: choose which destroyed member to compare with.',
+      opts.map((o) => ({ token: o.victim, label: `${s.defs[s.cards[o.victim]!.cardId]!.name}: ${o.reward ? `+1 permanent ${o.reward}` : 'no Mutation'}`, score: o.reward === 'physical' ? 1.5 : o.reward ? 1 : 0 })), t, { uid: t.uid });
+  }
+  const pick = opts.find((o) => o.victim === ans) ?? opts[0]!;
+  if (pick.reward) addMod(ctx, t.uid, pick.reward, 1, 'mutation', t.uid, 'Marrow Parasite Mutation');
+});
 
 register('drawFor', (ctx, t) => {
   const s = ctx.s;
@@ -788,7 +814,7 @@ hooks.destroyed = (ctx, uid, cause) => {
 
 register('larva', (ctx, t) => {
   const s = ctx.s;
-  const opts = player(s, t.seat).lab.filter((u) => defOf(s, u).unitType === 'Creature' && !usedThisTurn(s, `larva:${u}`));
+  const opts = player(s, t.seat).lab.filter((u) => defOf(s, u).unitType === 'Creature' && !usedThisTurn(s, `larva:${u}`) && selectable(s, u));
   if (!opts.length) return;
   const ans = answerOf(t);
   if (ans === undefined && opts.length > 1) {
@@ -824,7 +850,7 @@ export function cannibalize(ctx: Ctx, uid: string, source: string): number {
 }
 
 export function cannibalTargets(s: GameState, seat: Seat, except: string | null): string[] {
-  return player(s, seat).lab.filter((u) => u !== except && (defOf(s, u).unitType === 'Creature' || defOf(s, u).unitType === 'Cyborg'));
+  return player(s, seat).lab.filter((u) => u !== except && (defOf(s, u).unitType === 'Creature' || defOf(s, u).unitType === 'Cyborg') && !isRestricted(s, u, 'cost') && selectable(s, u));
 }
 
 // ---------------------------------------------------------------- end of Battle phase
@@ -838,7 +864,7 @@ export function endOfBattle(ctx: Ctx): void {
   for (const seat of b.creatureDied ?? []) {
     const siana = player(s, seat).lab.find((u) => hasEffect(s, u, 'SianaMutation') && canUseAbilities(s, u));
     if (!siana) continue;
-    const opts = Object.keys(b.survivors ?? {}).filter((u) => s.cards[u]?.zone === 'lab' && card(s, u).owner === seat && defOf(s, u).unitType === 'Creature');
+    const opts = Object.keys(b.survivors ?? {}).filter((u) => s.cards[u]?.zone === 'lab' && card(s, u).owner === seat && defOf(s, u).unitType === 'Creature' && selectable(s, u));
     if (opts.length) tasks.push({ k: 'siana', seat, source: siana, opts, lost: b.survivors });
   }
   if (tasks.length) pushSeq(ctx, tasks);
@@ -1139,7 +1165,7 @@ export function matchesV04(def: CardDef, f: Record<string, any> | undefined): bo
 // ---------------------------------------------------------------- Power and on-create effects
 
 const enemyUnits = (s: GameState, seat: Seat, filter?: Record<string, any>) =>
-  opponentsOf(s, seat).flatMap((o) => player(s, o).lab).filter((u) => matchesV04(defOf(s, u), filter));
+  opponentsOf(s, seat).flatMap((o) => player(s, o).lab).filter((u) => matchesV04(defOf(s, u), filter) && selectable(s, u));
 
 function itemOf(s: GameState, uid: string) {
   return s.stack.find((x) => x.uid === uid);
@@ -1164,6 +1190,18 @@ export const EXTRA: Record<string, (s: GameState, seat: Seat, chosen: string[], 
     if (chosen.length >= Number(params.max ?? 2)) return null;
     const options = disableTargets(s, seat, params).filter((u) => !chosen.includes(u));
     return options.length ? { label: 'Choose another unit (optional)', options, optional: true } : null;
+  },
+  EquipmentMechanic: (s, seat, chosen) => {
+    if (chosen.length === 0) {
+      const base = s.defs.PW_EM?.cost ?? ZERO;
+      const options = player(s, seat).discard.filter((u) => defOf(s, u).cardType === 'Equipment' && player(s, seat).lab.some((h) => canHoldEquipment(s, h, card(s, u).cardId) && selectable(s, h)) && canAfford(s, seat, addCosts(base, defOf(s, u).cost ?? ZERO)));
+      return { label: 'choose an Equipment in your discard (you pay its full cost too)', options, optional: false };
+    }
+    if (chosen.length === 1) {
+      const eq = chosen[0]!;
+      return { label: `attach ${name(s, eq)} to`, options: player(s, seat).lab.filter((h) => canHoldEquipment(s, h, card(s, eq).cardId) && selectable(s, h)), optional: false };
+    }
+    return null;
   },
   CannibalInstinct: (s, seat, chosen) => {
     if (chosen.length >= 2) return null;
@@ -1194,6 +1232,15 @@ register('castExtras', (ctx, t) => {
   const ch = a.type === 'ChooseFromList' ? a.choice : null;
   if (!ch || !ext.options.includes(ch)) return;
   item.targets = [...targets, ch];
+  // Equipment Mechanic: once the Equipment and host are chosen, pay base + Equipment cost in one payment.
+  if (e.effect === 'EquipmentMechanic' && item.targets.length === 2) {
+    const d = defOf(s, t.uid);
+    const total = addCosts(d.cost ?? ZERO, defOf(s, item.targets[0]!).cost ?? ZERO);
+    const p = autoPayment(s, item.controller, total);
+    if (!p) return void emit(ctx, { type: 'EffectFizzled', source: t.uid, reason: 'cannotPay' });
+    item.snap = { ...(item.snap ?? {}), paid: pay(ctx, item.controller, total, p, t.uid) };
+    return;
+  }
   if (ext.cannibalize) {
     item.snap = { ...(item.snap ?? {}), consumedPhysical: cannibalize(ctx, ch, t.uid) };
     return;
@@ -1227,7 +1274,7 @@ const V04_EFFECTS: Record<string, EffectImpl> = {
       const item = itemOf(s, e.source);
       const list = (item?.targets ?? (e.target ? [e.target] : [])).filter((u) => s.cards[u]?.zone === 'lab');
       if (!list.length) return void emit(ctx, { type: 'EffectFizzled', source: e.source, reason: 'targetGone' });
-      s.turnEffects.push({ kind: 'disableUnits', source: e.source, uids: list });
+      for (const u of list) addRestriction(ctx, u, { source: e.source, sourceCardId: card(s, e.source).cardId, kinds: ['attack', 'defend'], until: 'endOfTurn', label: `${name(s, e.source)}: cannot attack or defend this turn` });
       emit(ctx, { type: 'UnitsDisabled', source: e.source, uids: list });
       for (const u of list) for (const x of fighterUnits(s, u)) removeFromBattle(ctx, x, 'disabled');
     },
@@ -1238,7 +1285,7 @@ const V04_EFFECTS: Record<string, EffectImpl> = {
     targets: (s, seat) => s.stack.filter((x) => {
       if (x.controller === seat || x.countered) return false;
       const d = defOf(s, x.uid);
-      if (d.timing !== 'Pulse' || !d.effects.some((e) => ['TrapUnit', 'DisableTargets', 'DisableUnits'].includes(e.effect))) return false;
+      if ((d.timing as string) !== 'Reactive' || !d.effects.some((e) => ['TrapUnit', 'Restrict', 'DisableTargets', 'DisableUnits', 'DepleteUnit'].includes(e.effect))) return false;
       const ts = x.targets ?? (x.target ? [x.target] : []);
       return ts.length === 1 && s.cards[ts[0]!]?.owner === seat && ['Robot', 'Cyborg'].includes(defOf(s, ts[0]!).unitType ?? '');
     }).map((x) => x.uid),
@@ -1285,7 +1332,7 @@ const V04_EFFECTS: Record<string, EffectImpl> = {
     run(ctx, t) {
       const e = t as EffectTask;
       if (!e.target || ctx.s.cards[e.target]?.zone !== 'lab') return;
-      ctx.s.turnEffects.push({ kind: 'jam', source: e.source, uids: [e.target] });
+      addRestriction(ctx, e.target, { source: e.source, sourceCardId: card(ctx.s, e.source).cardId, kinds: ['activate'], until: 'endOfTurn', label: 'Signal Jam: no optional activated abilities this turn' });
       emit(ctx, { type: 'UnitJammed', uid: e.target, source: e.source });
     },
   },
@@ -1370,10 +1417,17 @@ const V04_EFFECTS: Record<string, EffectImpl> = {
     },
   },
 
-  /** Equipment Mechanic: return an Equipment from discard attached to a legal host, paying its full cost too. */
+  /** Equipment Mechanic: Equipment and host were chosen and the combined cost paid on casting; attach on resolution. */
   EquipmentMechanic: {
     canPlay: (s, seat) => player(s, seat).discard.some((u) => defOf(s, u).cardType === 'Equipment' && player(s, seat).lab.some((h) => canHoldEquipment(s, h, card(s, u).cardId)) && canAfford(s, seat, addBurnAny(defOf(s, u).cost ?? ZERO))),
     run(ctx, t) {
+      const item = itemOf(ctx.s, (t as EffectTask).source);
+      if (item?.targets?.length === 2) {
+        const [eq, host] = item.targets as [string, string];
+        const s0 = ctx.s;
+        if (s0.cards[eq]?.zone !== 'discard' || !canHoldEquipment(s0, host, card(s0, eq).cardId)) return void emit(ctx, { type: 'EffectFizzled', source: (t as EffectTask).source, reason: 'targetGone' });
+        return attachEquipment(ctx, (t as EffectTask).controller, eq, host, 'mechanic');
+      }
       const e = t as EffectTask;
       const s = ctx.s;
       const seat = e.controller;
@@ -1581,7 +1635,7 @@ const V04_EFFECTS: Record<string, EffectImpl> = {
     run(ctx, t) {
       const e = t as EffectTask;
       const s = ctx.s;
-      const opts = player(s, e.controller).lab.filter((u) => u !== e.source && defOf(s, u).unitType === 'Robot');
+      const opts = player(s, e.controller).lab.filter((u) => u !== e.source && defOf(s, u).unitType === 'Robot' && selectable(s, u));
       if (!opts.length) return;
       const ans = answerOf(t);
       if (ans === undefined && opts.length > 1) return decide(ctx, e.controller, name(s, e.source), defOf(s, e.source).text, opts.map((u) => ({ token: u, label: name(s, u), score: card(s, u).equipment ? 2 : 1 })), t, { uid: e.source });
@@ -1642,6 +1696,62 @@ export function depleteUnit(ctx: Ctx, uid: string, source: string | null): void 
     removeFromBattle(ctx, uid, 'depleted');
   }
 }
+
+/**
+ * v0.4.1 containment by restriction: the unit stays in its Lab but cannot do the listed things until
+ * released (end of turn, its owner's next Cleanup, or an escape roll in each owner Cleanup).
+ */
+V04_EFFECTS.Restrict = {
+  targets: (s, seat, _u, params) => enemyUnits(s, seat, params.filter),
+  run(ctx, t) {
+    const e = t as EffectTask;
+    const s = ctx.s;
+    const u = e.target;
+    if (!u || s.cards[u]?.zone !== 'lab' || !selectable(s, u)) return void emit(ctx, { type: 'EffectFizzled', source: e.source, reason: 'targetGone' });
+    const kinds = e.params.kinds as Restriction['kinds'];
+    if (kinds.includes('attack') || kinds.includes('defend')) {
+      const p = s.cards[u]!.stackPartner;
+      if (p) {
+        card(s, u).stackPartner = null;
+        card(s, p).stackPartner = null;
+        emit(ctx, { type: 'Unstacked', uids: [u, p], reason: 'restricted', seat: card(s, u).owner });
+      }
+      removeFromBattle(ctx, u, 'restricted');
+    }
+    card(s, u).escapeFails = 0;
+    addRestriction(ctx, u, { source: e.source, sourceCardId: card(s, e.source).cardId, kinds, until: e.params.until ?? 'endOfTurn', label: e.params.label ?? name(s, e.source) });
+  },
+};
+
+/** Cleanup of the active player: release "until your next Cleanup" restrictions and roll escapes. */
+register('releaseRestrictions', (ctx) => {
+  const s = ctx.s;
+  const seat = s.turn.active;
+  for (const u of [...player(s, seat).lab]) {
+    const rs = s.cards[u]?.restrictions ?? [];
+    for (const r of [...rs]) {
+      if (r.until === 'ownerCleanup') {
+        removeRestrictions(ctx, u, (x) => x === r, 'released');
+        card(s, u).depleted = true; // a freed unit returns depleted
+      } else if (r.until === 'escape') {
+        const check = s.defs[r.sourceCardId]?.effects.find((x) => x.trigger === 'TrapEscapeCheck');
+        const phys = unitStrength(s, u, 'physical', false);
+        const side = rollSide(ctx);
+        const value = numericValue(s, side);
+        const threshold = Number(check?.params.threshold ?? 5);
+        const freed = phys + value >= threshold;
+        const c = card(s, u);
+        c.escapeFails = (c.escapeFails ?? 0) + (freed ? 0 : 1);
+        const maxFails = Number(check?.params.maxFails ?? 2);
+        emit(ctx, { type: 'EscapeAttempt', seat, uid: u, cardId: c.cardId, trap: r.source, physical: phys, side, value, threshold, freed, fails: c.escapeFails });
+        if (freed || c.escapeFails >= maxFails) {
+          removeRestrictions(ctx, u, (x) => x === r, freed ? 'escaped' : 'secondFailure');
+          c.depleted = true;
+        }
+      }
+    }
+  }
+});
 
 V04_EFFECTS.DepleteUnit = {
   targets: (s, seat) => enemyUnits(s, seat),

@@ -24,8 +24,8 @@ describe('cards.json', () => {
     expect(c('EQ_KA').equip.moveCost).toEqual({ G: 0, B: 0, R: 0, P: 0, W: 0, choice: [['R', 'P']] });
     expect(c('PW_EM').cost.burnPool).toEqual(['G', 'B', 'R', 'P']);
     expect(c('TR_GSF').cardType).toBe('Power');
-    expect(c('TR_GSF').timing).toBe('Pulse');
-    expect(c('PW_RR').timing).toBe('Operation');
+    expect(c('TR_GSF').timing).toBe('Reactive');
+    expect(c('PW_RR').timing).toBe('Creation');
     expect(c('BU_DC').protocols).toHaveProperty('Precision');
   });
 

@@ -9,8 +9,8 @@ export const KEYWORD_HELP: Record<string, string> = {
   Cannibalize: 'Destroy another Creature or Cyborg you control as a cost. It goes to the discard pile with its Equipment.',
   Reanimated: 'Returned from the discard pile: +2 permanent Physical and −2 permanent Psionic (minimum 0). Not a Mutation.',
   Relocate: 'Move this Equipment to another legal unit in your Creation phase, paying its Relocate cost (or free).',
-  Pulse: 'A fast Power: play it in any priority window, on any turn, including in response to another card.',
-  Operation: 'A slow Power: only in your own Creation phase, with nothing waiting to resolve. Pulses can respond to it.',
+  Reactive: 'A fast Power: play it in any priority window, on any turn, including in response to another card.',
+  Creation: 'A Creation Power: only in your own Creation phase, with nothing waiting to resolve. Reactive Powers can respond to it.',
   Stack: 'A Cyborg joined with one non-Cyborg unit. They fight as one, adding their strengths; destroying the Stack destroys both.',
   Contain: 'The unit is set aside: it cannot attack, defend, or use or grant abilities until the card frees it.',
   Deplete: 'Use a ready card; it stays depleted until its controller\'s Replenish phase. Depleting Creation Units pays costs; a depleted Battle Unit cannot attack or defend, but its passive abilities still work.',
@@ -23,7 +23,7 @@ export const KEYWORD_HELP: Record<string, string> = {
 
 const PATTERNS: [string, RegExp][] = [
   ['Lock-On', /lock-on/i], ['Calibrate', /calibrat/i], ['Protocol', /protocol/i], ['Mutation', /mutation/i], ['Cannibalize', /cannibali/i],
-  ['Reanimated', /reanimat/i], ['Relocate', /relocat/i], ['Pulse', /\bpulse\b/i], ['Operation', /\boperation\b/i], ['Stack', /\bstack/i],
+  ['Reanimated', /reanimat/i], ['Relocate', /relocat/i], ['Reactive', /\breactive\b/i], ['Stack', /\bstack/i],
   ['Contain', /\bcontain/i], ['Deplete', /\bdeplete/i], ['Disoriented', /disorient/i], ['Obliterate', /obliterat/i],
   ['Ability roll', /ability roll|\bX\b/], ['Feeding', /carrion foundress/i], ['Burn', /\bburn/i],
 ];

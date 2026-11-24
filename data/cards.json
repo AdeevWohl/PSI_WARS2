@@ -1534,7 +1534,7 @@
      "P"
     ]
    },
-   "timing": "Pulse",
+   "timing": "Reactive",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -1553,7 +1553,7 @@
    ],
    "text": "Deal 1 damage to up to two Creatures or Cyborgs under enemy control.",
    "keywords": [
-    "Pulse"
+    "Reactive"
    ],
    "implementation": "v0.4: OnPlay → DamageTargets",
    "enabled": true,
@@ -1573,7 +1573,7 @@
     "P": 0,
     "W": 1
    },
-   "timing": "Pulse",
+   "timing": "Reactive",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -1597,7 +1597,7 @@
    ],
    "text": "Return a Creature or Cyborg with printed total cost 3 or less and printed Psionic above 0 (X qualifies) from your discard to your Lab. It returns at printed strengths with a permanent Reanimated modifier: +2 Physical and −2 Psionic (minimum 0).",
    "keywords": [
-    "Pulse",
+    "Reactive",
     "Reanimated"
    ],
    "implementation": "v0.4: OnPlay → ReviveToLab",
@@ -1631,7 +1631,7 @@
     "W": 0,
     "A": 1
    },
-   "timing": "Operation",
+   "timing": "Creation",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -1645,7 +1645,7 @@
    ],
    "text": "Search your Battle Deck for an Equipment, reveal it, put it in your hand, then shuffle.",
    "keywords": [
-    "Operation"
+    "Creation"
    ],
    "implementation": "v0.4: OnPlay → TutorToHand",
    "art": "cards/PW_EH",
@@ -1683,7 +1683,7 @@
      "P"
     ]
    },
-   "timing": "Operation",
+   "timing": "Creation",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -1693,7 +1693,7 @@
    ],
    "text": "Choose an Equipment in your discard and a legal host under your control. As an additional cost, pay that Equipment’s full printed creation cost. Return it directly to play attached to the chosen host.",
    "keywords": [
-    "Operation"
+    "Creation"
    ],
    "implementation": "v0.4: OnPlay → EquipmentMechanic",
    "art": "cards/PW_EM",
@@ -1725,7 +1725,7 @@
     "P": 1,
     "W": 1
    },
-   "timing": "Pulse",
+   "timing": "Reactive",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -1738,7 +1738,7 @@
    ],
    "text": "Choose up to two units under enemy control with Cyber above 0. They cannot attack or defend this turn; remove them from current battles if engaged.",
    "keywords": [
-    "Pulse"
+    "Reactive"
    ],
    "implementation": "v0.4: OnPlay → DisableTargets",
    "art": "cards/PW_HEP",
@@ -1780,7 +1780,7 @@
      "P"
     ]
    },
-   "timing": "Pulse",
+   "timing": "Reactive",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -1793,7 +1793,7 @@
    ],
    "text": "Deal 3 damage to a Battle Unit or 2 damage to a Lab.",
    "keywords": [
-    "Pulse"
+    "Reactive"
    ],
    "implementation": "v0.4: OnPlay → DealDamage",
    "enabled": true,
@@ -1813,7 +1813,7 @@
     "P": 1,
     "W": 1
    },
-   "timing": "Operation",
+   "timing": "Creation",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -1829,7 +1829,7 @@
    ],
    "text": "Creation only. Return a Robot with printed total creation cost 3 or less from your discard to play at its printed strengths.",
    "keywords": [
-    "Operation"
+    "Creation"
    ],
    "implementation": "v0.4: OnPlay → ReviveToLab",
    "art": "cards/PW_RR",
@@ -1871,7 +1871,7 @@
      "P"
     ]
    },
-   "timing": "Pulse",
+   "timing": "Reactive",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -1890,7 +1890,7 @@
    ],
    "text": "Deal 1 damage to up to two Robots or Cyborgs under enemy control.",
    "keywords": [
-    "Pulse"
+    "Reactive"
    ],
    "implementation": "v0.4: OnPlay → DamageTargets",
    "enabled": true,
@@ -1910,14 +1910,22 @@
     "P": 0,
     "W": 1
    },
-   "timing": "Pulse",
+   "timing": "Reactive",
    "effects": [
     {
      "trigger": "OnPlay",
-     "effect": "TrapUnit",
+     "effect": "Restrict",
      "params": {
-      "target": "opposingUnit",
-      "release": "escape"
+      "kinds": [
+       "attack",
+       "defend",
+       "target",
+       "activate",
+       "passive",
+       "cost"
+      ],
+      "until": "escape",
+      "label": "Grankor Stasis Field: contained"
      }
     },
     {
@@ -1933,10 +1941,10 @@
    ],
    "text": "Contain one Battle Unit under enemy control. While contained, it cannot attack, defend, use or grant abilities, be chosen by a Power or unit ability, or be used to pay a cost. At each of its owner’s Cleanups, roll red: free it if current Physical + numeric roll is at least 5; free it after its second failed escape.",
    "keywords": [
-    "Containment",
-    "Pulse"
+    "Contain",
+    "Reactive"
    ],
-   "implementation": "v0.4: OnPlay → TrapUnit; TrapEscapeCheck → PhysicalPlusRoll",
+   "implementation": "v0.4: OnPlay → Restrict; TrapEscapeCheck → PhysicalPlusRoll",
    "art": "cards/TR_GSF",
    "artSource": "41_Grankor Statsis Field.psd",
    "printed": {
@@ -2142,7 +2150,7 @@
      }
     }
    ],
-   "text": "Psionic X. After its X ability roll, you may discard a Battle card to give another untrapped unit under your control +1 Physical until end of turn.",
+   "text": "Psionic X. After its X ability roll, you may discard a Battle card to give another unit under your control +1 Physical until end of turn.",
    "implementation": "v0.4: RollX → RollX",
    "art": "cards/BU_GS",
    "artSource": "03_Garilian Seer.psd",
@@ -2605,7 +2613,7 @@
     "P": 0,
     "W": 1
    },
-   "timing": "Pulse",
+   "timing": "Reactive",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -2618,7 +2626,7 @@
    ],
    "text": "Choose up to two units under enemy control with Psionic above 0. They cannot attack or defend this turn; remove them from current battles if engaged.",
    "keywords": [
-    "Pulse"
+    "Reactive"
    ],
    "implementation": "v0.4: OnPlay → DisableTargets",
    "art": "cards/PW_MD",
@@ -2958,7 +2966,7 @@
      "params": {}
     }
    ],
-   "text": "Once during your Creation, deplete this ready, untrapped unit: the next Equipment you create this turn costs 1 fewer P (minimum total cost 1).",
+   "text": "Once during your Creation, deplete this ready unit: the next Equipment you create this turn costs 1 fewer P (minimum total cost 1).",
    "implementation": "v0.4: Activated → FabricatorDiscount",
    "enabled": true,
    "origin": "v0.4",
@@ -3114,7 +3122,7 @@
      }
     }
    ],
-   "text": "When created, choose another Robot under your control. While that Robot remains equipped and both are untrapped, this gains +1 Physical.",
+   "text": "When created, choose another Robot under your control. While that Robot remains equipped, this gains +1 Physical.",
    "implementation": "v0.4: OnCreate → LinkRobot; Static → StatBonus",
    "enabled": true,
    "origin": "v0.4",
@@ -3552,7 +3560,7 @@
      "params": {}
     }
    ],
-   "text": "When forming a Stack, if you control both an untrapped Robot and an untrapped Creature, choose one: Calibrate its Physical die, or grant its partner +1 Physical until the Stack separates.",
+   "text": "When forming a Stack, if you control both a Robot and a Creature, choose one: Calibrate its Physical die, or grant its partner +1 Physical until the Stack separates.",
    "implementation": "v0.4: OnStack → Convergence",
    "enabled": true,
    "origin": "v0.4",
@@ -3571,7 +3579,7 @@
     "P": 1,
     "W": 0
    },
-   "timing": "Pulse",
+   "timing": "Reactive",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -3579,9 +3587,9 @@
      "params": {}
     }
    ],
-   "text": "In response to a Pulse that targets exactly one of your Robots or Cyborgs and would prevent it from attacking or defending, cancel that Pulse. Paid costs are not refunded.",
+   "text": "In response to a Reactive Power that targets exactly one of your Robots or Cyborgs and would prevent it from attacking or defending, cancel that Reactive Power. Paid costs are not refunded.",
    "keywords": [
-    "Pulse"
+    "Reactive"
    ],
    "implementation": "v0.4: OnPlay → CounterPulse",
    "enabled": true,
@@ -3601,7 +3609,7 @@
     "P": 1,
     "W": 0
    },
-   "timing": "Operation",
+   "timing": "Creation",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -3611,7 +3619,7 @@
    ],
    "text": "Creation only. Remove one destroyed Robot from your discard. Replenish one depleted CU other than the CU paid for this card.",
    "keywords": [
-    "Operation"
+    "Creation"
    ],
    "implementation": "v0.4: OnPlay → SalvageProtocol",
    "enabled": true,
@@ -3641,7 +3649,7 @@
      ]
     ]
    },
-   "timing": "Operation",
+   "timing": "Creation",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -3653,7 +3661,7 @@
    ],
    "text": "Search your Battle Deck for an Equipment with printed total cost 2 or less and no burn cost. Reveal it and create it attached to a legal unit under your control without paying its cost. Shuffle.",
    "keywords": [
-    "Operation"
+    "Creation"
    ],
    "implementation": "v0.4: OnPlay → ModularAssembly",
    "enabled": true,
@@ -3679,7 +3687,7 @@
      ]
     ]
    },
-   "timing": "Pulse",
+   "timing": "Reactive",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -3697,7 +3705,7 @@
    ],
    "text": "Prevent the next 1 point of ability damage to one Robot or Cyborg under your control this turn.",
    "keywords": [
-    "Pulse"
+    "Reactive"
    ],
    "implementation": "v0.4: OnPlay → PreventDamage",
    "enabled": true,
@@ -3717,7 +3725,7 @@
     "P": 0,
     "W": 0
    },
-   "timing": "Pulse",
+   "timing": "Reactive",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -3727,7 +3735,7 @@
    ],
    "text": "Choose one Battle Unit under enemy control. It cannot use optional activated abilities until end of turn. Does not remove static abilities or mandatory rolls.",
    "keywords": [
-    "Pulse"
+    "Reactive"
    ],
    "implementation": "v0.4: OnPlay → SignalJam",
    "enabled": true,
@@ -3747,7 +3755,7 @@
     "P": 0,
     "W": 0
    },
-   "timing": "Pulse",
+   "timing": "Reactive",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -3759,7 +3767,7 @@
    ],
    "text": "In response to a Power or unit ability targeting one Creature or Cyborg under your control for damage, that unit loses 1 Psionic until end of turn (must have at least 1). Prevent up to 2 damage from that effect to that unit.",
    "keywords": [
-    "Pulse"
+    "Reactive"
    ],
    "implementation": "v0.4: OnPlay → Molting",
    "enabled": true,
@@ -3789,7 +3797,7 @@
      ]
     ]
    },
-   "timing": "Pulse",
+   "timing": "Reactive",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -3819,7 +3827,7 @@
    ],
    "text": "Choose a Creature under your control. Roll red as an ability roll. Numeric odd: +2 Psionic; numeric even: +1 Physical. Until end of turn.",
    "keywords": [
-    "Pulse"
+    "Reactive"
    ],
    "implementation": "v0.4: OnPlay → PowerRoll",
    "enabled": true,
@@ -3839,7 +3847,7 @@
     "P": 0,
     "W": 0
    },
-   "timing": "Pulse",
+   "timing": "Reactive",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -3850,7 +3858,7 @@
    "text": "Choose a Creature under your control. Cannibalize a different Creature or Cyborg under your control. The chosen Creature gains Physical equal to the consumed unit’s permanent Physical immediately before destruction until end of turn.",
    "keywords": [
     "Cannibalize",
-    "Pulse"
+    "Reactive"
    ],
    "implementation": "v0.4: OnPlay → CannibalInstinct",
    "enabled": true,
@@ -3870,7 +3878,7 @@
     "P": 0,
     "W": 0
    },
-   "timing": "Operation",
+   "timing": "Creation",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -3886,7 +3894,7 @@
    ],
    "text": "Creation only. Return up to two Creatures with printed total cost 1 from your discard to your hand.",
    "keywords": [
-    "Operation"
+    "Creation"
    ],
    "implementation": "v0.4: OnPlay → ReturnUpTo",
    "enabled": true,
@@ -3906,7 +3914,7 @@
     "P": 0,
     "W": 0
    },
-   "timing": "Pulse",
+   "timing": "Reactive",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -3937,7 +3945,7 @@
    ],
    "text": "Choose a Creature under your control in a blocked battle. Roll red as an ability roll. Numeric 1–2: +1 Physical; 3–5: +1 Psionic. Until end of turn.",
    "keywords": [
-    "Pulse"
+    "Reactive"
    ],
    "implementation": "v0.4: OnPlay → PowerRoll",
    "enabled": true,
@@ -3967,7 +3975,7 @@
      ]
     ]
    },
-   "timing": "Pulse",
+   "timing": "Reactive",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -3980,7 +3988,7 @@
    ],
    "text": "During the Power window, choose one of your existing Stacks. It gains +1 Cyber and +1 Psionic until it separates.",
    "keywords": [
-    "Pulse"
+    "Reactive"
    ],
    "implementation": "v0.4: OnPlay → StackBuff",
    "enabled": true,
@@ -4010,7 +4018,7 @@
      ]
     ]
    },
-   "timing": "Pulse",
+   "timing": "Reactive",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -4020,7 +4028,7 @@
    ],
    "text": "During the Power window, split one of your Stacks. Choose one member to remain engaged; the other returns to your Lab depleted.",
    "keywords": [
-    "Pulse"
+    "Reactive"
    ],
    "implementation": "v0.4: OnPlay → SplitStack",
    "enabled": true,
@@ -4040,26 +4048,34 @@
     "P": 1,
     "W": 0
    },
-   "timing": "Pulse",
+   "timing": "Reactive",
    "effects": [
     {
      "trigger": "OnPlay",
-     "effect": "TrapUnit",
+     "effect": "Restrict",
      "params": {
-      "target": "opposingUnit",
-      "release": "nextCleanup",
+      "kinds": [
+       "attack",
+       "defend",
+       "target",
+       "activate",
+       "passive",
+       "cost"
+      ],
+      "until": "ownerCleanup",
       "filter": {
        "maxPrintedPhysical": 2
-      }
+      },
+      "label": "Interference Net: contained"
      }
     }
    ],
-   "text": "Contain one unit under enemy control with printed Physical 2 or less. Free it at its owner’s next Cleanup.",
+   "text": "Contain one Battle Unit under enemy control with printed Physical 2 or less: until its owner's next Cleanup it cannot attack, defend, use or grant abilities, be chosen by a Power or ability, or be used to pay a cost. It is then released depleted.",
    "keywords": [
-    "Containment",
-    "Pulse"
+    "Contain",
+    "Reactive"
    ],
-   "implementation": "v0.4: OnPlay → TrapUnit",
+   "implementation": "v0.4: OnPlay → Restrict",
    "enabled": true,
    "origin": "v0.4",
    "role": "Control",
@@ -4087,7 +4103,7 @@
      ]
     ]
    },
-   "timing": "Pulse",
+   "timing": "Reactive",
    "effects": [
     {
      "trigger": "OnPlay",
@@ -4100,7 +4116,7 @@
    "text": "Choose a Battle Unit under enemy control. Deplete it. It loses 1 Physical until the end of the turn.",
    "keywords": [
     "Deplete",
-    "Pulse"
+    "Reactive"
    ],
    "implementation": "v0.4: OnPlay → DepleteUnit",
    "enabled": true,

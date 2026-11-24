@@ -47,8 +47,8 @@ export interface CardDef {
   cost?: Cost;
   stats?: Stats;
   equip?: { ability: Ability; bonus: number; allowed: UnitType[]; /** v0.4 Relocate cost; absent = free. */ moveCost?: Cost };
-  /** v0.4 Power timing: Pulse (fast) or Operation (own Creation phase, empty stack). */
-  timing?: 'Pulse' | 'Operation';
+  /** Power timing: Reactive (fast, any priority window) or Creation (own Creation phase, nothing waiting to resolve). */
+  timing?: 'Reactive' | 'Creation';
   /** v0.4 Protocol modes (id → description). */
   protocols?: Record<string, string>;
   /** v0.4 keyword tags shown in tooltips (Lock-On, Mutation, Protocol, Calibrate, Cannibalize, ...). */
@@ -156,10 +156,25 @@ export interface CardInstance {
   flags?: Record<string, number | string | boolean>;
   /** v0.4: a linked unit (Railgun Overseer's chosen Robot). */
   link?: string | null;
+  /** v0.4.1 source-specific restrictions (replace the old trapped/untrapped condition for v0.4 cards). */
+  restrictions?: Restriction[];
   /** Seats that have seen this card while it sits in a hidden zone (a hand); cleared when it moves. */
   revealedTo?: Seat[];
   /** v0.4: failed escape attempts from containment. */
   escapeFails?: number;
+}
+
+/** What a restriction prevents, independently: attacking, defending, being chosen by Powers/abilities,
+ * using activated abilities, passive/triggered abilities (incl. granting them), being used as a cost. */
+export type RestrictKind = 'attack' | 'defend' | 'target' | 'activate' | 'passive' | 'cost';
+
+export interface Restriction {
+  source: string;
+  sourceCardId: string;
+  kinds: RestrictKind[];
+  /** endOfTurn; ownerCleanup = released at its owner's next Cleanup; escape = escape roll in each owner Cleanup. */
+  until: 'endOfTurn' | 'ownerCleanup' | 'escape';
+  label: string;
 }
 
 export interface ModEntry {

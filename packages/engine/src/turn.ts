@@ -123,7 +123,7 @@ register('creationMain', (ctx) => {
 
 register('cleanup', (ctx) => {
   if (phase(ctx, 'cleanup')) return;
-  pushSeq(ctx, [{ k: 'openWindow', point: 'beforeCleanupEscapes' }, { k: 'escapes' }]);
+  pushSeq(ctx, [{ k: 'openWindow', point: 'beforeCleanupEscapes' }, { k: 'escapes' }, { k: 'releaseRestrictions' }]);
 });
 
 /**
@@ -178,6 +178,10 @@ register('endTurn', (ctx) => {
   for (const c of Object.values(s.cards)) {
     c.tempMods = { cyber: 0, psionic: 0, physical: 0 };
     clearTempLog(c);
+    if (c.restrictions) {
+      c.restrictions = c.restrictions.filter((r) => r.until !== 'endOfTurn');
+      if (!c.restrictions.length) delete c.restrictions;
+    }
     c.xValue = null;
     c.disoriented = false;
   }

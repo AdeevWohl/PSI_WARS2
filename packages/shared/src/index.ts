@@ -21,6 +21,8 @@ export interface Payment {
   any?: Partial<Record<CUType, number>>;
   /** v0.4: type destroyed for each extra burn component. */
   burns?: CUType[];
+  /** v0.4.1: the exact Creation Units chosen (ready, yours, distinct). Their types must form this payment. */
+  pick?: { deplete: string[]; burn: string[] };
 }
 
 export interface AttackDeclaration {

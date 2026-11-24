@@ -40,7 +40,7 @@ describe('v0.4 payment solver', () => {
 });
 
 describe('v0.4 Power timing', () => {
-  it('Operations are only playable in your own Creation phase; Pulses also respond', () => {
+  it('Creation Powers only in your own Creation phase; Reactive Powers also respond', () => {
     const sc = sc4({ at: 'creation', seats: [{ hand: ['PW_EH'], cus: { G: 1 } }, {}] });
     const d = drive(sc);
     d.expectPrompt('main', 0);

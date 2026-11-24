@@ -137,14 +137,17 @@ class Brain {
   leavesReserve(d: CardDef, reserve: CardDef | null): boolean {
     if (!reserve?.cost || !d.cost) return true;
     const r = this.readyCUs();
+    const size = (c: NonNullable<CardDef['cost']>) => (c.choice?.length ?? 0) + (c.A ?? 0) + c.W + (c.burns?.length ?? 0);
     for (const t of CU_TYPES) r[t] -= d.cost[t];
     let spare = 0;
     for (const t of CU_TYPES) {
       if (r[t] < 0) return false;
       spare += r[t];
     }
-    spare -= d.cost.W;
-    const need = CU_TYPES.reduce((n, t) => n + reserve.cost![t], 0) + reserve.cost.W;
+    spare -= size(d.cost);
+    // The reserve's fixed colours must still be there; its flexible parts come out of the spare pool.
+    for (const t of CU_TYPES) if (r[t] < reserve.cost[t]) return false;
+    const need = CU_TYPES.reduce((n, t) => n + reserve.cost![t], 0) + size(reserve.cost);
     return spare >= need;
   }
 
@@ -182,6 +185,8 @@ class Brain {
     const la = this.la;
     const act = this.mainActivation();
     if (act) return act;
+    const move = this.relocation();
+    if (move) return move;
     if (this.level === 'easy') {
       const units = la.plays.filter((p) => this.v.defs[p.cardId]!.cardType === 'BattleUnit');
       if (units.length) {
@@ -198,7 +203,7 @@ class Brain {
 
     // Normal / Hard: keep CUs back for an instant if we hold one.
     const hand = this.v.players[this.me]!.hand ?? [];
-    const reserve = hand.map((u) => this.def(u)).filter((d) => isTrapLike(d) || d.effects.some((e) => ['DisableUnits', 'DisableTargets', 'CounterPulse', 'Molting'].includes(e.effect))).sort((a, b) => this.costSize(a) - this.costSize(b))[0] ?? null;
+    const reserve = hand.map((u) => this.def(u)).filter((d) => d.timing === 'Reactive' && (isTrapLike(d) || d.effects.some((e) => ['DisableUnits', 'DisableTargets', 'CounterPulse', 'Molting', 'DepleteUnit', 'PreventDamage', 'ReviveToLab', 'CannibalInstinct', 'PowerRoll'].includes(e.effect)))).sort((a, b) => this.costSize(a) - this.costSize(b))[0] ?? null;
 
     let best: { score: number; cmd: Command } | null = null;
     for (const p of la.plays) {
@@ -307,6 +312,16 @@ class Brain {
           return t ? { score: 3.5, target: t } : { score: -Infinity, target: null };
         }
         case 'CannibalInstinct': {
+          // Lethal: an unblocked attacker plus the best spare body's Physical reaches the defender's Lab HP.
+          const pend = (this.v.battle?.attacks ?? []).filter((a) => a.status === 'pending' && a.seat === this.me && !a.blockers.length);
+          for (const a of pend) {
+            const t = a.units.find((u) => mine.includes(u));
+            if (!t) continue;
+            const spare = this.v.players[this.me]!.lab.filter((u) => u !== t && !a.units.includes(u) && ['Creature', 'Cyborg'].includes(this.def(u).unitType ?? ''));
+            const gain = Math.max(0, ...spare.map((u) => this.strength(u, false).physical));
+            const dmg = this.fighterStrength(a.units, true).physical + gain;
+            if (spare.length && dmg >= this.v.players[a.target]!.labHP) return { score: 200, target: t };
+          }
           const t = byValue(mine.filter(engaged))[0];
           return t ? { score: 4, target: t } : { score: -Infinity, target: null };
         }
@@ -323,6 +338,7 @@ class Brain {
           const t = enemy.find((u) => engaged(u) && this.def(u).effects.some((x) => ['LockOn', 'PayBoost', 'TargetingNode', 'NomisBoost', 'Intercept'].includes(x.effect)));
           return t ? { score: 3, target: t } : { score: -Infinity, target: null };
         }
+        case 'Restrict':
         case 'TrapUnit': {
           const t = this.bestTrapTarget(targets);
           return t && t.value >= 5 ? { score: 4 + t.value, target: t.uid } : { score: -Infinity, target: null };
@@ -450,15 +466,53 @@ class Brain {
   /** v0.4: form a Stack before attacking when the combined fighter is clearly stronger. */
   private stackChoice(): Command | null {
     if (this.level === 'easy') return null;
+    // Is a Stack worth it? Compare its odds against the opponent's strongest ready blocker with the two
+    // units attacking separately (two attackers can't both be blocked by one unit, but a lone small
+    // unit is easy to kill). Synergy cards and a stronger Stack against a big blocker tip the balance.
+    const opp = this.opponents()[0];
+    const ready = opp === undefined ? [] : this.v.players[opp]!.lab.filter((u) => !this.v.cards[u]!.depleted && !this.disabled(u));
+    const strongest = ready.map((u) => this.fighterStrength(this.fighter(u), false)).sort((x, y) => y.physical - x.physical)[0];
     let best: { a: string; b: string; score: number } | null = null;
     for (const s of this.la.stacks) {
       if (this.v.cards[s.a]!.depleted || this.v.cards[s.b]!.depleted) continue;
-      const st = this.fighterStrength([s.a, s.b], true);
-      const synergy = this.def(s.a).effects.some((e) => ['StackChoice', 'Convergence', 'StatBonus', 'StackShield', 'PartnerReroll'].includes(e.effect)) ? 1.5 : 0;
-      const score = st.physical + (st.cyber + st.psionic) * 0.4 + synergy;
-      if (score >= 6 && (!best || score > best.score)) best = { ...s, score };
+      const together = this.fighterStrength([s.a, s.b], true);
+      const synergy = this.def(s.a).effects.some((e) => ['StackChoice', 'Convergence', 'StatBonus', 'StackShield', 'PartnerReroll', 'AlloyUpgrade'].includes(e.effect)) ? 1.2 : 0;
+      let score: number;
+      if (!strongest) score = ready.length === 0 ? -1 : 0; // no blockers: two separate hits deal more
+      else {
+        const vs = (u: string[]) => odds(this.rules, this.v.config.diceVariant, this.fighterStrength(u, true), strongest);
+        const st = vs([s.a, s.b]);
+        const solo = Math.max(vs([s.a]).defDestroyed - vs([s.a]).attDestroyed, vs([s.b]).defDestroyed - vs([s.b]).attDestroyed);
+        // A Stack risks a two-for-one, so it must clearly improve the best single attack.
+        score = (st.defDestroyed - st.attDestroyed * 1.6) - solo + synergy * 0.25 + (ready.length >= 2 ? 0.1 : -0.2);
+      }
+      if (score > 0.2 && together.physical >= 4 && (!best || score > best.score)) best = { ...s, score };
     }
     return best ? { type: 'Stack', a: best.a, b: best.b } : null;
+  }
+
+  /** Units that grow by surviving blocked battles (Mutation, Alloy upgrades) are worth exposing to blocks. */
+  private growthBonus(uid: string): number {
+    const growth = this.def(uid).effects.some((e) => ['MutateOnPsiLoss', 'MarrowMutation', 'AlloyUpgrade', 'Feeding'].includes(e.effect));
+    return growth ? 0.25 : 0;
+  }
+
+  /** Equipment relocation: move Equipment off a unit that can't fight this turn onto a ready one, when worth its cost. */
+  private relocation(): Command | null {
+    if (this.level === 'easy') return null;
+    let best: { cmd: Command; score: number } | null = null;
+    for (const m of this.la.moveEquipment ?? []) {
+      const from = this.v.cards[m.equip]?.attachedTo;
+      if (!from) continue;
+      const fromIdle = this.v.cards[from]!.depleted;
+      const costN = m.cost ? m.cost.G + m.cost.B + m.cost.R + m.cost.P + (m.cost.choice?.length ?? 0) + (m.cost.A ?? 0) : 0;
+      for (const to of m.to) {
+        if (this.v.cards[to]!.depleted) continue;
+        const gain = this.unitValue(to) - this.unitValue(from) + (fromIdle ? 2 : 0) - costN * 1.5;
+        if (gain > 1.5 && (!best || gain > best.score)) best = { cmd: { type: 'MoveEquipment', equip: m.equip, to }, score: gain };
+      }
+    }
+    return best?.cmd ?? null;
   }
 
   private attack(): Command {
@@ -472,7 +526,8 @@ class Brain {
     const blockersOf = (seat: Seat) => this.v.players[seat]!.lab.filter((u, i, arr) => {
       const c = this.v.cards[u]!;
       if (c.stackPartner && arr.indexOf(c.stackPartner) < i) return false;
-      return !this.disabled(u);
+      // v0.4.1: only ready units can block.
+      return !c.depleted && !this.disabled(u);
     });
     const blockers = blockersOf(target);
 
@@ -499,7 +554,10 @@ class Brain {
       const { evs } = this.evaluateAttack(set, target, blockers);
       let worst: string | null = null;
       let worstEv = -0.3;
-      for (const [u, ev] of evs) if (ev < worstEv) { worstEv = ev; worst = u; }
+      for (const [u, ev0] of evs) {
+        const ev = ev0 + (blockers.length ? this.growthBonus(u) : 0);
+        if (ev < worstEv) { worstEv = ev; worst = u; }
+      }
       if (!worst) break;
       set = set.filter((u) => u !== worst);
     }
@@ -534,6 +592,8 @@ class Brain {
   }
 
   private disabled(uid: string): boolean {
+    const r = (this.v.cards[uid] as { restrictions?: { kinds: string[] }[] } | undefined)?.restrictions ?? [];
+    if (r.some((x) => x.kinds.includes('defend'))) return true;
     return this.v.turnEffects.some((te) => te.kind === 'disable' && this.disableHits(te.filter ?? {}, uid));
   }
 
@@ -796,5 +856,5 @@ export function chooseCommand(level: AiLevel, view: GameView, legal: LegalView, 
 
 /** v0.4: containment Powers behave like the old Trap cards for the AI. */
 function isTrapLike(d: CardDef): boolean {
-  return d.cardType === 'Trap' || d.effects.some((e) => e.trigger === 'OnPlay' && e.effect === 'TrapUnit');
+  return d.cardType === 'Trap' || d.effects.some((e) => e.trigger === 'OnPlay' && (e.effect === 'TrapUnit' || e.effect === 'Restrict'));
 }

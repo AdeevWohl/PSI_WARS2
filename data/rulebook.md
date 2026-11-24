@@ -236,7 +236,7 @@ These rules come from the v0.4 card set workbook (Rules and Keywords sheet) and 
 **Limits and interactions:** Depleted units stay depleted until their controller's next Replenish phase or an explicit effect. Combat never depletes.
 
 ### Battle windows / triggers
-*Shared.* Pulse cards may be played in normal priority windows, including opponent turn, with last-in-first-out responses. Resolve attack/blocked triggers before the Power window. Unit-owned before-dice abilities occur after assignment and Power window in the relevant engagement.
+*Shared.* Reactive cards may be played in normal priority windows, including opponent turn, with last-in-first-out responses. Resolve attack/blocked triggers before the Power window. Unit-owned before-dice abilities occur after assignment and Power window in the relevant engagement.
 
 **Limits and interactions:** No universal after-dice response window. No new assignments after declaration unless an explicit card allows it. A new unit may participate only if the corresponding declaration step has not yet occurred.
 
@@ -255,15 +255,15 @@ These rules come from the v0.4 card set workbook (Rules and Keywords sheet) and 
 
 **Limits and interactions:** Separate burn and deplete pools: Burn R/P 1 + Mixed B/G 1 means destroy red or purple and deplete blue or green. Never reuse one CU for two payments. Empty AC uses original rule: W matches printed colored/split costs, or any if none. Any is explicit unrestricted pool. Total cost counts all required CUs once, including W. No dual-type CU cards added in this pass.
 
-### Power — Pulse
+### Power — Reactive
 *Shared.* Fast Power: may be played in normal priority windows on any turn, including responses. A card can have a narrower printed trigger. Trap is a name/flavor, not a separate type.
 
 **Limits and interactions:** No automatic window after dice; all normal instant rules and target legality apply. Pay at declaration; costs not refunded if countered.
 
-### Power — Operation
+### Power — Creation
 *Shared.* Slow Power: may only be played in your own Creation phase when no card or ability is waiting to resolve.
 
-**Limits and interactions:** Pulses can respond to an Operation. Other Operations cannot respond. Units and Equipment still use Creation timing unless explicitly created by an effect.
+**Limits and interactions:** Reactive Powers can respond to an Creation. Other Creation Powers cannot respond. Units and Equipment still use Creation timing unless explicitly created by an effect.
 
 ### Zero strengths / disorientation
 *Shared.* Robots/Cyborgs may have 0 Cyber; Creatures/Cyborgs may have 0 Psionic. If the relevant type has 0 and faces an enemy with that channel >0, it is immediately Disoriented and rolls no die in that channel. If both have 0, skip channel.
@@ -288,7 +288,7 @@ These rules come from the v0.4 card set workbook (Rules and Keywords sheet) and 
 ### Reanimated
 *Creature signature.* Creature Regenerate returns an eligible Creature or Cyborg as a ready unit at printed strengths with a permanent modifier: +2 Physical / −2 Psionic, floor 0. Reanimated is a marker, not a Mutation or a new faction.
 
-**Limits and interactions:** Printed Psionic >0 or X, total cost ≤3; no carried Equipment or old permanent modifiers. Pulse can create a surprise defender before declaration, not after assignment. X modifier applies after X roll.
+**Limits and interactions:** Printed Psionic >0 or X, total cost ≤3; no carried Equipment or old permanent modifiers. Reactive can create a surprise defender before declaration, not after assignment. X modifier applies after X roll.
 
 ### Deck construction
 *Shared.* Battle 30–40, ≥12 units, ≤3 copies; Resource 18–24, ≤20 CUs, ≤8 of each CU type, ≤3 other cards each.
@@ -311,5 +311,5 @@ These rules supersede earlier depletion rules.
 - Depletion alone does **not** stop a unit from granting continuous abilities or Commander bonuses, using triggered abilities, activating abilities that don't need it ready, keeping or receiving Equipment, being targeted, or being Cannibalized / used as a cost that doesn't require readiness.
 - **Depleted mid-combat:** a unit depleted after being declared but before its engagement resolves leaves that engagement. If it is in a Stack, the Stack breaks and the eligible partner keeps fighting. If the whole defending side leaves, the attacker becomes unblocked; if the whole attacking side leaves, the engagement is cancelled. Readying it again does not put it back.
 - There is no summoning sickness.
-- **Parasitic Snare** (Pulse): choose a Battle Unit under enemy control. Deplete it. It loses 1 Physical until the end of the turn.
+- **Parasitic Snare** (Reactive): choose a Battle Unit under enemy control. Deplete it. It loses 1 Physical until the end of the turn.
 

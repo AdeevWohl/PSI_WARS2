@@ -345,8 +345,12 @@ export class Controller {
     const v = this.view!;
     const def = v.defs[play.cardId]!;
     let payment = play.suggested ?? undefined;
-    if (play.payments.length > 1) {
-      const chosen = await pickPayment(this.host, def, play.payments, play.suggested);
+    // Real choices: more than one way to pay, or a Fortified Creation Unit that could be burned.
+    const me = (this.legal?.seat ?? v.prompt?.seat ?? 0) as number;
+    const cost = play.cost ?? def.cost;
+    const fortChoice = !!cost && (cost.W > 0 || (cost.burns?.length ?? 0) > 0) && (v.players[me]?.cus ?? []).some((u) => { const eq = v.cards[u]?.equipment; return !!eq && !v.cards[u]!.depleted && v.defs[v.cards[eq]?.cardId ?? '']?.effects.some((e) => e.effect === 'FortifyResource'); });
+    if (cost && (play.payments.length > 1 || fortChoice)) {
+      const chosen = await pickPayment(this.host, v, me, def, cost, play.suggested);
       if (!chosen) {
         this.cancel();
         return;

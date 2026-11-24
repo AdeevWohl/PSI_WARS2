@@ -1,5 +1,5 @@
 import { card, defOf, matchesFilter, player } from './state';
-import { isFortification, staticBonus } from './mods';
+import { isFortification, isRestricted, staticBonus } from './mods';
 import type { Ability, GameState, Seat, StatMods } from './types';
 
 /** Printed/data base value; X resolves to the rolled value, or null if not rolled yet. */
@@ -29,6 +29,7 @@ export function auraBonus(s: GameState, uid: string, ab: Ability): number {
   const d = defOf(s, uid);
   let total = 0;
   for (const cu of player(s, c.owner).lab) {
+    if (isRestricted(s, cu, 'passive')) continue; // a restricted Commander grants nothing
     const cd = defOf(s, cu);
     for (const e of cd.effects) {
       if (e.trigger !== 'StaticAura') continue;
@@ -74,6 +75,7 @@ export function canHoldEquipment(s: GameState, unitUid: string, equipCardId: str
 /** Disabled by a "cannot attack or defend for turn" effect (High-Energy Pulse, Mental Disrupter). */
 export function isDisabled(s: GameState, uid: string): boolean {
   const d = defOf(s, uid);
+  if (isRestricted(s, uid, 'attack') && isRestricted(s, uid, 'defend')) return true;
   for (const te of s.turnEffects) {
     if (te.kind === 'disableUnits' && te.uids?.includes(uid)) return true;
     if (te.kind !== 'disable') continue;

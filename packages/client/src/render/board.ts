@@ -396,6 +396,7 @@ export class Board {
     if (c.disoriented) el.classList.add('disoriented');
     // v0.4: active Protocol and the reasons a unit's strengths changed.
     const cx = c as typeof c & { protocol?: string | null; modLog?: { stat: string; amount: number; kind: string; label: string }[] };
+    for (const r of (c as { restrictions?: { label: string; kinds: string[] }[] }).restrictions ?? []) markers.push({ kind: 'restricted', label: `${r.label} (${r.kinds.join(', ')})`, icon: r.kinds.length >= 5 ? '⛓' : r.kinds.includes('activate') && r.kinds.length === 1 ? '⊗' : '⊘' });
     if (cx.protocol) markers.push({ kind: 'protocol', label: `Protocol: ${cx.protocol} — ${(def as { protocols?: Record<string, string> }).protocols?.[cx.protocol] ?? ''}`, icon: cx.protocol[0]! });
     if (cx.modLog?.length) {
       const perm = cx.modLog.some((m) => ['mutation', 'reanimated', 'permanent'].includes(m.kind));

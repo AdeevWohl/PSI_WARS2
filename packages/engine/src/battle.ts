@@ -10,7 +10,7 @@ import { openWindow } from './windows';
 import { othersFrom } from './plays';
 import type { Ability, Attack, Ctx, DieRoll, GameState, Resolution, Seat, SideDice, Task } from './types';
 import { afterAttackDeclared, afterEngagement, beforeDiceStep, endOfBattle, snapshotFighters } from './v04';
-import { hasEffect, hooks, markUsed, usedThisTurn } from './mods';
+import { hasEffect, hooks, isRestricted, markUsed, usedThisTurn } from './mods';
 
 // ---------- eligibility ----------
 
@@ -22,7 +22,7 @@ export function eligibleAttackers(s: GameState, seat: Seat): string[] {
     if (seen.has(uid)) continue;
     const units = fighterUnits(s, uid);
     units.forEach((u) => seen.add(u));
-    if (units.every((u) => !card(s, u).depleted && !isDisabled(s, u))) out.push(uid);
+    if (units.every((u) => !card(s, u).depleted && !isDisabled(s, u) && !isRestricted(s, u, 'attack'))) out.push(uid);
   }
   return out;
 }
@@ -37,7 +37,7 @@ export function eligibleBlockers(s: GameState, seat: Seat): string[] {
     const units = fighterUnits(s, uid);
     units.forEach((u) => seen.add(u));
     if (units.some((u) => attacking.has(u))) continue;
-    if (units.every((u) => !card(s, u).depleted && !isDisabled(s, u))) out.push(uid);
+    if (units.every((u) => !card(s, u).depleted && !isDisabled(s, u) && !isRestricted(s, u, 'defend'))) out.push(uid);
   }
   return out;
 }

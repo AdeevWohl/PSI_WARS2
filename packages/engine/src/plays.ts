@@ -7,6 +7,7 @@ import { push } from './tasks';
 import type { CardDef, Cost, Ctx, GameState, Prompt, Seat, Task } from './types';
 import { consumeEquipmentDiscount, equipmentDiscount, EXTRA, onCreate } from './v04';
 import { lessOneP } from './payment';
+import { isRestricted } from './mods';
 import { openWindow } from './windows';
 
 export interface PlayOption {
@@ -18,6 +19,8 @@ export interface PlayOption {
   payments: Payment[];
   /** Auto-pay suggestion that preserves the most flexible CUs (§C3). */
   suggested: Payment | null;
+  /** v0.4.1: the cost actually charged (after discounts), for the Creation Unit picker. */
+  cost?: Cost;
 }
 
 const CU_NAME: Record<string, string> = { G: 'Digital Splicing', B: 'Neurogenesis', R: 'Bio-Acceleration', P: 'Material Animation', W: 'Creation Unit to destroy' };
@@ -31,11 +34,11 @@ export function unplayableReasons(s: GameState, seat: Seat, p: Prompt): Record<s
     if (playable.has(uid)) continue;
     const d = defOf(s, uid);
     if (!types.has(d.cardType)) {
-      out[uid] = types.size === 0 ? 'Finish the current decision first' : types.has('Power') ? 'Only Pulse Power cards can be played now' : 'Not playable now';
+      out[uid] = types.size === 0 ? 'Finish the current decision first' : types.has('Power') ? 'Only Reactive Power cards can be played now' : 'Not playable now';
       continue;
     }
     if (!timingOk(s, p, d)) {
-      out[uid] = 'Operation: only in your own Creation phase, with nothing waiting to resolve';
+      out[uid] = 'Creation Power: only in your own Creation phase, with nothing waiting to resolve';
       continue;
     }
     const short = shortfall(s, seat, costFor(s, seat, d));
@@ -60,15 +63,17 @@ export function unplayableReasons(s: GameState, seat: Seat, p: Prompt): Record<s
  * from your own Creation prompt (the stack is always empty there). Cards without a timing keep the
  * old rule: Traps are fast; other Powers follow INSTANT_SCOPE.
  */
-export function timingOf(s: GameState, d: CardDef): 'Pulse' | 'Operation' {
-  if (d.timing) return d.timing;
-  if (d.cardType === 'Trap') return 'Pulse';
-  return s.rules.houseRules.INSTANT_SCOPE === 'all' ? 'Pulse' : 'Operation';
+export function timingOf(s: GameState, d: CardDef): 'Reactive' | 'Creation' {
+  const t = d.timing as string | undefined;
+  if (t === 'Reactive' || t === 'Pulse') return 'Reactive';
+  if (t === 'Creation' || t === 'Operation') return 'Creation';
+  if (d.cardType === 'Trap') return 'Reactive';
+  return s.rules.houseRules.INSTANT_SCOPE === 'all' ? 'Reactive' : 'Creation';
 }
 
 function timingOk(s: GameState, p: Prompt, d: CardDef): boolean {
   if (d.cardType !== 'Power' && d.cardType !== 'Trap') return true;
-  if (timingOf(s, d) === 'Pulse') return true;
+  if (timingOf(s, d) === 'Reactive') return true;
   return p.kind === 'main' && s.stack.length === 0;
 }
 
@@ -76,6 +81,11 @@ function timingOk(s: GameState, p: Prompt, d: CardDef): boolean {
 export function costFor(s: GameState, seat: Seat, d: CardDef): Cost {
   const c = d.cost ?? ZERO_COST;
   return d.cardType === 'Equipment' && equipmentDiscount(s, seat) ? lessOneP(c) : c;
+}
+
+/** Cards whose cost is paid together with a later choice (Equipment Mechanic). */
+export function deferredCost(d: CardDef): boolean {
+  return d.effects.some((e) => e.trigger === 'OnPlay' && e.effect === 'EquipmentMechanic');
 }
 
 /** Which card types a prompt allows from hand (timing is checked per card). */
@@ -108,6 +118,8 @@ function powerPlayable(s: GameState, seat: Seat, uid: string, d: CardDef): { ok:
     if (impl.canPlay && !impl.canPlay(s, seat, uid, e.params)) return { ok: false, targets: null };
     if (impl.targets) targets = impl.targets(s, seat, uid, e.params);
   }
+  // v0.4.1: units a restriction protects cannot be chosen (Labs and cards on the stack can).
+  if (targets) targets = targets.filter((t) => !s.cards[t] || s.cards[t]!.zone !== 'lab' || !isRestricted(s, t, 'target'));
   if (targets && targets.length === 0) return { ok: false, targets: null };
   return { ok: true, targets };
 }
@@ -141,7 +153,11 @@ export function playOptions(s: GameState, seat: Seat, p: Prompt): PlayOption[] {
       if (!r.ok) continue;
       targets = r.targets;
     }
-    out.push({ uid, cardId: d.id, targets, payments: enumeratePayments(s, seat, cost), suggested: autoPayment(s, seat, cost) });
+    if (deferredCost(d)) {
+      out.push({ uid, cardId: d.id, targets, payments: [], suggested: null, cost });
+      continue;
+    }
+    out.push({ uid, cardId: d.id, targets, payments: enumeratePayments(s, seat, cost), suggested: autoPayment(s, seat, cost), cost });
   }
   return out;
 }
@@ -185,8 +201,8 @@ export function performPlay(ctx: Ctx, seat: Seat, p: Prompt, cmd: Extract<Comman
   }
 
   const cost = costFor(s, seat, d);
-  const payment = cmd.payment ?? autoPayment(s, seat, cost)!;
-  const paid = pay(ctx, seat, cost, payment, cmd.uid);
+  // Equipment Mechanic pays its whole combined cost once the Equipment is chosen (atomic).
+  const paid = deferredCost(d) ? [] : pay(ctx, seat, cost, cmd.payment ?? autoPayment(s, seat, cost)!, cmd.uid);
   if (d.cardType === 'Equipment' && cost !== (d.cost ?? ZERO_COST)) consumeEquipmentDiscount(s, seat);
 
   if (d.cardType === 'BattleUnit') {

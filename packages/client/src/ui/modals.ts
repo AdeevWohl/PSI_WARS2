@@ -1,5 +1,6 @@
-import type { Payment } from '@psi-wars/shared';
-import type { CardDef, GameView, LegalView } from '@psi-wars/engine';
+import type { CUType, Payment, Seat } from '@psi-wars/shared';
+import { paymentFromTypes, type CardDef, type Cost, type GameView, type LegalView } from '@psi-wars/engine';
+import { costPips, pipEl } from '../render/card';
 import { createCardEl, updateOverlays } from '../render/card';
 import { h } from './dom';
 
@@ -44,20 +45,74 @@ export function paymentLabel(p: Payment): string {
   return parts.length ? `Destroy ${parts.join(' + ')}` : 'No Creation Units destroyed';
 }
 
-/** Payment picker (RULING A7-b): appears only when there is a real choice; the suggestion is preselected. */
-export function pickPayment(host: HTMLElement, def: CardDef, payments: Payment[], suggested: Payment | null): Promise<Payment | null> {
+/**
+ * Creation Unit picker (v0.4.1): click the exact Creation Units to deplete or burn. Each click cycles a
+ * unit: unused → deplete → burn (when the cost burns) → unused. The engine's suggestion is preselected;
+ * "Pay" works only when the chosen units pay the cost exactly. Fortified units (◈) are depleted instead
+ * of destroyed when burned, and their Fortification is used up — so whether to use it is your choice.
+ */
+export function pickPayment(host: HTMLElement, view: GameView, seat: Seat, def: CardDef, cost: Cost, suggested: Payment | null): Promise<Payment | null> {
   return new Promise((resolve) => {
-    const key = (p: Payment) => JSON.stringify(p.destroy);
-    const sug = suggested ? key(suggested) : null;
-    const sorted = [...payments].sort((a, b) => (key(a) === sug ? -1 : key(b) === sug ? 1 : 0));
-    const list = h(
-      'div',
-      { class: 'choice-grid', style: 'flex-direction:column;align-items:stretch' },
-      ...sorted.map((p) =>
-        h('button', { class: `btn${key(p) === sug ? ' primary' : ''}`, onclick: () => { m.close(); resolve(p); } }, paymentLabel(p), key(p) === sug ? h('span', { class: 'dim', style: 'margin-left:8px;font-weight:400' }, '(suggested: keeps your most flexible Creation Units)') : null),
-      ),
-    );
-    const m = openModal(host, `Pay for ${def.name}`, 'The coloured cost is depleted automatically. Choose which Creation Units to destroy for the white cost.', list, [{ label: 'Cancel', onClick: () => { m.close(); resolve(null); } }], { dismissable: false });
+    const ready = (view.players[seat]?.cus ?? []).filter((u) => view.cards[u] && !view.cards[u]!.depleted);
+    const typeOf = (u: string) => view.defs[view.cards[u]!.cardId]!.cuType as CUType;
+    const fortified = (u: string) => {
+      const eq = view.cards[u]!.equipment;
+      return !!eq && !!view.cards[eq] && view.defs[view.cards[eq]!.cardId]!.effects.some((e) => e.effect === 'FortifyResource');
+    };
+    const burns = cost.W + (cost.burns?.length ?? 0) > 0;
+    const state = new Map<string, '' | 'deplete' | 'burn'>(ready.map((u) => [u, '']));
+    // Preselect the suggestion: depletions from unfortified units, burns from fortified ones first.
+    if (suggested) {
+      const want = (types: CUType[], mode: 'deplete' | 'burn') => {
+        for (const t of types) {
+          const pool = ready.filter((u) => typeOf(u) === t && state.get(u) === '').sort((a, b) => (mode === 'burn' ? Number(fortified(b)) - Number(fortified(a)) : Number(fortified(a)) - Number(fortified(b))));
+          if (pool[0]) state.set(pool[0], mode);
+        }
+      };
+      const fixed: CUType[] = [];
+      for (const t of ['G', 'B', 'R', 'P'] as CUType[]) for (let k = 0; k < cost[t]; k++) fixed.push(t);
+      for (const [t, n] of Object.entries(suggested.any ?? {})) for (let k = 0; k < (n ?? 0); k++) fixed.push(t as CUType);
+      want([...fixed, ...(suggested.choice ?? [])], 'deplete');
+      const b: CUType[] = [];
+      for (const [t, n] of Object.entries(suggested.destroy)) for (let k = 0; k < (n ?? 0); k++) b.push(t as CUType);
+      want([...b, ...(suggested.burns ?? [])], 'burn');
+    }
+    const status = h('div', { class: 'pay-status' });
+    const grid = h('div', { class: 'pay-grid' });
+    const payBtn = h('button', { class: 'btn primary' }, 'Pay') as HTMLButtonElement;
+    const current = (): Payment | null => {
+      const dep = ready.filter((u) => state.get(u) === 'deplete');
+      const brn = ready.filter((u) => state.get(u) === 'burn');
+      const p = paymentFromTypes(cost, dep.map(typeOf), brn.map(typeOf));
+      return p ? { ...p, pick: { deplete: dep, burn: brn } } : null;
+    };
+    const draw = () => {
+      grid.replaceChildren(...ready.map((u) => {
+        const st = state.get(u)!;
+        return h('button', {
+          class: `pay-cu cu-${typeOf(u)} ${st}`, title: `${view.defs[view.cards[u]!.cardId]!.name}${fortified(u) ? ' (Resource Fortification: depleted instead of destroyed if burned)' : ''}`,
+          onclick: () => {
+            const next = st === '' ? 'deplete' : st === 'deplete' && burns ? 'burn' : '';
+            state.set(u, next);
+            draw();
+          },
+        }, h('span', { class: 'pay-dot' }), fortified(u) ? h('span', { class: 'pay-fort' }, '◈') : null, h('span', { class: 'pay-mode' }, st === 'deplete' ? 'Deplete' : st === 'burn' ? 'Burn' : '—'));
+      }));
+      const p = current();
+      payBtn.disabled = !p;
+      status.textContent = p ? 'These Creation Units pay the cost exactly.' : 'Choose Creation Units until they pay the cost exactly (each unit pays one light).';
+      status.classList.toggle('ok', !!p);
+    };
+    payBtn.onclick = () => {
+      const p = current();
+      if (!p) return;
+      m.close();
+      resolve(p);
+    };
+    const body = h('div', { class: 'pay-box' }, h('div', { class: 'pay-cost' }, h('span', { class: 'dim' }, 'Cost'), h('div', { class: 'lf-pips row big' }, costPips(cost).map(pipEl))), grid, status);
+    const m = openModal(host, `Pay for ${def.name}`, 'Click a Creation Unit to deplete it; click again to burn it (if the cost burns). Silver = deplete, black = burn.', body, [{ label: 'Cancel', onClick: () => { m.close(); resolve(null); } }], { dismissable: false });
+    m.el.querySelector('.row')?.appendChild(payBtn);
+    draw();
   });
 }
 

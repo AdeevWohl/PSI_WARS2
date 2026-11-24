@@ -9,7 +9,7 @@
  */
 import type { Ability, CUType } from '@psi-wars/shared';
 import { card, defOf, emit, player } from './state';
-import type { CardInstance, Ctx, GameState, ModEntry, StatMods } from './types';
+import type { CardInstance, Ctx, GameState, ModEntry, Restriction, RestrictKind, StatMods } from './types';
 
 export const ZERO_MODS = (): StatMods => ({ cyber: 0, psionic: 0, physical: 0 });
 const PERMANENT_KINDS = new Set(['permanent', 'mutation', 'reanimated']);
@@ -58,14 +58,40 @@ export function effectOf(s: GameState, uid: string, effect: string) {
   return defOf(s, uid).effects.find((e) => e.effect === effect);
 }
 
-/** A unit can use or grant abilities while it is in the Lab (contained units cannot). */
-export function canUseAbilities(s: GameState, uid: string): boolean {
-  return s.cards[uid]?.zone === 'lab';
+/** Is this unit under a restriction of this kind (from any source)? */
+export function isRestricted(s: GameState, uid: string, kind: RestrictKind): boolean {
+  return !!s.cards[uid]?.restrictions?.some((r) => r.kinds.includes(kind));
 }
 
-/** Signal Jam: no optional activated abilities this turn. */
+export function addRestriction(ctx: Ctx, uid: string, r: Restriction): void {
+  const c = card(ctx.s, uid);
+  (c.restrictions ??= []).push(r);
+  emit(ctx, { type: 'Restricted', uid, cardId: c.cardId, seat: c.owner, kinds: r.kinds, until: r.until, source: r.source, sourceCardId: r.sourceCardId, label: r.label });
+}
+
+export function removeRestrictions(ctx: Ctx, uid: string, pred: (r: Restriction) => boolean, reason: string): void {
+  const c = ctx.s.cards[uid];
+  if (!c?.restrictions?.length) return;
+  const gone = c.restrictions.filter(pred);
+  if (!gone.length) return;
+  c.restrictions = c.restrictions.filter((r) => !pred(r));
+  if (!c.restrictions.length) delete c.restrictions;
+  emit(ctx, { type: 'RestrictionEnded', uid, cardId: c.cardId, seat: c.owner, sources: gone.map((r) => r.sourceCardId), reason });
+}
+
+/** Passive and triggered abilities work (and are granted) unless a restriction stops them. */
+export function canUseAbilities(s: GameState, uid: string): boolean {
+  return s.cards[uid]?.zone === 'lab' && !isRestricted(s, uid, 'passive');
+}
+
+/** Activated abilities blocked (Signal Jam, containment). */
 export function isJammed(s: GameState, uid: string): boolean {
-  return s.turnEffects.some((t) => t.kind === 'jam' && t.uids?.includes(uid));
+  return isRestricted(s, uid, 'activate') || s.turnEffects.some((t) => t.kind === 'jam' && t.uids?.includes(uid));
+}
+
+/** Can a Power or unit ability choose this card? */
+export function selectable(s: GameState, uid: string): boolean {
+  return !isRestricted(s, uid, 'target');
 }
 
 export function isFortification(s: GameState, uid: string): boolean {
@@ -88,6 +114,7 @@ export function staticBonus(s: GameState, uid: string, ab: Ability): number {
   let total = 0;
   for (const e of defOf(s, uid).effects) {
     if (e.trigger !== 'Static' || e.effect !== 'StatBonus' || e.params.stat !== ab) continue;
+    if (isRestricted(s, uid, 'passive')) continue;
     const w = e.params.when ?? {};
     if (w.equipped && !c.equipment) continue;
     if (w.stackedWith) {

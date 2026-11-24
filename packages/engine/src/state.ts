@@ -103,6 +103,7 @@ export function moveCard(
     delete c.flags;
     delete c.link;
     delete c.escapeFails;
+    delete c.restrictions;
     if (c.stackPartner) {
       const p = s.cards[c.stackPartner];
       if (p) p.stackPartner = null;

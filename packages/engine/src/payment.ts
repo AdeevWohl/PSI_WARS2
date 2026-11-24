@@ -169,13 +169,85 @@ export function autoPayment(s: GameState, seat: Seat, cost: Cost): Payment | nul
 const payKey = (x: Payment) => [CU_TYPES.map((t) => x.destroy[t] ?? 0).join(','), (x.choice ?? []).join(''), CU_TYPES.map((t) => x.any?.[t] ?? 0).join(','), (x.burns ?? []).join('')].join('|');
 
 export function isValidPayment(s: GameState, seat: Seat, cost: Cost, p: Payment): boolean {
+  if (p.pick && !validPick(s, seat, cost, p)) return false;
   const k = payKey(p);
   return enumeratePayments(s, seat, cost).some((x) => payKey(x) === k);
+}
+
+/**
+ * v0.4.1 individual selection: turn the types of the chosen Creation Units into a payment, or null if
+ * they cannot pay this cost exactly (every CU pays exactly one component; none left over).
+ */
+export function paymentFromTypes(cost: Cost, deplete: CUType[], burn: CUType[]): Payment | null {
+  const rest = zero();
+  for (const t of deplete) rest[t]++;
+  for (const t of CU_TYPES) {
+    rest[t] -= cost[t];
+    if (rest[t] < 0) return null;
+  }
+  const lights = cost.choice ?? [];
+  const A = cost.A ?? 0;
+  if (CU_TYPES.reduce((n, t) => n + rest[t], 0) !== lights.length + A) return null;
+  // Assign the leftover depleted CUs to the mixed lights (backtracking); the rest pay "any".
+  const chosen: CUType[] = [];
+  const fit = (i: number): boolean => {
+    if (i === lights.length) return true;
+    for (const t of new Set(lights[i]!)) {
+      if (rest[t] <= 0) continue;
+      rest[t]--;
+      chosen.push(t);
+      if (fit(i + 1)) return true;
+      chosen.pop();
+      rest[t]++;
+    }
+    return false;
+  };
+  if (!fit(0)) return null;
+  const any: Partial<Record<CUType, number>> = {};
+  for (const t of CU_TYPES) if (rest[t]) any[t] = rest[t];
+  // Burns: W from the card's pool, then each extra burn from its own pool.
+  if (burn.length !== cost.W + (cost.burns?.length ?? 0)) return null;
+  const pools: CUType[][] = [...Array.from({ length: cost.W }, () => eligibleDestroyTypes(cost)), ...(cost.burns ?? [])];
+  const used = burn.map(() => false);
+  const assign: CUType[] = [];
+  const fitBurn = (j: number): boolean => {
+    if (j === pools.length) return true;
+    for (let k = 0; k < burn.length; k++) {
+      if (used[k] || !pools[j]!.includes(burn[k]!)) continue;
+      used[k] = true;
+      assign[j] = burn[k]!;
+      if (fitBurn(j + 1)) return true;
+      used[k] = false;
+    }
+    return false;
+  };
+  if (!fitBurn(0)) return null;
+  const destroy: Partial<Record<CUType, number>> = {};
+  for (let j = 0; j < cost.W; j++) destroy[assign[j]!] = (destroy[assign[j]!] ?? 0) + 1;
+  const p: Payment = { destroy };
+  if (lights.length) p.choice = chosen;
+  if (A) p.any = any;
+  if (cost.burns?.length) p.burns = assign.slice(cost.W);
+  return p;
+}
+
+function validPick(s: GameState, seat: Seat, cost: Cost, p: Payment): boolean {
+  const pick = p.pick!;
+  const all = [...pick.deplete, ...pick.burn];
+  if (new Set(all).size !== all.length) return false;
+  const mine = new Set(player(s, seat).cus);
+  for (const u of all) {
+    const c = s.cards[u];
+    if (!c || !mine.has(u) || c.depleted || !defOf(s, u).cuType) return false;
+  }
+  const derived = paymentFromTypes(cost, pick.deplete.map((u) => defOf(s, u).cuType!), pick.burn.map((u) => defOf(s, u).cuType!));
+  return !!derived && payKey(derived) === payKey(p);
 }
 
 /** Deplete and destroy CUs. Assumes the payment was validated. Fortified CUs absorb destroys first. */
 export function pay(ctx: Ctx, seat: Seat, cost: Cost, p: Payment, forUid: string): string[] {
   const s = ctx.s;
+  if (p.pick) return payPicked(ctx, seat, p.pick, forUid);
   const ready = readyCUs(s, seat);
   // Depletions use unfortified units first; destroys use fortified units first (they are depleted instead).
   for (const t of CU_TYPES) ready[t].sort((a, b) => Number(isFortified(s, a)) - Number(isFortified(s, b)));
@@ -254,4 +326,29 @@ export function addCosts(a: Cost, b: Cost): Cost {
   for (let i = 0; i < b.W; i++) burns.push(eligibleDestroyTypes(b));
   if (burns.length) out.burns = burns;
   return out;
+}
+
+/** Pay with the exact Creation Units chosen (validated). A burned fortified CU is depleted instead, and its Fortification discarded. */
+function payPicked(ctx: Ctx, seat: Seat, pick: { deplete: string[]; burn: string[] }, forUid: string): string[] {
+  const s = ctx.s;
+  const fortified: string[] = [];
+  const destroyed: string[] = [];
+  for (const u of pick.deplete) card(s, u).depleted = true;
+  for (const u of pick.burn) {
+    if (isFortified(s, u)) {
+      card(s, u).depleted = true;
+      fortified.push(u);
+      const eq = card(s, u).equipment!;
+      card(s, u).equipment = null;
+      card(s, eq).attachedTo = null;
+      moveCard(ctx, eq, 'discard');
+      emit(ctx, { type: 'FortificationUsed', seat, uid: eq, cu: u, cardId: card(s, eq).cardId });
+    } else destroyed.push(u);
+  }
+  const ids = destroyed.map((u) => card(s, u).cardId);
+  for (const u of destroyed) moveCard(ctx, u, 'discard');
+  if (pick.deplete.length) emit(ctx, { type: 'CUDepleted', seat, uids: [...pick.deplete], forUid });
+  if (fortified.length) emit(ctx, { type: 'CUFortified', seat, uids: fortified, forUid });
+  if (destroyed.length) emit(ctx, { type: 'CUDestroyed', seat, uids: destroyed, cardIds: ids, forUid });
+  return [...pick.deplete, ...fortified];
 }

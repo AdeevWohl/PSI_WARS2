@@ -110,7 +110,7 @@ export function pipEl(p: Pip): HTMLElement {
   return h('div', { class: `lf-pip${p.burn ? ' burn' : ''}`, title, 'aria-label': title }, h('span', { class: 'lf-n' }, String(p.n)), pipDot(p.types));
 }
 
-const KEYWORDS = ['Lock-On', 'Calibrate', 'Protocol', 'Mutation', 'Cannibalize', 'Reanimated', 'Relocate', 'Pulse', 'Operation', 'Assault', 'Guard', 'Precision', 'Scan', 'Stacked', 'Stack', 'Contain', 'Disoriented', 'Obliterate', 'Psionic X', 'Cyber X'];
+const KEYWORDS = ['Lock-On', 'Calibrate', 'Protocol', 'Mutation', 'Cannibalize', 'Reanimated', 'Relocate', 'Reactive', 'Creation Power', 'Assault', 'Guard', 'Precision', 'Scan', 'Stacked', 'Stack', 'Contain', 'Disoriented', 'Obliterate', 'Psionic X', 'Cyber X'];
 const KW_RE = new RegExp(`(${KEYWORDS.map((k) => k.replace(/[-]/g, '\\-')).join('|')})`, 'g');
 
 /** Rules text with keywords in bold (text nodes only — no HTML injection). */

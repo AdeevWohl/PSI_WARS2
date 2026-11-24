@@ -13,7 +13,7 @@ export { defaultCommandFor } from './tasks';
 export { viewFor, filterEvents, unitStatsFor, type GameView, type PlayerView, type PromptView, type UnitStats } from './view';
 export { randomLegalCommand } from './sample';
 export { seedRng, randInt, shuffleInPlace, type RngState } from './rng';
-export { canAfford, shortfall, autoPayment, enumeratePayments, readyCUs } from './payment';
+export { canAfford, shortfall, autoPayment, enumeratePayments, readyCUs, paymentFromTypes, isValidPayment, totalCost } from './payment';
 export { unitStrength, fighterStrength, canHoldEquipment, isDisabled, battleUnitCount } from './stats';
 export { face, numericValue } from './dice';
 export { EFFECTS } from './effects';
