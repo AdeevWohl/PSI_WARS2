@@ -1,9 +1,35 @@
 {
   "version": 1,
-  "generatedAt": "2026-11-22T23:06:14.622Z",
+  "generatedAt": "2026-11-26T01:31:11.597Z",
   "cardAspect": 0.7242647058823529,
   "basePath": "art/generated/",
   "assets": {
+    "cards/BU_AA": {
+      "hash": "60d3584c6076",
+      "width": 1024,
+      "height": 1414,
+      "variants": {
+        "sm": {
+          "w": 256,
+          "h": 353,
+          "webp": "cards/BU_AA-sm.webp",
+          "jpg": "cards/BU_AA-sm.jpg"
+        },
+        "md": {
+          "w": 512,
+          "h": 707,
+          "webp": "cards/BU_AA-md.webp",
+          "jpg": "cards/BU_AA-md.jpg"
+        },
+        "lg": {
+          "w": 1024,
+          "h": 1414,
+          "webp": "cards/BU_AA-lg.webp",
+          "jpg": "cards/BU_AA-lg.jpg"
+        }
+      },
+      "placeholder": "data:image/webp;base64,UklGRmQAAABXRUJQVlA4IFgAAADQAwCdASoQABYAPu1iqU2ppaQiMAgBMB2JQBOgAwDPfh8/EJ3+pgAA/UpZywTZYKD9ApJZMKxfcuYCvQu0ZTbl7NQc+mlt6+llbVPqqkl0o5O7c2UJwEAA"
+    },
     "cards/BU_AD": {
       "hash": "02b2c7ef55b5",
       "width": 1576,
@@ -212,6 +238,32 @@
       },
       "placeholder": "data:image/webp;base64,UklGRmIAAABXRUJQVlA4IFYAAACwAwCdASoQABYAPu1krU2ppaSiMAgBMB2JQBOgA8rl+2sF7zx2AAD+MsBA7pc8QTMqK5+8zzLRYBkaWgfwVjB+ryEExQcs7aoPfFZ0tlnj/VeHxIAAAA=="
     },
+    "cards/BU_HR": {
+      "hash": "81323d35fa58",
+      "width": 1024,
+      "height": 1414,
+      "variants": {
+        "sm": {
+          "w": 256,
+          "h": 353,
+          "webp": "cards/BU_HR-sm.webp",
+          "jpg": "cards/BU_HR-sm.jpg"
+        },
+        "md": {
+          "w": 512,
+          "h": 707,
+          "webp": "cards/BU_HR-md.webp",
+          "jpg": "cards/BU_HR-md.jpg"
+        },
+        "lg": {
+          "w": 1024,
+          "h": 1414,
+          "webp": "cards/BU_HR-lg.webp",
+          "jpg": "cards/BU_HR-lg.jpg"
+        }
+      },
+      "placeholder": "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAADQAwCdASoQABYAPu1iqU2ppaOiMAgBMB2JQBOgAx3sXfCuRX9CJIAA+xa6hv+5coTYaR9J3OqvT7Icrl29cZlOylpZxZ04M2dOO+zFVvWcgAAA"
+    },
     "cards/BU_JP": {
       "hash": "b7a2fb1660c8",
       "width": 1576,
@@ -367,6 +419,32 @@
         }
       },
       "placeholder": "data:image/webp;base64,UklGRlwAAABXRUJQVlA4IFAAAAAwAwCdASoQABYALrV2u12jqampiYC0SygFYAFH4wj7eQwAAPvf7VN2jmOrM/qYRGKn9FSFE4d1GVwpGZ9c0948iRD2oDSY4cEHA8AeKegAAA=="
+    },
+    "cards/BU_ML": {
+      "hash": "9c3e2b26b857",
+      "width": 1024,
+      "height": 1414,
+      "variants": {
+        "sm": {
+          "w": 256,
+          "h": 353,
+          "webp": "cards/BU_ML-sm.webp",
+          "jpg": "cards/BU_ML-sm.jpg"
+        },
+        "md": {
+          "w": 512,
+          "h": 707,
+          "webp": "cards/BU_ML-md.webp",
+          "jpg": "cards/BU_ML-md.jpg"
+        },
+        "lg": {
+          "w": 1024,
+          "h": 1414,
+          "webp": "cards/BU_ML-lg.webp",
+          "jpg": "cards/BU_ML-lg.jpg"
+        }
+      },
+      "placeholder": "data:image/webp;base64,UklGRlIAAABXRUJQVlA4IEYAAADQAwCdASoQABYAPu1iqU2ppaQiMAgBMB2JZQCsABBtfUZFYJmv40gA/ulDLAwtMs/iEByjgwc/u0zxdp7joiWyl4MlgAAA"
     },
     "cards/BU_NA": {
       "hash": "994a30a245ed",

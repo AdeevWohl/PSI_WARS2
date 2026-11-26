@@ -127,7 +127,7 @@
 .lf-art { position: absolute; left: 2cqw; right: 2cqw; top: 2cqw; height: var(--art-h); overflow: hidden; border-radius: 3cqw 3cqw 1cqw 1cqw; background: #070d19; }
 /* Crop: image width = z × window; the focus point fy sits mid-window, clamped so the image always covers it. */
 .card .lf .lf-img { --img-h: calc(var(--z) * 96cqw * 1.3807); position: absolute; width: calc(var(--z) * 100%); height: auto; max-width: none; right: 0; left: auto;
-  top: clamp(calc(var(--art-h) - var(--img-h) * 0.76), calc(var(--art-h) / 2 - var(--fy) * var(--img-h)), 0cqw); object-fit: fill; background: none; }
+  top: clamp(calc(var(--art-h) - var(--img-h) * var(--bot, 0.76)), calc(var(--art-h) / 2 - var(--fy) * var(--img-h)), 0cqw); object-fit: fill; background: none; }
 .lf-noart { display: grid; place-items: center; background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--tint) 45%, transparent), transparent 65%), #070d19; }
 .lf-noart .proc-emblem { font-size: 30cqw; }
 .lf-noart .proc-cu { position: absolute; inset: 14% 28%; }

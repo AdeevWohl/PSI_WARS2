@@ -224,9 +224,10 @@ export function liveFace(def: CardDef, size: ArtSize): HTMLElement {
   if (hasArt(def.art)) {
     const im = img(def.art!, size === 'sm' ? 'md' : size, def.name);
     im.classList.add('lf-img');
-    const crop = cropFor(def.art);
+    const crop = cropFor(def.art, (def.artSource ?? '').startsWith('ai:'));
     im.style.setProperty('--z', String(crop.z));
     im.style.setProperty('--fy', String(crop.fy));
+    im.style.setProperty('--bot', String(crop.bottom ?? 0.76));
     artWin.appendChild(im);
   } else {
     artWin.classList.add('lf-noart');

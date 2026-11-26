@@ -2846,7 +2846,9 @@
    "enabled": true,
    "origin": "v0.4",
    "role": "Swarm / evolution",
-   "designNote": "Risk: zero Psionic disorientation versus psychic defenders."
+   "designNote": "Risk: zero Psionic disorientation versus psychic defenders.",
+   "art": "cards/BU_ML",
+   "artSource": "ai: gpt-image-2.6-sunburst (tools/art)"
   },
   {
    "id": "BU_BC2",
@@ -3396,7 +3398,9 @@
    "enabled": true,
    "origin": "v0.4",
    "role": "Swarm",
-   "designNote": "Wide attack payoff capped at two bonus damage."
+   "designNote": "Wide attack payoff capped at two bonus damage.",
+   "art": "cards/BU_HR",
+   "artSource": "ai: gpt-image-2.6-sunburst (tools/art)"
   },
   {
    "id": "BU_AA",
@@ -3433,7 +3437,9 @@
    "enabled": true,
    "origin": "v0.4",
    "role": "Evolution",
-   "designNote": "Opposing Lock-On must weigh two different threats."
+   "designNote": "Opposing Lock-On must weigh two different threats.",
+   "art": "cards/BU_AA",
+   "artSource": "ai: gpt-image-2.6-sunburst (tools/art)"
   },
   {
    "id": "BU_SA2",

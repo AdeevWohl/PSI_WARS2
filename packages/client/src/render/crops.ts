@@ -8,7 +8,16 @@
 export interface Crop {
   fy: number;
   z: number;
+  /** Lowest part of the image that may show (printed art hides its stat boxes below ~76%). */
+  bottom?: number;
 }
+
+/** Full illustrations (generated art, no printed frame): whole width, no boxes to hide. */
+export const FULL_ART: Record<string, Crop> = {
+  BU_ML: { fy: 0.36, z: 1, bottom: 1 },
+  BU_AA: { fy: 0.42, z: 1, bottom: 1 },
+  BU_HR: { fy: 0.4, z: 1, bottom: 1 },
+};
 
 const UNIT = 1.19; // hides the left strip (x < 16%)
 const WIDE = 1.08; // Creation Units / Creation Oracle: thinner strip
@@ -32,6 +41,9 @@ export const CROPS: Record<string, Crop> = {
   'cards/BU_XP': { fy: 0.35, z: UNIT }, 'cards/PW_MD': { fy: 0.35, z: UNIT },
 };
 
-export function cropFor(art: string | undefined): Crop {
+export function cropFor(art: string | undefined, fullIllustration = false): Crop {
+  const id = art?.split('/').pop() ?? '';
+  if (FULL_ART[id]) return FULL_ART[id]!;
+  if (fullIllustration) return { fy: 0.42, z: 1, bottom: 1 };
   return (art && CROPS[art]) || { fy: 0.37, z: art?.includes('/CU_') || art?.includes('/RS_') ? WIDE : UNIT };
 }

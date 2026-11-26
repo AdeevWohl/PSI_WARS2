@@ -1,0 +1,14 @@
+{
+ "BU_ML": {
+  "source": "art/ai/gpt-image-2.6-sunburst-high/BU_ML.png",
+  "fullIllustration": true
+ },
+ "BU_AA": {
+  "source": "art/ai/gpt-image-2.6-sunburst-high/BU_AA.png",
+  "fullIllustration": true
+ },
+ "BU_HR": {
+  "source": "art/ai/gpt-image-2.6-sunburst-high/BU_HR.png",
+  "fullIllustration": true
+ }
+}
